@@ -6,3 +6,4 @@ extension/dist/
 extension/python/
 *.vsix
 sdkgen/.cache/
+.cache/

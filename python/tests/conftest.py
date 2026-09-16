@@ -3,6 +3,7 @@ not depend on the generated one (and pin down exactly what they rely on)."""
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -108,9 +109,17 @@ FIXTURE = {
 }
 
 
-@pytest.fixture
-def db() -> TypeDB:
+@pytest.fixture(params=["fixture", "sdk"])
+def db(request) -> TypeDB:
+    """Every translator test runs against the hand-written slice and the
+    generated SDK database, so the tests pin behaviour and also prove the real
+    database carries what they rely on."""
     import copy
+    if request.param == "sdk":
+        path = Path(__file__).resolve().parents[1] / "pyftc" / "data" / "sdk-11.2.0.json"
+        if not path.exists():
+            pytest.skip("generated SDK database missing; run sdkgen")
+        return TypeDB(json.loads(path.read_text()))
     return TypeDB(copy.deepcopy(FIXTURE))
 
 

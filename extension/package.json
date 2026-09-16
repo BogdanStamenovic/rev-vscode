@@ -1,0 +1,109 @@
+{
+  "name": "rev-vscode",
+  "displayName": "REV FTC",
+  "description": "Write FTC/FGC robot code in Python inside VS Code; deploy translated to Java on the Control Hub via OnBot Java.",
+  "version": "0.1.0",
+  "publisher": "bogdanstamenovic",
+  "private": true,
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": ["Other"],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onView:revFtcHub",
+    "workspaceContains:**/*.py",
+    "onCommand:revFtc.deploy",
+    "onCommand:revFtc.spawnStarterPack",
+    "onCommand:revFtc.showGeneratedJava",
+    "onCommand:revFtc.refreshHubView"
+  ],
+  "contributes": {
+    "commands": [
+      { "command": "revFtc.deploy", "title": "REV FTC: Deploy to Hub", "icon": "$(play)" },
+      { "command": "revFtc.spawnStarterPack", "title": "REV FTC: Spawn Starter Pack", "icon": "$(add)" },
+      { "command": "revFtc.showGeneratedJava", "title": "REV FTC: Show Generated Java", "icon": "$(file-code)" },
+      { "command": "revFtc.refreshHubView", "title": "REV FTC: Refresh Hub View", "icon": "$(refresh)" }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "revFtc",
+          "title": "REV FTC",
+          "icon": "media/activity-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "revFtc": [
+        { "id": "revFtcHub", "name": "Hub" }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        { "command": "revFtc.spawnStarterPack", "when": "view == revFtcHub", "group": "navigation@1" },
+        { "command": "revFtc.refreshHubView", "when": "view == revFtcHub", "group": "navigation@2" }
+      ],
+      "editor/title": [
+        { "command": "revFtc.deploy", "when": "resourceLangId == python", "group": "navigation@1" },
+        { "command": "revFtc.showGeneratedJava", "when": "resourceLangId == python", "group": "navigation@2" }
+      ],
+      "commandPalette": [
+        { "command": "revFtc.deploy" },
+        { "command": "revFtc.spawnStarterPack" },
+        { "command": "revFtc.showGeneratedJava" },
+        { "command": "revFtc.refreshHubView" }
+      ]
+    },
+    "configuration": {
+      "title": "REV FTC",
+      "properties": {
+        "revFtc.hubUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Manual override for the hub's OnBot Java base URL (e.g. http://192.168.43.1:8080). Leave empty to auto-detect over Wi-Fi or USB/adb."
+        },
+        "revFtc.adbPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the adb binary. Leave empty to try 'adb' on PATH, then the REV Hardware Client bundled adb."
+        },
+        "revFtc.pythonPath": {
+          "type": "string",
+          "default": "",
+          "description": "Python interpreter used to run 'python -m pyftc'. Leave empty to try python3, then python."
+        },
+        "revFtc.sourceRoot": {
+          "type": "string",
+          "default": "",
+          "description": "Workspace-relative folder containing your OpMode .py files. Empty means the workspace root."
+        },
+        "revFtc.translatorCommand": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Advanced: override the command used to invoke the translator (e.g. to point at a test fixture) instead of '<pythonPath> -m pyftc'. Arguments like 'translate-project --root ...' are appended."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "typecheck": "tsc --noEmit -p .",
+    "pretest": "tsc -p tsconfig.test.json",
+    "test": "node --test out-test/test/*.test.js",
+    "prepackage": "node scripts/copy-python.mjs",
+    "package": "npm run prepackage && npm run build && npx @vscode/vsce package --no-dependencies -o dist/rev-vscode.vsix"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^4.0.0",
+    "esbuild": "^0.28.2",
+    "typescript": "^5.6.0"
+  }
+}
