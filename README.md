@@ -6,6 +6,8 @@ someone had typed Java into the OnBot Java editor. The hub never finds out.
 
 It exists because the robot only speaks Java and its owner does not want to.
 
+**How to add motors, servos, sensors, gamepad controls and autonomous code: [docs/MANUAL.md](docs/MANUAL.md).**
+
 ## What works today
 
 Verified against a real Control Hub (RC app 11.2, SDK 11.2.0) over USB:
@@ -17,9 +19,11 @@ Verified against a real Control Hub (RC app 11.2, SDK 11.2.0) over USB:
 - **Spawn starter pack** (sidebar button): reads the hub's active hardware
   configuration and writes a Python OpMode with a field per device, the
   `hardwareMap` lookups, an init section, and a loop that runs until STOP.
-  The comments list every device (hub, port, encoder ticks, RPM, whether its
-  hub is currently connected) and everything each device type can do, with the
-  SDK's own javadoc.
+  Every motor, CR servo and servo gets a gamepad control (left/right-named
+  motors become arcade drive), listed in a controls table at the top. The
+  comments list every device (hub, port, encoder ticks, RPM, whether its hub is
+  currently connected) and everything each device type can do, with the SDK's
+  own javadoc.
 - **Autocomplete**: `from ftc.hardware import DcMotor` etc. resolves to stub
   modules generated from the real SDK sources, so Pylance knows parameter names,
   types and docs. `self.hardwareMap.get(DcMotor, "left")` is typed as `DcMotor`.
@@ -120,6 +124,7 @@ robot is in a supported state. Whether the people at the help desk accept
 | `python/pyftc/data/sdk-11.2.0.json` | generated type database |
 | `sdkgen/` | generator: SDK sources jars from Maven Central → the two above |
 | `extension/` | VS Code extension (TypeScript) |
+| `docs/MANUAL.md` | how to add devices, controls, autonomous; extending the tool |
 | `docs/ARCHITECTURE.md` | design, contracts, verified hub protocol |
 
 ## Tests

@@ -1294,6 +1294,9 @@ class ClassTranslator:
                 return self.super_call(node, fn.attr)
             obj = self.expr(fn.value)
             if obj.cls is not None:
+                nested = self.db.nested(obj.cls.fqn, fn.attr)
+                if nested is not None:  # IMU.Parameters(...) creates the nested class
+                    return self.construct(node, nested, expected)
                 return self.method_call(node, obj, JType(obj.cls.fqn), fn.attr, static=True)
             return self.method_call(node, obj, obj.type, fn.attr, static=False)
         raise self.fail(node, "unsupported call")
@@ -1487,6 +1490,8 @@ class ClassTranslator:
         if tu.is_primitive or pu.is_primitive:
             if tu == pu:
                 return 3
+            if pt.name == "java.lang.Object" and not pt.dims:
+                return 1  # boxing: addData("pressed", touch.isPressed())
             if tu.name == "boolean" or pu.name == "boolean":
                 return -1
             if tu.is_numeric and pu.is_numeric:

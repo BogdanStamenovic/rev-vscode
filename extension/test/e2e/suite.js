@@ -29,6 +29,7 @@ async function run() {
     const src = fs.existsSync(starter) ? fs.readFileSync(starter, 'utf8') : '';
     check('starter pack file created', src.includes('class StarterPack(LinearOpMode)'), src.slice(0, 200));
     check('starter pack lists live hardware', src.includes('"petranje"') && src.includes('What a DcMotor can do'));
+    check('starter pack has gamepad controls', src.includes('# ── Gamepad controls') && src.includes('self.gamepad1.'));
 
     await vscode.commands.executeCommand('revFtc.deploy');
     let tree = await hubTree();

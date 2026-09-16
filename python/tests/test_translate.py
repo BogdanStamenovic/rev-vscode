@@ -310,3 +310,21 @@ def test_syntax_error_reported(translate):
     r = translate("class X(:\n")
     assert not r["ok"]
     assert "syntax error" in r["diagnostics"][0]["message"]
+
+
+def test_primitive_boxes_to_object_param(translate):
+    r = translate(body('self.telemetry.addData("pressed", self.gamepad1.a)\nself.telemetry.addData("n", 3)'))
+    assert r["ok"], r["diagnostics"]
+    assert 'telemetry.addData("pressed", gamepad1.a);' in java(r)
+
+
+def test_nested_class_constructor(translate):
+    src = body('p = IMU.Parameters(RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, '
+               'RevHubOrientationOnRobot.UsbFacingDirection.FORWARD))')
+    src = src.replace("import math", "import math\nfrom ftc.hardware import IMU, RevHubOrientationOnRobot")
+    r = translate(src)
+    if not r["ok"] and any("RevHubOrientationOnRobot" in m for m in errors(r)):
+        import pytest
+        pytest.skip("fixture DB has no RevHubOrientationOnRobot; covered by the sdk variant")
+    assert r["ok"], r["diagnostics"]
+    assert "IMU.Parameters p = new IMU.Parameters(new RevHubOrientationOnRobot(" in java(r)
