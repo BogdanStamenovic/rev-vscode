@@ -39,10 +39,10 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('revFtc.deploy', () => void runDeploy()),
-    vscode.commands.registerCommand('revFtc.spawnStarterPack', () => void runSpawnStarterPack()),
-    vscode.commands.registerCommand('revFtc.showGeneratedJava', () => void runShowGeneratedJava(javaProvider)),
-    vscode.commands.registerCommand('revFtc.refreshHubView', () => void hubTreeProvider.refresh(true))
+    vscode.commands.registerCommand('revFtc.deploy', () => runDeploy()),
+    vscode.commands.registerCommand('revFtc.spawnStarterPack', () => runSpawnStarterPack()),
+    vscode.commands.registerCommand('revFtc.showGeneratedJava', () => runShowGeneratedJava(javaProvider)),
+    vscode.commands.registerCommand('revFtc.refreshHubView', () => hubTreeProvider.refresh(true))
   );
 
   const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);

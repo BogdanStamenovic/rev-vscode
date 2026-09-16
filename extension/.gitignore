@@ -5,3 +5,4 @@ out-test/
 *.vsix
 # Mirrored from ../python by scripts/copy-python.mjs before packaging.
 /python/
+.vscode-test/

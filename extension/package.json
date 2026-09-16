@@ -8,7 +8,9 @@
   "engines": {
     "vscode": "^1.90.0"
   },
-  "categories": ["Other"],
+  "categories": [
+    "Other"
+  ],
   "main": "./dist/extension.js",
   "activationEvents": [
     "onView:revFtcHub",
@@ -20,10 +22,26 @@
   ],
   "contributes": {
     "commands": [
-      { "command": "revFtc.deploy", "title": "REV FTC: Deploy to Hub", "icon": "$(play)" },
-      { "command": "revFtc.spawnStarterPack", "title": "REV FTC: Spawn Starter Pack", "icon": "$(add)" },
-      { "command": "revFtc.showGeneratedJava", "title": "REV FTC: Show Generated Java", "icon": "$(file-code)" },
-      { "command": "revFtc.refreshHubView", "title": "REV FTC: Refresh Hub View", "icon": "$(refresh)" }
+      {
+        "command": "revFtc.deploy",
+        "title": "REV FTC: Deploy to Hub",
+        "icon": "$(play)"
+      },
+      {
+        "command": "revFtc.spawnStarterPack",
+        "title": "REV FTC: Spawn Starter Pack",
+        "icon": "$(add)"
+      },
+      {
+        "command": "revFtc.showGeneratedJava",
+        "title": "REV FTC: Show Generated Java",
+        "icon": "$(file-code)"
+      },
+      {
+        "command": "revFtc.refreshHubView",
+        "title": "REV FTC: Refresh Hub View",
+        "icon": "$(refresh)"
+      }
     ],
     "viewsContainers": {
       "activitybar": [
@@ -36,23 +54,50 @@
     },
     "views": {
       "revFtc": [
-        { "id": "revFtcHub", "name": "Hub" }
+        {
+          "id": "revFtcHub",
+          "name": "Hub"
+        }
       ]
     },
     "menus": {
       "view/title": [
-        { "command": "revFtc.spawnStarterPack", "when": "view == revFtcHub", "group": "navigation@1" },
-        { "command": "revFtc.refreshHubView", "when": "view == revFtcHub", "group": "navigation@2" }
+        {
+          "command": "revFtc.spawnStarterPack",
+          "when": "view == revFtcHub",
+          "group": "navigation@1"
+        },
+        {
+          "command": "revFtc.refreshHubView",
+          "when": "view == revFtcHub",
+          "group": "navigation@2"
+        }
       ],
       "editor/title": [
-        { "command": "revFtc.deploy", "when": "resourceLangId == python", "group": "navigation@1" },
-        { "command": "revFtc.showGeneratedJava", "when": "resourceLangId == python", "group": "navigation@2" }
+        {
+          "command": "revFtc.deploy",
+          "when": "resourceLangId == python",
+          "group": "navigation@1"
+        },
+        {
+          "command": "revFtc.showGeneratedJava",
+          "when": "resourceLangId == python",
+          "group": "navigation@2"
+        }
       ],
       "commandPalette": [
-        { "command": "revFtc.deploy" },
-        { "command": "revFtc.spawnStarterPack" },
-        { "command": "revFtc.showGeneratedJava" },
-        { "command": "revFtc.refreshHubView" }
+        {
+          "command": "revFtc.deploy"
+        },
+        {
+          "command": "revFtc.spawnStarterPack"
+        },
+        {
+          "command": "revFtc.showGeneratedJava"
+        },
+        {
+          "command": "revFtc.refreshHubView"
+        }
       ]
     },
     "configuration": {
@@ -80,7 +125,9 @@
         },
         "revFtc.translatorCommand": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "default": [],
           "description": "Advanced: override the command used to invoke the translator (e.g. to point at a test fixture) instead of '<pythonPath> -m pyftc'. Arguments like 'translate-project --root ...' are appended."
         }
@@ -94,7 +141,9 @@
     "pretest": "tsc -p tsconfig.test.json",
     "test": "node --test out-test/test/*.test.js",
     "prepackage": "node scripts/copy-python.mjs",
-    "package": "npm run prepackage && npm run build && npx @vscode/vsce package --no-dependencies -o dist/rev-vscode.vsix"
+    "package": "npm run prepackage && npm run build && npx @vscode/vsce package --no-dependencies -o dist/rev-vscode.vsix",
+    "smoke": "tsc -p tsconfig.test.json && NODE_PATH=test/vscode-shim node out-test/test/hub-smoke.js",
+    "e2e": "node test/e2e/run.mjs"
   },
   "dependencies": {
     "fast-xml-parser": "^4.5.0"
@@ -102,8 +151,14 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.90.0",
+    "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^4.0.0",
     "esbuild": "^0.28.2",
     "typescript": "^5.6.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BogdanStamenovic/rev-vscode"
   }
 }

@@ -53,7 +53,11 @@ export async function runDeploy(): Promise<void> {
         for (const f of result.files) {
           produced.set(canonicalHubPath(f.hubPath), f);
         }
-        const toDelete = existing.filter((p) => p.startsWith(OUR_FOLDER_PREFIX) && !produced.has(p));
+        // The tree lists directories too (".../pyftc/"); deleting that would take
+        // every generated file with it, so only stale .java files qualify.
+        const toDelete = existing.filter(
+          (p) => p.startsWith(OUR_FOLDER_PREFIX) && p.endsWith('.java') && !produced.has(p)
+        );
         if (toDelete.length > 0) {
           log(`deploy: deleting ${toDelete.length} stale file(s) from ${OUR_FOLDER_PREFIX}`);
           await deleteFiles(toDelete);
