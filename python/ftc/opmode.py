@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from ftc.telemetry import Telemetry
     from ftc.util import WeakReferenceSet, WebServer
 
+_AnnotationTargetT = TypeVar("_AnnotationTargetT")
 class OpModeManager:
     """OpModeManager instances are used to register OpModes for use."""
     __java__ = "com.qualcomm.robotcore.eventloop.opmode.OpModeManager"
@@ -51,16 +52,20 @@ class AnnotatedOpModeRegistrar:
         ...
 
 
-def Autonomous(*, name: str = '', group: str = '', preselectTeleOp: str = '') -> Callable[[type], type]:
+class Autonomous:
     """Provides an easy and non-centralized way of determining the OpMode list shown on an FTC Driver Station. Put an Autonomous annotation on your autonomous OpModes that you want to show up in the driver station display. If you want to temporarily disable an OpMode, then set then also add a Disabled annotation to it."""
-    def _decorator(cls: type) -> type:
-        return cls
-    return _decorator
+    __java__ = "com.qualcomm.robotcore.eventloop.opmode.Autonomous"
+    def __init__(self, *, name: str = '', group: str = '', preselectTeleOp: str = '') -> None:
+        ...
+    def __call__(self, target: type[_AnnotationTargetT]) -> type[_AnnotationTargetT]:
+        return target
 
 
-def Disabled(cls: type) -> type:
+class Disabled:
     """Provides a way to temporarily disable an OpMode annotated with Autonomous or TeleOp from showing up on the driver station OpMode list."""
-    return cls
+    __java__ = "com.qualcomm.robotcore.eventloop.opmode.Disabled"
+    def __new__(cls, target: type[_AnnotationTargetT]) -> type[_AnnotationTargetT]:
+        return target
 
 
 class EventLoopManagerClient:
@@ -544,20 +549,26 @@ class OpModeRegister:
         ...
 
 
-def OpModeRegistrar(cls: type) -> type:
+class OpModeRegistrar:
     """Provides an easy and non-centralized way of contributing to the OpMode list shown on an FTC Driver Station. While Autonomous and TeleOp annotations can be placed on your *own* classes to register them, to register classes found in libraries *other* than your own it is best to use a mechanism that does not require that you modify source code in that other library. OpModeRegistrar provides such a mechanism. Place an OpModeRegistrar annotation on a static method in your code that accepts a parameter of type OpModeManager or AnnotatedOpModeManager, and that method will be automatically called at the right time to register OpModes. You can use any of the register() methods that exist on the AnnotatedOpModeManager to register OpModes."""
-    return cls
+    __java__ = "com.qualcomm.robotcore.eventloop.opmode.OpModeRegistrar"
+    def __new__(cls, target: type[_AnnotationTargetT]) -> type[_AnnotationTargetT]:
+        return target
 
 
-def TeleOp(*, name: str = '', group: str = '') -> Callable[[type], type]:
+class TeleOp:
     """Provides an easy and non-centralized way of determining the OpMode list shown on an FTC Driver Station. Put an TeleOp annotation on your teleop OpModes that you want to show up in the driver station display. If you want to temporarily disable an OpMode from showing up, then set then also add a Disabled annotation to it."""
-    def _decorator(cls: type) -> type:
-        return cls
-    return _decorator
+    __java__ = "com.qualcomm.robotcore.eventloop.opmode.TeleOp"
+    def __init__(self, *, name: str = '', group: str = '') -> None:
+        ...
+    def __call__(self, target: type[_AnnotationTargetT]) -> type[_AnnotationTargetT]:
+        return target
 
 
-def Utility(*, name: str = '', description: str = '') -> Callable[[type], type]:
+class Utility:
     """Provides an easy and non-centralized way of determining the OpMode list shown on an FTC Driver Station. Put a Utility annotation on your utility OpModes that you want to show up in the driver station display."""
-    def _decorator(cls: type) -> type:
-        return cls
-    return _decorator
+    __java__ = "com.qualcomm.robotcore.eventloop.opmode.Utility"
+    def __init__(self, *, name: str = '', description: str = '') -> None:
+        ...
+    def __call__(self, target: type[_AnnotationTargetT]) -> type[_AnnotationTargetT]:
+        return target

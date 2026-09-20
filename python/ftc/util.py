@@ -149,17 +149,6 @@ class ClassUtil:
     TAG: str
 
 
-class PeerStatusCallback:
-    __java__ = "org.firstinspires.ftc.robotcore.internal.network.PeerStatusCallback"
-    def onPeerConnected(self) -> None:
-        """Notifies that a peer is newly connected (including if the peer just changed or the robot was restarted)."""
-        ...
-
-    def onPeerDisconnected(self) -> None:
-        """Notifies that the peer is newly disconnected."""
-        ...
-
-
 class GlobalWarningSource:
     """Instances of this interface can be registered with RobotLog as dynamic generators of robot warning messages."""
     __java__ = "com.qualcomm.robotcore.util.GlobalWarningSource"
@@ -181,6 +170,17 @@ class GlobalWarningSource:
 
     def clearGlobalWarning(self) -> None:
         """Clears any currently set warning (if permitted) for this source, and zeros the sources suppression count."""
+        ...
+
+
+class PeerStatusCallback:
+    __java__ = "org.firstinspires.ftc.robotcore.internal.network.PeerStatusCallback"
+    def onPeerConnected(self) -> None:
+        """Notifies that a peer is newly connected (including if the peer just changed or the robot was restarted)."""
+        ...
+
+    def onPeerDisconnected(self) -> None:
+        """Notifies that the peer is newly disconnected."""
         ...
 
 

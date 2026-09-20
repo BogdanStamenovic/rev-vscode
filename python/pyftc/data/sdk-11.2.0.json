@@ -178,7 +178,7 @@
               "varargs": false
             }
           ],
-          "returns": "java.lang.UsbDeviceType",
+          "returns": "com.qualcomm.robotcore.hardware.DeviceManager.UsbDeviceType",
           "static": false,
           "typeParams": []
         },
@@ -1008,7 +1008,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         }
@@ -1059,7 +1059,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         }
@@ -1110,7 +1110,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         }
@@ -1845,7 +1845,7 @@
           "params": [
             {
               "name": "parameters",
-              "type": "java.lang.Parameters",
+              "type": "com.qualcomm.hardware.ams.AMSColorSensor.Parameters",
               "varargs": false
             }
           ],
@@ -1946,7 +1946,7 @@
             },
             {
               "name": "desired",
-              "type": "java.lang.Enable",
+              "type": "com.qualcomm.hardware.ams.AMSColorSensor.Enable",
               "varargs": false
             }
           ],
@@ -1966,12 +1966,12 @@
             },
             {
               "name": "mask",
-              "type": "java.lang.Enable",
+              "type": "com.qualcomm.hardware.ams.AMSColorSensor.Enable",
               "varargs": false
             },
             {
               "name": "desired",
-              "type": "java.lang.Enable",
+              "type": "com.qualcomm.hardware.ams.AMSColorSensor.Enable",
               "varargs": false
             }
           ],
@@ -2058,7 +2058,7 @@
           "params": [
             {
               "name": "gain",
-              "type": "java.lang.Gain",
+              "type": "com.qualcomm.hardware.ams.AMSColorSensor.Gain",
               "varargs": false
             }
           ],
@@ -2073,7 +2073,7 @@
           "params": [
             {
               "name": "ledDrive",
-              "type": "java.lang.LEDDrive",
+              "type": "com.qualcomm.hardware.ams.AMSColorSensor.LEDDrive",
               "varargs": false
             }
           ],
@@ -2265,7 +2265,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -2285,7 +2285,7 @@
           "params": [
             {
               "name": "reg",
-              "type": "java.lang.Register",
+              "type": "com.qualcomm.hardware.ams.AMSColorSensor.Register",
               "varargs": false
             }
           ],
@@ -2300,7 +2300,7 @@
           "params": [
             {
               "name": "reg",
-              "type": "java.lang.Register",
+              "type": "com.qualcomm.hardware.ams.AMSColorSensor.Register",
               "varargs": false
             },
             {
@@ -2320,7 +2320,7 @@
           "params": [
             {
               "name": "reg",
-              "type": "java.lang.Register",
+              "type": "com.qualcomm.hardware.ams.AMSColorSensor.Register",
               "varargs": false
             }
           ],
@@ -2335,7 +2335,7 @@
           "params": [
             {
               "name": "reg",
-              "type": "java.lang.Register",
+              "type": "com.qualcomm.hardware.ams.AMSColorSensor.Register",
               "varargs": false
             },
             {
@@ -2355,7 +2355,7 @@
           "params": [
             {
               "name": "reg",
-              "type": "java.lang.Register",
+              "type": "com.qualcomm.hardware.ams.AMSColorSensor.Register",
               "varargs": false
             },
             {
@@ -2375,7 +2375,7 @@
           "params": [
             {
               "name": "reg",
-              "type": "java.lang.Register",
+              "type": "com.qualcomm.hardware.ams.AMSColorSensor.Register",
               "varargs": false
             },
             {
@@ -2823,7 +2823,7 @@
           "doc": "Returns the manufacturer of this device. Although AndyMark distributes the hardware, the internal BNO055 chip is manufactured by Bosch and this device is represented internally as a Lynx component.",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         }
@@ -3147,7 +3147,7 @@
           "params": [
             {
               "name": "parameters",
-              "type": "java.lang.Parameters",
+              "type": "com.qualcomm.robotcore.hardware.IMU.Parameters",
               "varargs": false
             }
           ],
@@ -3245,7 +3245,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -5280,7 +5280,7 @@
           "final": false,
           "name": "accelerationAlgorithm",
           "static": false,
-          "type": "java.lang.AccelerationIntegrator"
+          "type": "com.qualcomm.hardware.bosch.BNO055IMU.AccelerationIntegrator"
         },
         {
           "doc": "",
@@ -5382,12 +5382,12 @@
           "params": [
             {
               "name": "regFirst",
-              "type": "java.lang.Register",
+              "type": "com.qualcomm.hardware.bosch.BNO055IMU.Register",
               "varargs": false
             },
             {
               "name": "regMax",
-              "type": "java.lang.Register",
+              "type": "com.qualcomm.hardware.bosch.BNO055IMU.Register",
               "varargs": false
             }
           ],
@@ -5409,7 +5409,7 @@
           "doc": "",
           "name": "disabledParameters",
           "params": [],
-          "returns": "java.lang.Parameters",
+          "returns": "com.qualcomm.hardware.bosch.BNO055IMU.Parameters",
           "static": true,
           "typeParams": []
         },
@@ -5498,7 +5498,7 @@
           "params": [
             {
               "name": "parameters",
-              "type": "java.lang.Parameters",
+              "type": "com.qualcomm.hardware.bosch.BNO055IMU.Parameters",
               "varargs": false
             }
           ],
@@ -5513,7 +5513,7 @@
           "params": [
             {
               "name": "expectedStatus",
-              "type": "java.lang.SystemStatus",
+              "type": "com.qualcomm.hardware.bosch.BNO055IMU.SystemStatus",
               "varargs": false
             }
           ],
@@ -5528,7 +5528,7 @@
           "params": [
             {
               "name": "mode",
-              "type": "java.lang.SensorMode",
+              "type": "com.qualcomm.hardware.bosch.BNO055IMU.SensorMode",
               "varargs": false
             }
           ],
@@ -5541,7 +5541,7 @@
           "doc": "",
           "name": "getSystemStatus",
           "params": [],
-          "returns": "java.lang.SystemStatus",
+          "returns": "com.qualcomm.hardware.bosch.BNO055IMU.SystemStatus",
           "static": false,
           "typeParams": []
         },
@@ -5550,7 +5550,7 @@
           "doc": "",
           "name": "getSystemError",
           "params": [],
-          "returns": "java.lang.SystemError",
+          "returns": "com.qualcomm.hardware.bosch.BNO055IMU.SystemError",
           "static": false,
           "typeParams": []
         },
@@ -5559,7 +5559,7 @@
           "doc": "",
           "name": "getCalibrationStatus",
           "params": [],
-          "returns": "java.lang.CalibrationStatus",
+          "returns": "com.qualcomm.hardware.bosch.BNO055IMU.CalibrationStatus",
           "static": false,
           "typeParams": []
         },
@@ -5586,7 +5586,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -5689,7 +5689,7 @@
           "doc": "",
           "name": "readCalibrationData",
           "params": [],
-          "returns": "java.lang.CalibrationData",
+          "returns": "com.qualcomm.hardware.bosch.BNO055IMU.CalibrationData",
           "static": false,
           "typeParams": []
         },
@@ -5700,7 +5700,7 @@
           "params": [
             {
               "name": "data",
-              "type": "java.lang.CalibrationData",
+              "type": "com.qualcomm.hardware.bosch.BNO055IMU.CalibrationData",
               "varargs": false
             }
           ],
@@ -5913,7 +5913,7 @@
           "params": [
             {
               "name": "reg",
-              "type": "java.lang.Register",
+              "type": "com.qualcomm.hardware.bosch.BNO055IMU.Register",
               "varargs": false
             }
           ],
@@ -5928,7 +5928,7 @@
           "params": [
             {
               "name": "reg",
-              "type": "java.lang.Register",
+              "type": "com.qualcomm.hardware.bosch.BNO055IMU.Register",
               "varargs": false
             },
             {
@@ -5948,7 +5948,7 @@
           "params": [
             {
               "name": "reg",
-              "type": "java.lang.Register",
+              "type": "com.qualcomm.hardware.bosch.BNO055IMU.Register",
               "varargs": false
             }
           ],
@@ -5963,7 +5963,7 @@
           "params": [
             {
               "name": "reg",
-              "type": "java.lang.Register",
+              "type": "com.qualcomm.hardware.bosch.BNO055IMU.Register",
               "varargs": false
             },
             {
@@ -5983,7 +5983,7 @@
           "params": [
             {
               "name": "reg",
-              "type": "java.lang.Register",
+              "type": "com.qualcomm.hardware.bosch.BNO055IMU.Register",
               "varargs": false
             },
             {
@@ -6008,7 +6008,7 @@
           "params": [
             {
               "name": "reg",
-              "type": "java.lang.Register",
+              "type": "com.qualcomm.hardware.bosch.BNO055IMU.Register",
               "varargs": false
             },
             {
@@ -6028,7 +6028,7 @@
           "params": [
             {
               "name": "reg",
-              "type": "java.lang.Register",
+              "type": "com.qualcomm.hardware.bosch.BNO055IMU.Register",
               "varargs": false
             },
             {
@@ -6053,7 +6053,7 @@
           "params": [
             {
               "name": "reg",
-              "type": "java.lang.Register",
+              "type": "com.qualcomm.hardware.bosch.BNO055IMU.Register",
               "varargs": false
             },
             {
@@ -6631,7 +6631,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         }
@@ -8251,7 +8251,7 @@
           "params": [
             {
               "name": "parameters",
-              "type": "java.lang.Parameters",
+              "type": "com.qualcomm.hardware.broadcom.BroadcomColorSensor.Parameters",
               "varargs": false
             }
           ],
@@ -8362,7 +8362,7 @@
           "params": [
             {
               "name": "gain",
-              "type": "java.lang.Gain",
+              "type": "com.qualcomm.hardware.broadcom.BroadcomColorSensor.Gain",
               "varargs": false
             }
           ],
@@ -8377,7 +8377,7 @@
           "params": [
             {
               "name": "ledDrive",
-              "type": "java.lang.LEDCurrent",
+              "type": "com.qualcomm.hardware.broadcom.BroadcomColorSensor.LEDCurrent",
               "varargs": false
             }
           ],
@@ -8401,12 +8401,12 @@
           "params": [
             {
               "name": "pulseMod",
-              "type": "java.lang.LEDPulseModulation",
+              "type": "com.qualcomm.hardware.broadcom.BroadcomColorSensor.LEDPulseModulation",
               "varargs": false
             },
             {
               "name": "curr",
-              "type": "java.lang.LEDCurrent",
+              "type": "com.qualcomm.hardware.broadcom.BroadcomColorSensor.LEDCurrent",
               "varargs": false
             }
           ],
@@ -8421,12 +8421,12 @@
           "params": [
             {
               "name": "res",
-              "type": "java.lang.PSResolution",
+              "type": "com.qualcomm.hardware.broadcom.BroadcomColorSensor.PSResolution",
               "varargs": false
             },
             {
               "name": "rate",
-              "type": "java.lang.PSMeasurementRate",
+              "type": "com.qualcomm.hardware.broadcom.BroadcomColorSensor.PSMeasurementRate",
               "varargs": false
             }
           ],
@@ -8441,12 +8441,12 @@
           "params": [
             {
               "name": "res",
-              "type": "java.lang.LSResolution",
+              "type": "com.qualcomm.hardware.broadcom.BroadcomColorSensor.LSResolution",
               "varargs": false
             },
             {
               "name": "rate",
-              "type": "java.lang.LSMeasurementRate",
+              "type": "com.qualcomm.hardware.broadcom.BroadcomColorSensor.LSMeasurementRate",
               "varargs": false
             }
           ],
@@ -8594,7 +8594,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -8614,7 +8614,7 @@
           "params": [
             {
               "name": "reg",
-              "type": "java.lang.Register",
+              "type": "com.qualcomm.hardware.broadcom.BroadcomColorSensor.Register",
               "varargs": false
             }
           ],
@@ -8629,7 +8629,7 @@
           "params": [
             {
               "name": "reg",
-              "type": "java.lang.Register",
+              "type": "com.qualcomm.hardware.broadcom.BroadcomColorSensor.Register",
               "varargs": false
             },
             {
@@ -8649,7 +8649,7 @@
           "params": [
             {
               "name": "reg",
-              "type": "java.lang.Register",
+              "type": "com.qualcomm.hardware.broadcom.BroadcomColorSensor.Register",
               "varargs": false
             }
           ],
@@ -8664,7 +8664,7 @@
           "params": [
             {
               "name": "reg",
-              "type": "java.lang.Register",
+              "type": "com.qualcomm.hardware.broadcom.BroadcomColorSensor.Register",
               "varargs": false
             },
             {
@@ -8684,7 +8684,7 @@
           "params": [
             {
               "name": "reg",
-              "type": "java.lang.Register",
+              "type": "com.qualcomm.hardware.broadcom.BroadcomColorSensor.Register",
               "varargs": false
             },
             {
@@ -8704,7 +8704,7 @@
           "params": [
             {
               "name": "reg",
-              "type": "java.lang.Register",
+              "type": "com.qualcomm.hardware.broadcom.BroadcomColorSensor.Register",
               "varargs": false
             },
             {
@@ -8773,7 +8773,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -10388,14 +10388,14 @@
           "final": false,
           "name": "cachingMode",
           "static": false,
-          "type": "java.lang.CachingMode"
+          "type": "com.qualcomm.hardware.digitalchickenlabs.OctoQuad.CachingMode"
         },
         {
           "doc": "",
           "final": false,
           "name": "cachedData",
           "static": false,
-          "type": "java.lang.EncoderDataBlock"
+          "type": "com.qualcomm.hardware.digitalchickenlabs.OctoQuad.EncoderDataBlock"
         },
         {
           "doc": "",
@@ -10428,7 +10428,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -10455,7 +10455,7 @@
           "doc": "",
           "name": "getFirmwareVersion",
           "params": [],
-          "returns": "java.lang.FirmwareVersion",
+          "returns": "com.qualcomm.hardware.digitalchickenlabs.OctoQuad.FirmwareVersion",
           "static": false,
           "typeParams": []
         },
@@ -10549,7 +10549,7 @@
             },
             {
               "name": "direction",
-              "type": "java.lang.EncoderDirection",
+              "type": "com.qualcomm.hardware.digitalchickenlabs.OctoQuad.EncoderDirection",
               "varargs": false
             }
           ],
@@ -10568,7 +10568,7 @@
               "varargs": false
             }
           ],
-          "returns": "java.lang.EncoderDirection",
+          "returns": "com.qualcomm.hardware.digitalchickenlabs.OctoQuad.EncoderDirection",
           "static": false,
           "typeParams": []
         },
@@ -10609,7 +10609,7 @@
           "params": [
             {
               "name": "out",
-              "type": "java.lang.EncoderDataBlock",
+              "type": "com.qualcomm.hardware.digitalchickenlabs.OctoQuad.EncoderDataBlock",
               "varargs": false
             }
           ],
@@ -10622,7 +10622,7 @@
           "doc": "",
           "name": "readAllEncoderData",
           "params": [],
-          "returns": "java.lang.EncoderDataBlock",
+          "returns": "com.qualcomm.hardware.digitalchickenlabs.OctoQuad.EncoderDataBlock",
           "static": false,
           "typeParams": []
         },
@@ -10713,7 +10713,7 @@
             },
             {
               "name": "params",
-              "type": "java.lang.ChannelPulseWidthParams",
+              "type": "com.qualcomm.hardware.digitalchickenlabs.OctoQuad.ChannelPulseWidthParams",
               "varargs": false
             }
           ],
@@ -10732,7 +10732,7 @@
               "varargs": false
             }
           ],
-          "returns": "java.lang.ChannelPulseWidthParams",
+          "returns": "com.qualcomm.hardware.digitalchickenlabs.OctoQuad.ChannelPulseWidthParams",
           "static": false,
           "typeParams": []
         },
@@ -10911,7 +10911,7 @@
           "doc": "",
           "name": "getLocalizerStatus",
           "params": [],
-          "returns": "java.lang.LocalizerStatus",
+          "returns": "com.qualcomm.hardware.digitalchickenlabs.OctoQuad.LocalizerStatus",
           "static": false,
           "typeParams": []
         },
@@ -10920,7 +10920,7 @@
           "doc": "",
           "name": "getLocalizerHeadingAxisChoice",
           "params": [],
-          "returns": "java.lang.LocalizerYawAxis",
+          "returns": "com.qualcomm.hardware.digitalchickenlabs.OctoQuad.LocalizerYawAxis",
           "static": false,
           "typeParams": []
         },
@@ -10940,7 +10940,7 @@
           "params": [
             {
               "name": "out",
-              "type": "java.lang.LocalizerDataBlock",
+              "type": "com.qualcomm.hardware.digitalchickenlabs.OctoQuad.LocalizerDataBlock",
               "varargs": false
             }
           ],
@@ -10953,7 +10953,7 @@
           "doc": "",
           "name": "readLocalizerData",
           "params": [],
-          "returns": "java.lang.LocalizerDataBlock",
+          "returns": "com.qualcomm.hardware.digitalchickenlabs.OctoQuad.LocalizerDataBlock",
           "static": false,
           "typeParams": []
         },
@@ -10964,12 +10964,12 @@
           "params": [
             {
               "name": "localizerOut",
-              "type": "java.lang.LocalizerDataBlock",
+              "type": "com.qualcomm.hardware.digitalchickenlabs.OctoQuad.LocalizerDataBlock",
               "varargs": false
             },
             {
               "name": "encoderOut",
-              "type": "java.lang.EncoderDataBlock",
+              "type": "com.qualcomm.hardware.digitalchickenlabs.OctoQuad.EncoderDataBlock",
               "varargs": false
             }
           ],
@@ -11083,7 +11083,7 @@
           "params": [
             {
               "name": "config",
-              "type": "java.lang.ChannelBankConfig",
+              "type": "com.qualcomm.hardware.digitalchickenlabs.OctoQuad.ChannelBankConfig",
               "varargs": false
             }
           ],
@@ -11096,7 +11096,7 @@
           "doc": "",
           "name": "getChannelBankConfig",
           "params": [],
-          "returns": "java.lang.ChannelBankConfig",
+          "returns": "com.qualcomm.hardware.digitalchickenlabs.OctoQuad.ChannelBankConfig",
           "static": false,
           "typeParams": []
         },
@@ -11107,7 +11107,7 @@
           "params": [
             {
               "name": "mode",
-              "type": "java.lang.I2cRecoveryMode",
+              "type": "com.qualcomm.hardware.digitalchickenlabs.OctoQuad.I2cRecoveryMode",
               "varargs": false
             }
           ],
@@ -11120,7 +11120,7 @@
           "doc": "",
           "name": "getI2cRecoveryMode",
           "params": [],
-          "returns": "java.lang.I2cRecoveryMode",
+          "returns": "com.qualcomm.hardware.digitalchickenlabs.OctoQuad.I2cRecoveryMode",
           "static": false,
           "typeParams": []
         },
@@ -11140,7 +11140,7 @@
           "params": [
             {
               "name": "mode",
-              "type": "java.lang.CachingMode",
+              "type": "com.qualcomm.hardware.digitalchickenlabs.OctoQuad.CachingMode",
               "varargs": false
             }
           ],
@@ -11321,7 +11321,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -12147,7 +12147,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -14611,7 +14611,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -14958,7 +14958,7 @@
           "final": true,
           "name": "registeredCallbacks",
           "static": false,
-          "type": "com.qualcomm.robotcore.util.WeakReferenceSet<java.lang.Callback>"
+          "type": "com.qualcomm.robotcore.util.WeakReferenceSet<com.qualcomm.robotcore.hardware.usb.RobotArmingStateNotifier.Callback>"
         },
         {
           "doc": "",
@@ -15000,7 +15000,7 @@
             },
             {
               "name": "state",
-              "type": "com.qualcomm.robotcore.hardware.usb.RobotUsbModule.ARMINGSTATE",
+              "type": "com.qualcomm.robotcore.hardware.usb.RobotArmingStateNotifier.ARMINGSTATE",
               "varargs": false
             }
           ],
@@ -15040,7 +15040,7 @@
           "doc": "",
           "name": "getArmingState",
           "params": [],
-          "returns": "java.lang.ARMINGSTATE",
+          "returns": "com.qualcomm.robotcore.hardware.usb.RobotArmingStateNotifier.ARMINGSTATE",
           "static": false,
           "typeParams": []
         },
@@ -15051,7 +15051,7 @@
           "params": [
             {
               "name": "callback",
-              "type": "java.lang.Callback",
+              "type": "com.qualcomm.robotcore.hardware.usb.RobotArmingStateNotifier.Callback",
               "varargs": false
             },
             {
@@ -15071,7 +15071,7 @@
           "params": [
             {
               "name": "callback",
-              "type": "java.lang.Callback",
+              "type": "com.qualcomm.robotcore.hardware.usb.RobotArmingStateNotifier.Callback",
               "varargs": false
             }
           ],
@@ -15084,7 +15084,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -15185,7 +15185,7 @@
           "params": [
             {
               "name": "status",
-              "type": "java.lang.HealthStatus",
+              "type": "com.qualcomm.robotcore.hardware.HardwareDeviceHealth.HealthStatus",
               "varargs": false
             }
           ],
@@ -15198,7 +15198,7 @@
           "doc": "",
           "name": "getHealthStatusOverride",
           "params": [],
-          "returns": "java.util.concurrent.Callable<java.lang.HealthStatus>",
+          "returns": "java.util.concurrent.Callable<com.qualcomm.robotcore.hardware.HardwareDeviceHealth.HealthStatus>",
           "static": false,
           "typeParams": []
         },
@@ -15207,7 +15207,7 @@
           "doc": "",
           "name": "getHealthStatus",
           "params": [],
-          "returns": "java.lang.HealthStatus",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDeviceHealth.HealthStatus",
           "static": false,
           "typeParams": []
         },
@@ -15331,7 +15331,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -16857,7 +16857,7 @@
             },
             {
               "name": "mode",
-              "type": "java.lang.Mode",
+              "type": "com.qualcomm.robotcore.hardware.DigitalChannelController.Mode",
               "varargs": false
             }
           ],
@@ -17047,7 +17047,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         }
@@ -18315,14 +18315,14 @@
           "final": false,
           "name": "currentSteps",
           "static": false,
-          "type": "java.util.ArrayList<java.lang.Step>"
+          "type": "java.util.ArrayList<com.qualcomm.robotcore.hardware.Blinker.Step>"
         },
         {
           "doc": "",
           "final": false,
           "name": "previousSteps",
           "static": false,
-          "type": "java.util.Deque<java.util.ArrayList<java.lang.Step>>"
+          "type": "java.util.Deque<java.util.ArrayList<com.qualcomm.robotcore.hardware.Blinker.Step>>"
         },
         {
           "doc": "",
@@ -18705,7 +18705,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -18810,7 +18810,7 @@
           "doc": "",
           "name": "getArmingState",
           "params": [],
-          "returns": "java.lang.ARMINGSTATE",
+          "returns": "com.qualcomm.robotcore.hardware.usb.RobotArmingStateNotifier.ARMINGSTATE",
           "static": false,
           "typeParams": []
         },
@@ -18821,7 +18821,7 @@
           "params": [
             {
               "name": "callback",
-              "type": "java.lang.Callback",
+              "type": "com.qualcomm.robotcore.hardware.usb.RobotArmingStateNotifier.Callback",
               "varargs": false
             },
             {
@@ -18841,7 +18841,7 @@
           "params": [
             {
               "name": "callback",
-              "type": "java.lang.Callback",
+              "type": "com.qualcomm.robotcore.hardware.usb.RobotArmingStateNotifier.Callback",
               "varargs": false
             }
           ],
@@ -18861,7 +18861,7 @@
             },
             {
               "name": "state",
-              "type": "java.lang.ARMINGSTATE",
+              "type": "com.qualcomm.robotcore.hardware.usb.RobotArmingStateNotifier.ARMINGSTATE",
               "varargs": false
             }
           ],
@@ -18951,7 +18951,7 @@
           "params": [
             {
               "name": "steps",
-              "type": "java.util.Collection<java.lang.Step>",
+              "type": "java.util.Collection<com.qualcomm.robotcore.hardware.Blinker.Step>",
               "varargs": false
             }
           ],
@@ -18964,7 +18964,7 @@
           "doc": "",
           "name": "getPattern",
           "params": [],
-          "returns": "java.util.Collection<java.lang.Step>",
+          "returns": "java.util.Collection<com.qualcomm.robotcore.hardware.Blinker.Step>",
           "static": false,
           "typeParams": []
         },
@@ -18984,7 +18984,7 @@
           "params": [
             {
               "name": "steps",
-              "type": "java.util.Collection<java.lang.Step>",
+              "type": "java.util.Collection<com.qualcomm.robotcore.hardware.Blinker.Step>",
               "varargs": false
             }
           ],
@@ -18999,7 +18999,7 @@
           "params": [
             {
               "name": "steps",
-              "type": "java.util.Collection<java.lang.Step>",
+              "type": "java.util.Collection<com.qualcomm.robotcore.hardware.Blinker.Step>",
               "varargs": false
             }
           ],
@@ -19032,7 +19032,7 @@
           "params": [
             {
               "name": "steps",
-              "type": "java.util.Collection<java.lang.Step>",
+              "type": "java.util.Collection<com.qualcomm.robotcore.hardware.Blinker.Step>",
               "varargs": false
             }
           ],
@@ -19681,7 +19681,7 @@
               "varargs": false
             }
           ],
-          "returns": "java.util.List<java.lang.Step>",
+          "returns": "java.util.List<com.qualcomm.robotcore.hardware.Blinker.Step>",
           "static": false,
           "typeParams": []
         },
@@ -19696,7 +19696,7 @@
               "varargs": false
             }
           ],
-          "returns": "java.util.List<java.lang.Step>",
+          "returns": "java.util.List<com.qualcomm.robotcore.hardware.Blinker.Step>",
           "static": false,
           "typeParams": []
         }
@@ -19728,7 +19728,7 @@
               "varargs": false
             }
           ],
-          "returns": "java.util.List<java.lang.Step>",
+          "returns": "java.util.List<com.qualcomm.robotcore.hardware.Blinker.Step>",
           "static": false,
           "typeParams": []
         },
@@ -19743,7 +19743,7 @@
               "varargs": false
             }
           ],
-          "returns": "java.util.List<java.lang.Step>",
+          "returns": "java.util.List<com.qualcomm.robotcore.hardware.Blinker.Step>",
           "static": false,
           "typeParams": []
         }
@@ -19927,7 +19927,7 @@
               "varargs": false
             }
           ],
-          "returns": "java.util.List<java.lang.Step>",
+          "returns": "java.util.List<com.qualcomm.robotcore.hardware.Blinker.Step>",
           "static": false,
           "typeParams": []
         }
@@ -21261,7 +21261,7 @@
           "doc": "",
           "name": "getPwmStatus",
           "params": [],
-          "returns": "java.lang.PwmStatus",
+          "returns": "com.qualcomm.robotcore.hardware.ServoController.PwmStatus",
           "static": false,
           "typeParams": []
         },
@@ -22299,7 +22299,7 @@
               "varargs": false
             }
           ],
-          "returns": "java.lang.SystemOperationHandle",
+          "returns": "com.qualcomm.hardware.lynx.LynxUsbDevice.SystemOperationHandle",
           "static": false,
           "typeParams": []
         },
@@ -22459,7 +22459,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -22477,7 +22477,7 @@
           "doc": "",
           "name": "getShutdownReason",
           "params": [],
-          "returns": "java.lang.ShutdownReason",
+          "returns": "com.qualcomm.robotcore.eventloop.SyncdDevice.ShutdownReason",
           "static": false,
           "typeParams": []
         },
@@ -22519,7 +22519,7 @@
           "doc": "",
           "name": "getArmingState",
           "params": [],
-          "returns": "java.lang.ARMINGSTATE",
+          "returns": "com.qualcomm.robotcore.hardware.usb.RobotArmingStateNotifier.ARMINGSTATE",
           "static": false,
           "typeParams": []
         },
@@ -22530,7 +22530,7 @@
           "params": [
             {
               "name": "callback",
-              "type": "java.lang.Callback",
+              "type": "com.qualcomm.robotcore.hardware.usb.RobotArmingStateNotifier.Callback",
               "varargs": false
             },
             {
@@ -22550,7 +22550,7 @@
           "params": [
             {
               "name": "callback",
-              "type": "java.lang.Callback",
+              "type": "com.qualcomm.robotcore.hardware.usb.RobotArmingStateNotifier.Callback",
               "varargs": false
             }
           ],
@@ -25103,7 +25103,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -25390,7 +25390,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -25512,7 +25512,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -25905,7 +25905,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -26073,7 +26073,7 @@
           "params": [
             {
               "name": "mode",
-              "type": "java.lang.CompassMode",
+              "type": "com.qualcomm.robotcore.hardware.CompassSensor.CompassMode",
               "varargs": false
             }
           ],
@@ -26291,7 +26291,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -26889,7 +26889,7 @@
           "final": false,
           "name": "mode",
           "static": false,
-          "type": "java.lang.Mode"
+          "type": "com.qualcomm.robotcore.hardware.IrSeekerSensor.Mode"
         },
         {
           "doc": "",
@@ -26924,7 +26924,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -27036,7 +27036,7 @@
           "params": [
             {
               "name": "mode",
-              "type": "java.lang.Mode",
+              "type": "com.qualcomm.robotcore.hardware.IrSeekerSensor.Mode",
               "varargs": false
             }
           ],
@@ -27049,7 +27049,7 @@
           "doc": "",
           "name": "getMode",
           "params": [],
-          "returns": "java.lang.Mode",
+          "returns": "com.qualcomm.robotcore.hardware.IrSeekerSensor.Mode",
           "static": false,
           "typeParams": []
         },
@@ -27085,7 +27085,7 @@
           "doc": "",
           "name": "getIndividualSensors",
           "params": [],
-          "returns": "java.lang.IrSeekerIndividualSensor[]",
+          "returns": "com.qualcomm.robotcore.hardware.IrSeekerSensor.IrSeekerIndividualSensor[]",
           "static": false,
           "typeParams": []
         },
@@ -27415,7 +27415,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -27656,7 +27656,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -27992,7 +27992,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         }
@@ -28250,7 +28250,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -28960,7 +28960,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -29141,7 +29141,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -29742,7 +29742,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -30771,7 +30771,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -34638,7 +34638,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -35147,7 +35147,7 @@
             },
             {
               "name": "direction",
-              "type": "java.lang.Direction",
+              "type": "com.qualcomm.robotcore.hardware.DcMotorSimple.Direction",
               "varargs": false
             }
           ]
@@ -35178,7 +35178,7 @@
           "final": false,
           "name": "direction",
           "static": false,
-          "type": "java.lang.Direction"
+          "type": "com.qualcomm.robotcore.hardware.DcMotorSimple.Direction"
         },
         {
           "doc": "",
@@ -35216,7 +35216,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -35290,7 +35290,7 @@
           "params": [
             {
               "name": "direction",
-              "type": "java.lang.Direction",
+              "type": "com.qualcomm.robotcore.hardware.DcMotorSimple.Direction",
               "varargs": false
             }
           ],
@@ -35303,7 +35303,7 @@
           "doc": "",
           "name": "getDirection",
           "params": [],
-          "returns": "java.lang.Direction",
+          "returns": "com.qualcomm.robotcore.hardware.DcMotorSimple.Direction",
           "static": false,
           "typeParams": []
         },
@@ -35375,7 +35375,7 @@
             },
             {
               "name": "direction",
-              "type": "com.qualcomm.robotcore.hardware.DcMotor.Direction",
+              "type": "com.qualcomm.robotcore.hardware.DcMotorSimple.Direction",
               "varargs": false
             },
             {
@@ -35410,7 +35410,7 @@
           "params": [
             {
               "name": "range",
-              "type": "java.lang.PwmRange",
+              "type": "com.qualcomm.robotcore.hardware.PwmControl.PwmRange",
               "varargs": false
             }
           ],
@@ -35423,7 +35423,7 @@
           "doc": "",
           "name": "getPwmRange",
           "params": [],
-          "returns": "java.lang.PwmRange",
+          "returns": "com.qualcomm.robotcore.hardware.PwmControl.PwmRange",
           "static": false,
           "typeParams": []
         },
@@ -36616,7 +36616,7 @@
           "params": [
             {
               "name": "mode",
-              "type": "java.lang.RunMode",
+              "type": "com.qualcomm.robotcore.hardware.DcMotor.RunMode",
               "varargs": false
             },
             {
@@ -36636,7 +36636,7 @@
           "params": [
             {
               "name": "mode",
-              "type": "java.lang.RunMode",
+              "type": "com.qualcomm.robotcore.hardware.DcMotor.RunMode",
               "varargs": false
             },
             {
@@ -36701,7 +36701,7 @@
           "params": [
             {
               "name": "mode",
-              "type": "java.lang.RunMode",
+              "type": "com.qualcomm.robotcore.hardware.DcMotor.RunMode",
               "varargs": false
             }
           ],
@@ -36716,7 +36716,7 @@
           "params": [
             {
               "name": "mode",
-              "type": "java.lang.RunMode",
+              "type": "com.qualcomm.robotcore.hardware.DcMotor.RunMode",
               "varargs": false
             }
           ],
@@ -36846,7 +36846,7 @@
             },
             {
               "name": "direction",
-              "type": "java.lang.Direction",
+              "type": "com.qualcomm.robotcore.hardware.DcMotorSimple.Direction",
               "varargs": false
             }
           ]
@@ -36866,7 +36866,7 @@
             },
             {
               "name": "direction",
-              "type": "java.lang.Direction",
+              "type": "com.qualcomm.robotcore.hardware.DcMotorSimple.Direction",
               "varargs": false
             },
             {
@@ -36902,7 +36902,7 @@
           "final": false,
           "name": "direction",
           "static": false,
-          "type": "java.lang.Direction"
+          "type": "com.qualcomm.robotcore.hardware.DcMotorSimple.Direction"
         },
         {
           "doc": "",
@@ -36919,7 +36919,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -37008,7 +37008,7 @@
           "params": [
             {
               "name": "direction",
-              "type": "java.lang.Direction",
+              "type": "com.qualcomm.robotcore.hardware.DcMotorSimple.Direction",
               "varargs": false
             }
           ],
@@ -37021,7 +37021,7 @@
           "doc": "Get the direction",
           "name": "getDirection",
           "params": [],
-          "returns": "java.lang.Direction",
+          "returns": "com.qualcomm.robotcore.hardware.DcMotorSimple.Direction",
           "static": false,
           "typeParams": []
         },
@@ -37089,7 +37089,7 @@
           "params": [
             {
               "name": "zeroPowerBehavior",
-              "type": "java.lang.ZeroPowerBehavior",
+              "type": "com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior",
               "varargs": false
             }
           ],
@@ -37102,7 +37102,7 @@
           "doc": "",
           "name": "getZeroPowerBehavior",
           "params": [],
-          "returns": "java.lang.ZeroPowerBehavior",
+          "returns": "com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior",
           "static": false,
           "typeParams": []
         },
@@ -37207,7 +37207,7 @@
           "doc": "",
           "name": "getOperationalDirection",
           "params": [],
-          "returns": "java.lang.Direction",
+          "returns": "com.qualcomm.robotcore.hardware.DcMotorSimple.Direction",
           "static": false,
           "typeParams": []
         },
@@ -37218,7 +37218,7 @@
           "params": [
             {
               "name": "mode",
-              "type": "java.lang.RunMode",
+              "type": "com.qualcomm.robotcore.hardware.DcMotor.RunMode",
               "varargs": false
             }
           ],
@@ -37233,7 +37233,7 @@
           "params": [
             {
               "name": "mode",
-              "type": "java.lang.RunMode",
+              "type": "com.qualcomm.robotcore.hardware.DcMotor.RunMode",
               "varargs": false
             }
           ],
@@ -37246,7 +37246,7 @@
           "doc": "Get the current mode",
           "name": "getMode",
           "params": [],
-          "returns": "java.lang.RunMode",
+          "returns": "com.qualcomm.robotcore.hardware.DcMotor.RunMode",
           "static": false,
           "typeParams": []
         }
@@ -37289,7 +37289,7 @@
             },
             {
               "name": "direction",
-              "type": "java.lang.Direction",
+              "type": "com.qualcomm.robotcore.hardware.DcMotorSimple.Direction",
               "varargs": false
             }
           ]
@@ -37309,7 +37309,7 @@
             },
             {
               "name": "direction",
-              "type": "java.lang.Direction",
+              "type": "com.qualcomm.robotcore.hardware.DcMotorSimple.Direction",
               "varargs": false
             },
             {
@@ -37452,7 +37452,7 @@
           "params": [
             {
               "name": "mode",
-              "type": "java.lang.RunMode",
+              "type": "com.qualcomm.robotcore.hardware.DcMotor.RunMode",
               "varargs": false
             },
             {
@@ -37472,7 +37472,7 @@
           "params": [
             {
               "name": "mode",
-              "type": "java.lang.RunMode",
+              "type": "com.qualcomm.robotcore.hardware.DcMotor.RunMode",
               "varargs": false
             },
             {
@@ -37537,7 +37537,7 @@
           "params": [
             {
               "name": "mode",
-              "type": "java.lang.RunMode",
+              "type": "com.qualcomm.robotcore.hardware.DcMotor.RunMode",
               "varargs": false
             }
           ],
@@ -37552,7 +37552,7 @@
           "params": [
             {
               "name": "mode",
-              "type": "java.lang.RunMode",
+              "type": "com.qualcomm.robotcore.hardware.DcMotor.RunMode",
               "varargs": false
             }
           ],
@@ -38666,7 +38666,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -39404,7 +39404,7 @@
           "doc": "",
           "name": "getRobocolMsgType",
           "params": [],
-          "returns": "java.lang.MsgType",
+          "returns": "com.qualcomm.robotcore.robocol.RobocolParsable.MsgType",
           "static": false,
           "typeParams": []
         },
@@ -41017,7 +41017,7 @@
             },
             {
               "name": "override",
-              "type": "java.util.concurrent.Callable<java.lang.HealthStatus>",
+              "type": "java.util.concurrent.Callable<com.qualcomm.robotcore.hardware.HardwareDeviceHealth.HealthStatus>",
               "varargs": false
             }
           ]
@@ -41041,14 +41041,14 @@
           "final": false,
           "name": "healthStatus",
           "static": false,
-          "type": "java.lang.HealthStatus"
+          "type": "com.qualcomm.robotcore.hardware.HardwareDeviceHealth.HealthStatus"
         },
         {
           "doc": "",
           "final": false,
           "name": "override",
           "static": false,
-          "type": "java.util.concurrent.Callable<java.lang.HealthStatus>"
+          "type": "java.util.concurrent.Callable<com.qualcomm.robotcore.hardware.HardwareDeviceHealth.HealthStatus>"
         }
       ],
       "kind": "class",
@@ -41069,7 +41069,7 @@
           "params": [
             {
               "name": "status",
-              "type": "java.lang.HealthStatus",
+              "type": "com.qualcomm.robotcore.hardware.HardwareDeviceHealth.HealthStatus",
               "varargs": false
             }
           ],
@@ -41082,7 +41082,7 @@
           "doc": "",
           "name": "getHealthStatus",
           "params": [],
-          "returns": "java.lang.HealthStatus",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDeviceHealth.HealthStatus",
           "static": false,
           "typeParams": []
         }
@@ -43211,7 +43211,7 @@
           "final": false,
           "name": "heartbeatAction",
           "static": false,
-          "type": "java.lang.HeartbeatAction"
+          "type": "com.qualcomm.robotcore.hardware.I2cDeviceSynch.HeartbeatAction"
         },
         {
           "doc": "",
@@ -43403,7 +43403,7 @@
           "params": [
             {
               "name": "action",
-              "type": "java.lang.HeartbeatAction",
+              "type": "com.qualcomm.robotcore.hardware.I2cDeviceSynch.HeartbeatAction",
               "varargs": false
             }
           ],
@@ -43416,7 +43416,7 @@
           "doc": "",
           "name": "getHeartbeatAction",
           "params": [],
-          "returns": "java.lang.HeartbeatAction",
+          "returns": "com.qualcomm.robotcore.hardware.I2cDeviceSynch.HeartbeatAction",
           "static": false,
           "typeParams": []
         },
@@ -43445,7 +43445,7 @@
           "params": [
             {
               "name": "window",
-              "type": "java.lang.ReadWindow",
+              "type": "com.qualcomm.robotcore.hardware.I2cDeviceSynch.ReadWindow",
               "varargs": false
             }
           ],
@@ -43458,7 +43458,7 @@
           "doc": "",
           "name": "getReadWindow",
           "params": [],
-          "returns": "java.lang.ReadWindow",
+          "returns": "com.qualcomm.robotcore.hardware.I2cDeviceSynch.ReadWindow",
           "static": false,
           "typeParams": []
         },
@@ -43469,12 +43469,12 @@
           "params": [
             {
               "name": "windowNeeded",
-              "type": "java.lang.ReadWindow",
+              "type": "com.qualcomm.robotcore.hardware.I2cDeviceSynch.ReadWindow",
               "varargs": false
             },
             {
               "name": "windowToSet",
-              "type": "java.lang.ReadWindow",
+              "type": "com.qualcomm.robotcore.hardware.I2cDeviceSynch.ReadWindow",
               "varargs": false
             }
           ],
@@ -43499,12 +43499,12 @@
             },
             {
               "name": "readWindowNeeded",
-              "type": "java.lang.ReadWindow",
+              "type": "com.qualcomm.robotcore.hardware.I2cDeviceSynch.ReadWindow",
               "varargs": false
             },
             {
               "name": "readWindowSet",
-              "type": "java.lang.ReadWindow",
+              "type": "com.qualcomm.robotcore.hardware.I2cDeviceSynch.ReadWindow",
               "varargs": false
             }
           ],
@@ -43517,7 +43517,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -43573,7 +43573,7 @@
           "params": [
             {
               "name": "status",
-              "type": "java.lang.HealthStatus",
+              "type": "com.qualcomm.robotcore.hardware.HardwareDeviceHealth.HealthStatus",
               "varargs": false
             }
           ],
@@ -43586,7 +43586,7 @@
           "doc": "",
           "name": "getHealthStatus",
           "params": [],
-          "returns": "java.lang.HealthStatus",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDeviceHealth.HealthStatus",
           "static": false,
           "typeParams": []
         },
@@ -45193,7 +45193,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -45329,14 +45329,14 @@
           "final": false,
           "name": "currentSteps",
           "static": false,
-          "type": "java.util.ArrayList<java.lang.Step>"
+          "type": "java.util.ArrayList<com.qualcomm.robotcore.hardware.Blinker.Step>"
         },
         {
           "doc": "",
           "final": false,
           "name": "previousSteps",
           "static": false,
-          "type": "java.util.Deque<java.util.ArrayList<java.lang.Step>>"
+          "type": "java.util.Deque<java.util.ArrayList<com.qualcomm.robotcore.hardware.Blinker.Step>>"
         },
         {
           "doc": "",
@@ -45395,7 +45395,7 @@
           "params": [
             {
               "name": "steps",
-              "type": "java.util.Collection<java.lang.Step>",
+              "type": "java.util.Collection<com.qualcomm.robotcore.hardware.Blinker.Step>",
               "varargs": false
             }
           ],
@@ -45428,7 +45428,7 @@
           "params": [
             {
               "name": "steps",
-              "type": "java.util.Collection<java.lang.Step>",
+              "type": "java.util.Collection<com.qualcomm.robotcore.hardware.Blinker.Step>",
               "varargs": false
             }
           ],
@@ -45443,7 +45443,7 @@
           "params": [
             {
               "name": "steps",
-              "type": "java.util.Collection<java.lang.Step>",
+              "type": "java.util.Collection<com.qualcomm.robotcore.hardware.Blinker.Step>",
               "varargs": false
             }
           ],
@@ -45456,7 +45456,7 @@
           "doc": "",
           "name": "getPattern",
           "params": [],
-          "returns": "java.util.Collection<java.lang.Step>",
+          "returns": "java.util.Collection<com.qualcomm.robotcore.hardware.Blinker.Step>",
           "static": false,
           "typeParams": []
         },
@@ -46789,7 +46789,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -48242,7 +48242,7 @@
             },
             {
               "name": "direction",
-              "type": "java.lang.Direction",
+              "type": "com.qualcomm.robotcore.hardware.Servo.Direction",
               "varargs": false
             }
           ]
@@ -48273,7 +48273,7 @@
           "final": false,
           "name": "direction",
           "static": false,
-          "type": "java.lang.Direction"
+          "type": "com.qualcomm.robotcore.hardware.Servo.Direction"
         },
         {
           "doc": "",
@@ -48297,7 +48297,7 @@
           "doc": "",
           "name": "getManufacturer",
           "params": [],
-          "returns": "java.lang.Manufacturer",
+          "returns": "com.qualcomm.robotcore.hardware.HardwareDevice.Manufacturer",
           "static": false,
           "typeParams": []
         },
@@ -48362,7 +48362,7 @@
           "params": [
             {
               "name": "direction",
-              "type": "java.lang.Direction",
+              "type": "com.qualcomm.robotcore.hardware.Servo.Direction",
               "varargs": false
             }
           ],
@@ -48375,7 +48375,7 @@
           "doc": "Get the direction",
           "name": "getDirection",
           "params": [],
-          "returns": "java.lang.Direction",
+          "returns": "com.qualcomm.robotcore.hardware.Servo.Direction",
           "static": false,
           "typeParams": []
         },
@@ -48491,7 +48491,7 @@
             },
             {
               "name": "direction",
-              "type": "java.lang.Direction",
+              "type": "com.qualcomm.robotcore.hardware.Servo.Direction",
               "varargs": false
             },
             {
@@ -48526,7 +48526,7 @@
           "params": [
             {
               "name": "range",
-              "type": "java.lang.PwmRange",
+              "type": "com.qualcomm.robotcore.hardware.PwmControl.PwmRange",
               "varargs": false
             }
           ],
@@ -48539,7 +48539,7 @@
           "doc": "",
           "name": "getPwmRange",
           "params": [],
-          "returns": "java.lang.PwmRange",
+          "returns": "com.qualcomm.robotcore.hardware.PwmControl.PwmRange",
           "static": false,
           "typeParams": []
         },
@@ -51225,7 +51225,7 @@
           "doc": "",
           "name": "getI2cChannel",
           "params": [],
-          "returns": "java.lang.I2cChannel",
+          "returns": "com.qualcomm.robotcore.hardware.configuration.DeviceConfiguration.I2cChannel",
           "static": false,
           "typeParams": []
         },
@@ -52747,7 +52747,7 @@
             },
             {
               "name": "flavor",
-              "type": "java.lang.DeviceFlavor",
+              "type": "com.qualcomm.robotcore.hardware.configuration.ConfigurationType.DeviceFlavor",
               "varargs": false
             },
             {
@@ -52772,7 +52772,7 @@
           "params": [
             {
               "name": "flavor",
-              "type": "java.lang.DeviceFlavor",
+              "type": "com.qualcomm.robotcore.hardware.configuration.ConfigurationType.DeviceFlavor",
               "varargs": false
             }
           ]
@@ -53520,7 +53520,7 @@
             },
             {
               "name": "flavor",
-              "type": "java.lang.DeviceFlavor",
+              "type": "com.qualcomm.robotcore.hardware.configuration.ConfigurationType.DeviceFlavor",
               "varargs": false
             },
             {
@@ -53540,7 +53540,7 @@
           "params": [
             {
               "name": "flavor",
-              "type": "java.lang.DeviceFlavor",
+              "type": "com.qualcomm.robotcore.hardware.configuration.ConfigurationType.DeviceFlavor",
               "varargs": false
             }
           ]
@@ -53620,7 +53620,7 @@
           "doc": "",
           "name": "getDeviceFlavor",
           "params": [],
-          "returns": "java.lang.DeviceFlavor",
+          "returns": "com.qualcomm.robotcore.hardware.configuration.ConfigurationType.DeviceFlavor",
           "static": false,
           "typeParams": []
         },
@@ -53694,7 +53694,7 @@
           "params": [
             {
               "name": "flavor",
-              "type": "java.lang.DeviceFlavor",
+              "type": "com.qualcomm.robotcore.hardware.configuration.ConfigurationType.DeviceFlavor",
               "varargs": false
             }
           ],
@@ -54587,7 +54587,7 @@
           "doc": "",
           "name": "getRobocolMsgType",
           "params": [],
-          "returns": "java.lang.MsgType",
+          "returns": "com.qualcomm.robotcore.robocol.RobocolParsable.MsgType",
           "static": false,
           "typeParams": []
         },
@@ -54876,7 +54876,7 @@
           "doc": "Get Robocol message type",
           "name": "getRobocolMsgType",
           "params": [],
-          "returns": "java.lang.MsgType",
+          "returns": "com.qualcomm.robotcore.robocol.RobocolParsable.MsgType",
           "static": false,
           "typeParams": []
         },
@@ -55050,7 +55050,7 @@
           "doc": "",
           "name": "getRobocolMsgType",
           "params": [],
-          "returns": "java.lang.MsgType",
+          "returns": "com.qualcomm.robotcore.robocol.RobocolParsable.MsgType",
           "static": false,
           "typeParams": []
         },
@@ -56198,7 +56198,7 @@
           "doc": "",
           "name": "getRobocolMsgType",
           "params": [],
-          "returns": "java.lang.MsgType",
+          "returns": "com.qualcomm.robotcore.robocol.RobocolParsable.MsgType",
           "static": false,
           "typeParams": []
         },
@@ -64730,7 +64730,7 @@
           "doc": "",
           "name": "getConnectStatus",
           "params": [],
-          "returns": "com.qualcomm.robotcore.wifi.WifiDirectAssistant.ConnectStatus",
+          "returns": "com.qualcomm.robotcore.wifi.NetworkConnection.ConnectStatus",
           "static": false,
           "typeParams": []
         },
@@ -64835,6 +64835,26 @@
       "module": "ftc.hardware",
       "outer": null,
       "simpleName": "NetworkConnection",
+      "typeParams": []
+    },
+    "com.qualcomm.robotcore.wifi.NetworkConnection.ConnectStatus": {
+      "abstract": false,
+      "constructors": [],
+      "doc": "",
+      "enumConstants": [
+        "NOT_CONNECTED",
+        "CONNECTING",
+        "CONNECTED",
+        "GROUP_OWNER",
+        "ERROR"
+      ],
+      "extends": [],
+      "fields": [],
+      "kind": "enum",
+      "methods": [],
+      "module": null,
+      "outer": "com.qualcomm.robotcore.wifi.NetworkConnection",
+      "simpleName": "ConnectStatus",
       "typeParams": []
     },
     "com.qualcomm.robotcore.wifi.NetworkConnection.NetworkConnectionCallback": {
@@ -64946,406 +64966,6 @@
       "module": "ftc.internal",
       "outer": null,
       "simpleName": "NetworkType",
-      "typeParams": []
-    },
-    "com.qualcomm.robotcore.wifi.WifiDirectAssistant": {
-      "abstract": false,
-      "constructors": [],
-      "doc": "",
-      "enumConstants": [],
-      "extends": [
-        "com.qualcomm.robotcore.wifi.NetworkConnection"
-      ],
-      "fields": [
-        {
-          "doc": "",
-          "final": true,
-          "name": "TAG",
-          "static": true,
-          "type": "java.lang.String"
-        }
-      ],
-      "kind": "class",
-      "methods": [
-        {
-          "abstract": false,
-          "doc": "",
-          "name": "getWifiDirectAssistant",
-          "params": [
-            {
-              "name": "context",
-              "type": "android.content.Context",
-              "varargs": false
-            }
-          ],
-          "returns": "com.qualcomm.robotcore.wifi.WifiDirectAssistant",
-          "static": true,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "",
-          "name": "getNetworkType",
-          "params": [],
-          "returns": "com.qualcomm.robotcore.wifi.NetworkType",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "",
-          "name": "enable",
-          "params": [],
-          "returns": "void",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "",
-          "name": "disable",
-          "params": [],
-          "returns": "void",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "",
-          "name": "discoverPotentialConnections",
-          "params": [],
-          "returns": "void",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "",
-          "name": "createConnection",
-          "params": [],
-          "returns": "void",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "",
-          "name": "cancelPotentialConnections",
-          "params": [],
-          "returns": "void",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "",
-          "name": "getInfo",
-          "params": [],
-          "returns": "java.lang.String",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "",
-          "name": "isEnabled",
-          "params": [],
-          "returns": "boolean",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "",
-          "name": "getConnectStatus",
-          "params": [],
-          "returns": "java.lang.ConnectStatus",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "",
-          "name": "getPeers",
-          "params": [],
-          "returns": "java.util.List<android.net.wifi.p2p.WifiP2pDevice>",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "Get the device mac address",
-          "name": "getDeviceMacAddress",
-          "params": [],
-          "returns": "java.lang.String",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "Get the device name",
-          "name": "getDeviceName",
-          "params": [],
-          "returns": "java.lang.String",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "",
-          "name": "getConnectionOwnerAddress",
-          "params": [],
-          "returns": "java.net.InetAddress",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "Get the IP address of the group owner",
-          "name": "getGroupOwnerAddress",
-          "params": [],
-          "returns": "java.net.InetAddress",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "",
-          "name": "getConnectionOwnerMacAddress",
-          "params": [],
-          "returns": "java.lang.String",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "",
-          "name": "getConnectionOwnerName",
-          "params": [],
-          "returns": "java.lang.String",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "Get the group owners device name. Example: '417-Z-RC'",
-          "name": "getGroupOwnerName",
-          "params": [],
-          "returns": "java.lang.String",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "Return the passphrase for this network; only valid if this device is the group owner",
-          "name": "getPassphrase",
-          "params": [],
-          "returns": "java.lang.String",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "Get the group owners interface used. Example. 'p2p0'",
-          "name": "getGroupInterface",
-          "params": [],
-          "returns": "java.lang.String",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "Get the group network name. Example: 'DIRECT-dR-417-Z-RC'",
-          "name": "getGroupNetworkName",
-          "params": [],
-          "returns": "java.lang.String",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "",
-          "name": "isWifiP2pEnabled",
-          "params": [],
-          "returns": "boolean",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "Returns true if connected, or group owner",
-          "name": "isConnected",
-          "params": [],
-          "returns": "boolean",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "Returns true if this device is the group owner",
-          "name": "isGroupOwner",
-          "params": [],
-          "returns": "boolean",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "Discover Wi-Fi Direct peers",
-          "name": "discoverPeers",
-          "params": [],
-          "returns": "void",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "Cancel discover Wi-Fi Direct peers request",
-          "name": "cancelDiscoverPeers",
-          "params": [],
-          "returns": "void",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "Create a Wi-Fi Direct group",
-          "name": "createGroup",
-          "params": [],
-          "returns": "void",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "Remove a Wi-Fi Direct group",
-          "name": "removeGroup",
-          "params": [],
-          "returns": "void",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "",
-          "name": "connect",
-          "params": [
-            {
-              "name": "deviceAddress",
-              "type": "java.lang.String",
-              "varargs": false
-            },
-            {
-              "name": "notSupported",
-              "type": "java.lang.String",
-              "varargs": false
-            }
-          ],
-          "returns": "void",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "",
-          "name": "connect",
-          "params": [
-            {
-              "name": "deviceAddress",
-              "type": "java.lang.String",
-              "varargs": false
-            }
-          ],
-          "returns": "void",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "",
-          "name": "getFailureReason",
-          "params": [],
-          "returns": "java.lang.String",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "",
-          "name": "failureReasonToString",
-          "params": [
-            {
-              "name": "reason",
-              "type": "int",
-              "varargs": false
-            }
-          ],
-          "returns": "java.lang.String",
-          "static": true,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "",
-          "name": "sendEvent",
-          "params": [
-            {
-              "name": "event",
-              "type": "java.lang.NetworkEvent",
-              "varargs": false
-            }
-          ],
-          "returns": "void",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "Degenerate implementations",
-          "name": "onWaitForConnection",
-          "params": [],
-          "returns": "void",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "",
-          "name": "setNetworkSettings",
-          "params": [
-            {
-              "name": "deviceName",
-              "type": "java.lang.String",
-              "varargs": false
-            },
-            {
-              "name": "password",
-              "type": "java.lang.String",
-              "varargs": false
-            },
-            {
-              "name": "channel",
-              "type": "org.firstinspires.ftc.robotcore.internal.network.ApChannel",
-              "varargs": false
-            }
-          ],
-          "returns": "void",
-          "static": false,
-          "typeParams": []
-        },
-        {
-          "abstract": false,
-          "doc": "",
-          "name": "detectWifiReset",
-          "params": [],
-          "returns": "void",
-          "static": false,
-          "typeParams": []
-        }
-      ],
-      "module": "ftc.hardware",
-      "outer": null,
-      "simpleName": "WifiDirectAssistant",
       "typeParams": []
     },
     "fi.iki.elonen.NanoHTTPD": {
@@ -81153,7 +80773,7 @@
             },
             {
               "name": "webcamStreamFormat",
-              "type": "java.lang.StreamFormat",
+              "type": "org.firstinspires.ftc.vision.VisionPortal.StreamFormat",
               "varargs": false
             },
             {
@@ -81199,7 +80819,7 @@
           "final": false,
           "name": "cameraState",
           "static": false,
-          "type": "java.lang.CameraState"
+          "type": "org.firstinspires.ftc.vision.VisionPortal.CameraState"
         },
         {
           "doc": "",
@@ -81262,7 +80882,7 @@
           "final": true,
           "name": "webcamStreamFormat",
           "static": false,
-          "type": "java.lang.StreamFormat"
+          "type": "org.firstinspires.ftc.vision.VisionPortal.StreamFormat"
         },
         {
           "doc": "",
@@ -81378,7 +80998,7 @@
           "doc": "",
           "name": "getCameraState",
           "params": [],
-          "returns": "java.lang.CameraState",
+          "returns": "org.firstinspires.ftc.vision.VisionPortal.CameraState",
           "static": false,
           "typeParams": []
         },
@@ -83151,7 +82771,7 @@
             },
             {
               "name": "tagFamily",
-              "type": "java.lang.TagFamily",
+              "type": "org.firstinspires.ftc.vision.apriltag.AprilTagProcessor.TagFamily",
               "varargs": false
             },
             {
@@ -83314,7 +82934,7 @@
           "params": [
             {
               "name": "poseSolver",
-              "type": "java.lang.PoseSolver",
+              "type": "org.firstinspires.ftc.vision.apriltag.AprilTagProcessor.PoseSolver",
               "varargs": false
             }
           ],
@@ -84313,12 +83933,12 @@
             },
             {
               "name": "contourMode",
-              "type": "java.lang.ContourMode",
+              "type": "org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor.ContourMode",
               "varargs": false
             },
             {
               "name": "morphOperationType",
-              "type": "java.lang.MorphOperationType",
+              "type": "org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor.MorphOperationType",
               "varargs": false
             },
             {
@@ -84465,7 +84085,7 @@
           "params": [
             {
               "name": "filter",
-              "type": "java.lang.BlobFilter",
+              "type": "org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor.BlobFilter",
               "varargs": false
             }
           ],
@@ -84480,7 +84100,7 @@
           "params": [
             {
               "name": "filter",
-              "type": "java.lang.BlobFilter",
+              "type": "org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor.BlobFilter",
               "varargs": false
             }
           ],
@@ -84504,7 +84124,7 @@
           "params": [
             {
               "name": "sort",
-              "type": "java.lang.BlobSort",
+              "type": "org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor.BlobSort",
               "varargs": false
             }
           ],
@@ -84517,7 +84137,7 @@
           "doc": "",
           "name": "getBlobs",
           "params": [],
-          "returns": "java.util.List<java.lang.Blob>",
+          "returns": "java.util.List<org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor.Blob>",
           "static": false,
           "typeParams": []
         }
@@ -84544,7 +84164,7 @@
       "doc": "",
       "enumConstants": [],
       "extends": [
-        "java.lang.Blob"
+        "org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor.Blob"
       ],
       "fields": [],
       "kind": "class",
@@ -85161,7 +84781,7 @@
             },
             {
               "name": "swatches",
-              "type": "java.lang.Swatch[]",
+              "type": "org.firstinspires.ftc.vision.opencv.PredominantColorProcessor.Swatch[]",
               "varargs": false
             }
           ]
@@ -85265,7 +84885,7 @@
           "doc": "",
           "name": "getAnalysis",
           "params": [],
-          "returns": "java.lang.Result",
+          "returns": "org.firstinspires.ftc.vision.opencv.PredominantColorProcessor.Result",
           "static": false,
           "typeParams": []
         },

@@ -37,6 +37,12 @@ MODULE_DOCSTRINGS = {
     ),
 }
 
+# Synthetic TypeVar used only by _render_annotation_class, so a decorated
+# class keeps its own type instead of widening to plain `type`. Leading
+# underscore keeps it out of the way of any real Java generic name (checked
+# empirically across SDK 11.2.0: no type param is ever spelled this way).
+_ANNOTATION_TARGET_TV = "_AnnotationTargetT"
+
 JAVA_EXCEPTION_BASES = {
     "java.lang.RuntimeException": "Exception",
     "java.lang.Exception": "Exception",
@@ -430,10 +436,24 @@ class ModuleWriter:
         name = "__init__" if is_ctor else sanitize_ident(name)
         lines = []
         overload = len(methods) > 1
+        # Java allows one name to be overloaded between a static and an
+        # instance member (e.g. VectorF.length(): int as an instance method
+        # alongside static VectorF.length(int): VectorF); Python has no such
+        # split -- a name is either an instance method or a staticmethod for
+        # ALL of its overloads, never a mix (pyright: "use @staticmethod
+        # inconsistently"). These stub bodies are never executed (ftc/*.py
+        # is autocomplete-only, per ARCHITECTURE.md; the translator reads
+        # the JSON type DB, not these files), so the fix that keeps both
+        # real call shapes type-checking -- `obj.length()` and
+        # `VectorF.length(5)` -- is to render the WHOLE group as
+        # @staticmethod as soon as *any* overload is static, dropping `self`
+        # even from the originally-instance overloads: pyright resolves a
+        # staticmethod call from either an instance or the class purely by
+        # argument shape, so `obj.length()` still matches the zero-arg
+        # overload and `VectorF.length(5)` still matches the one-arg one.
         any_static = any(m.get("static") for m in methods)
-        all_static = all(m.get("static") for m in methods)
         for m in methods:
-            is_static = bool(m.get("static")) if not is_ctor else False
+            is_static = any_static if not is_ctor else False
             if overload:
                 lines.append(f"{indent}@overload")
             if is_static:
@@ -454,8 +474,8 @@ class ModuleWriter:
             lines.append(f"{indent}    ...")
         if overload:
             sig_name = "__init__" if is_ctor else name
-            head = "self, *args: Any, **kwargs: Any" if not all_static else "*args: Any, **kwargs: Any"
-            if all_static:
+            head = "self, *args: Any, **kwargs: Any" if not any_static else "*args: Any, **kwargs: Any"
+            if any_static and not is_ctor:
                 lines.append(f"{indent}@staticmethod")
             ret = "None" if is_ctor else "Any"
             lines.append(f"{indent}def {sig_name}({head}) -> {ret}:")
@@ -487,7 +507,7 @@ class ModuleWriter:
         simple = c["simpleName"]
 
         if kind == "annotation":
-            return self._render_annotation_decorator(fqn, indent)
+            return self._render_annotation_class(fqn, indent)
 
         type_params = c.get("typeParams") or []
         tv_names = []
@@ -555,7 +575,29 @@ class ModuleWriter:
         lines.extend(body)
         return lines
 
-    def _render_annotation_decorator(self, fqn: str, indent: str) -> list[str]:
+    def _render_annotation_class(self, fqn: str, indent: str) -> list[str]:
+        """Java `@interface` types are used two incompatible ways in FTC
+        code: as a class decorator (`@TeleOp(name="Drive")`, bare
+        `@Disabled`) and as an ordinary type (e.g.
+        `processAnnotation(motorType: MotorType)`). The old rendering (a
+        plain function returning a function) satisfied only the decorator
+        use; pyright rejected the type-position use ("Expected class but
+        received (...) -> ...").
+
+        Rendering as a class satisfies both. For an annotation with
+        elements, `__init__` takes them as keyword args (the
+        `@TeleOp(name=...)` call itself) and `__call__` makes the instance
+        act as the actual decorator, returning its target class unchanged
+        (typed via `_ANNOTATION_TARGET_TV` so the decorated class keeps its
+        own type instead of widening to plain `type`). A marker annotation
+        with no elements is applied bare (`@Disabled`, no parens) -- Python
+        then calls `Disabled(Foo)` directly, so the identity behavior has
+        to live in `__new__`, the only hook that lets a class call return
+        something other than a fresh instance of itself. None of this runs
+        for real (bodies are `...`/`return target`, and ftc/*.py is
+        autocomplete-only -- the translator reads the JSON type DB, never
+        these files), so the only bar is that both call shapes type-check.
+        """
         entry = self.registry.by_fqn[fqn]
         node = entry.node
         simple = node.name
@@ -563,30 +605,40 @@ class ModuleWriter:
         c = self.classes[fqn]
         first_doc = c.get("doc", "")
 
+        self.ctx.typevars_seen.setdefault(_ANNOTATION_TARGET_TV, None)
+        tv = _ANNOTATION_TARGET_TV
+
+        lines = [f"{indent}class {simple}:"]
+        body: list[str] = []
+        if elements:
+            body.extend(_format_docstring(first_doc, indent + "    "))
+        else:
+            body.extend(_format_docstring(first_doc, indent + "    ")
+                        or [f'{indent}    """{simple} marker annotation."""'])
+        body.append(f'{indent}    __java__ = "{fqn}"')
+
         if not elements:
-            lines = [f"{indent}def {simple}(cls: type) -> type:"]
-            lines.extend(_format_docstring(first_doc, indent + "    ") or [f'{indent}    """{simple} marker annotation."""'])
-            lines.append(f"{indent}    return cls")
-            return lines
+            body.append(f"{indent}    def __new__(cls, target: type[{tv}]) -> type[{tv}]:")
+            body.append(f"{indent}        return target")
+        else:
+            ctx_local = TypeContext(registry=self.registry, class_fqn=fqn,
+                                     type_param_names=set())
+            params = []
+            for elem in elements:
+                pname = sanitize_ident(elem.name)
+                ptype_str = type_node_to_string(elem.return_type, ctx_local)
+                ptype = self.ctx.render(ptype_str)
+                default = _default_expr(elem.default)
+                if default is not None:
+                    params.append(f"{pname}: {ptype} = {default}")
+                else:
+                    params.append(f"{pname}: {ptype}")
+            body.append(f"{indent}    def __init__(self, *, {', '.join(params)}) -> None:")
+            body.append(f"{indent}        ...")
+            body.append(f"{indent}    def __call__(self, target: type[{tv}]) -> type[{tv}]:")
+            body.append(f"{indent}        return target")
 
-        ctx_local = TypeContext(registry=self.registry, class_fqn=fqn,
-                                 type_param_names=set())
-        params = []
-        for elem in elements:
-            pname = sanitize_ident(elem.name)
-            ptype_str = type_node_to_string(elem.return_type, ctx_local)
-            ptype = self.ctx.render(ptype_str)
-            default = _default_expr(elem.default)
-            if default is not None:
-                params.append(f"{pname}: {ptype} = {default}")
-            else:
-                params.append(f"{pname}: {ptype}")
-
-        lines = [f"{indent}def {simple}(*, {', '.join(params)}) -> Callable[[type], type]:"]
-        lines.extend(_format_docstring(first_doc, indent + "    "))
-        lines.append(f"{indent}    def _decorator(cls: type) -> type:")
-        lines.append(f"{indent}        return cls")
-        lines.append(f"{indent}    return _decorator")
+        lines.extend(body)
         return lines
 
     # -- top level --------------------------------------------------------------

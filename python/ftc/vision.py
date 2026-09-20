@@ -200,7 +200,7 @@ class VisionPortalImpl(VisionPortal):
         def onDrawFrame(self, canvas: Any, onscreenWidth: int, onscreenHeight: int, scaleBmpPxToCanvasPx: float, scaleCanvasDensity: float, userContext: object) -> None:
             ...
 
-    def __init__(self, camera: CameraName, cameraMonitorViewId: int, autoPauseCameraMonitor: bool, cameraResolution: Any, webcamStreamFormat: Any, autoStartStream: bool, showStats: bool, processors: list[VisionProcessor]) -> None:
+    def __init__(self, camera: CameraName, cameraMonitorViewId: int, autoPauseCameraMonitor: bool, cameraResolution: Any, webcamStreamFormat: VisionPortal.StreamFormat, autoStartStream: bool, showStats: bool, processors: list[VisionProcessor]) -> None:
         ...
 
     def startCamera(self) -> None:
@@ -215,7 +215,7 @@ class VisionPortalImpl(VisionPortal):
     def getProcessorEnabled(self, processor: VisionProcessor) -> bool:
         ...
 
-    def getCameraState(self) -> Any:
+    def getCameraState(self) -> VisionPortal.CameraState:
         ...
 
     def setActiveCamera(self, webcamName: WebcamName) -> None:
@@ -253,7 +253,7 @@ class VisionPortalImpl(VisionPortal):
 
     camera: Any
     cameraMonitorViewId: int
-    cameraState: Any
+    cameraState: VisionPortal.CameraState
     processors: list[VisionProcessor]
     processorsEnabled: list[bool]
     calibration: CameraCalibration
@@ -262,7 +262,7 @@ class VisionPortalImpl(VisionPortal):
     showStats: bool
     userStateSemaphore: Any
     cameraResolution: Any
-    webcamStreamFormat: Any
+    webcamStreamFormat: VisionPortal.StreamFormat
     CAMERA_ROTATION: Any
     captureNextFrame: str
     captureFrameMtx: object
@@ -593,7 +593,7 @@ class AprilTagProcessorImpl(AprilTagProcessor):
         rvec: Any
         tvec: Any
 
-    def __init__(self, robotInCameraFrame: OpenGLMatrix, fx: float, fy: float, cx: float, cy: float, outputUnitsLength: DistanceUnit, outputUnitsAngle: AngleUnit, tagLibrary: AprilTagLibrary, drawAxes: bool, drawCube: bool, drawOutline: bool, drawTagID: bool, tagFamily: Any, threads: int, suppressCalibrationWarnings: bool) -> None:
+    def __init__(self, robotInCameraFrame: OpenGLMatrix, fx: float, fy: float, cx: float, cy: float, outputUnitsLength: DistanceUnit, outputUnitsAngle: AngleUnit, tagLibrary: AprilTagLibrary, drawAxes: bool, drawCube: bool, drawOutline: bool, drawTagID: bool, tagFamily: AprilTagProcessor.TagFamily, threads: int, suppressCalibrationWarnings: bool) -> None:
         ...
 
     def finalize(self) -> None:
@@ -614,7 +614,7 @@ class AprilTagProcessorImpl(AprilTagProcessor):
     def setDecimation(self, decimation: float) -> None:
         ...
 
-    def setPoseSolver(self, poseSolver: Any) -> None:
+    def setPoseSolver(self, poseSolver: AprilTagProcessor.PoseSolver) -> None:
         ...
 
     def getPerTagAvgPoseSolveTime(self) -> int:
@@ -879,7 +879,7 @@ class ColorBlobLocatorProcessor(VisionProcessor):
 
 class ColorBlobLocatorProcessorImpl(ColorBlobLocatorProcessor):
     __java__ = "org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessorImpl"
-    class BlobImpl:
+    class BlobImpl(ColorBlobLocatorProcessor.Blob):
         __java__ = "org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessorImpl.BlobImpl"
         def __init__(self, contour: Any) -> None:
             ...
@@ -914,7 +914,7 @@ class ColorBlobLocatorProcessorImpl(ColorBlobLocatorProcessor):
         def getCircle(self) -> Circle:
             ...
 
-    def __init__(self, colorRange: ColorRange, roiImg: ImageRegion, contourMode: Any, morphOperationType: Any, erodeSize: int, dilateSize: int, drawContours: bool, blurSize: int, boundingBoxColor: int, circleFitColor: int, roiColor: int, contourColor: int) -> None:
+    def __init__(self, colorRange: ColorRange, roiImg: ImageRegion, contourMode: ColorBlobLocatorProcessor.ContourMode, morphOperationType: ColorBlobLocatorProcessor.MorphOperationType, erodeSize: int, dilateSize: int, drawContours: bool, blurSize: int, boundingBoxColor: int, circleFitColor: int, roiColor: int, contourColor: int) -> None:
         ...
 
     def init(self, width: int, height: int, calibration: CameraCalibration) -> None:
@@ -926,19 +926,19 @@ class ColorBlobLocatorProcessorImpl(ColorBlobLocatorProcessor):
     def onDrawFrame(self, canvas: Any, onscreenWidth: int, onscreenHeight: int, scaleBmpPxToCanvasPx: float, scaleCanvasDensity: float, userContext: object) -> None:
         ...
 
-    def addFilter(self, filter: Any) -> None:
+    def addFilter(self, filter: ColorBlobLocatorProcessor.BlobFilter) -> None:
         ...
 
-    def removeFilter(self, filter: Any) -> None:
+    def removeFilter(self, filter: ColorBlobLocatorProcessor.BlobFilter) -> None:
         ...
 
     def removeAllFilters(self) -> None:
         ...
 
-    def setSort(self, sort: Any) -> None:
+    def setSort(self, sort: ColorBlobLocatorProcessor.BlobSort) -> None:
         ...
 
-    def getBlobs(self) -> list[Any]:
+    def getBlobs(self) -> list[ColorBlobLocatorProcessor.Blob]:
         ...
 
 
@@ -1071,7 +1071,7 @@ class PredominantColorProcessor(VisionProcessor):
 
 class PredominantColorProcessorImpl(PredominantColorProcessor):
     __java__ = "org.firstinspires.ftc.vision.opencv.PredominantColorProcessorImpl"
-    def __init__(self, roi: ImageRegion, swatches: list[Any]) -> None:
+    def __init__(self, roi: ImageRegion, swatches: list[PredominantColorProcessor.Swatch]) -> None:
         ...
 
     def init(self, width: int, height: int, calibration: CameraCalibration) -> None:
@@ -1083,7 +1083,7 @@ class PredominantColorProcessorImpl(PredominantColorProcessor):
     def onDrawFrame(self, canvas: Any, onscreenWidth: int, onscreenHeight: int, scaleBmpPxToCanvasPx: float, scaleCanvasDensity: float, userContext: object) -> None:
         ...
 
-    def getAnalysis(self) -> Any:
+    def getAnalysis(self) -> PredominantColorProcessor.Result:
         ...
 
     def yCrCb2Rgb(self, yCrCb: list[int]) -> list[int]:

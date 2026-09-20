@@ -12,6 +12,7 @@ EXCEPTION = TypeVar("EXCEPTION", bound="Any")
 R = TypeVar("R")
 T = TypeVar("T")
 VALUE = TypeVar("VALUE")
+_AnnotationTargetT = TypeVar("_AnnotationTargetT")
 class BlocksOpModeCompanion:
     """An abstract base class that provides access to hardwareMap, telemetry, gamepad1, and gamepad2, in order to assist a novice Java coder who wants to implement some code in Java that can be called from a Blocks OpMode. The use of this class is not required for exporting a method to the Blocks programming environment. See ExportToBlocks for details on how to export a method to Blocks."""
     __java__ = "org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion"
@@ -50,9 +51,11 @@ class ClassFactory:
         ...
 
 
-def Const(cls: type) -> type:
+class Const:
     """Const documents a method that promises not to change the internal state of the method receiver. Documenting methods in this way helps programmers understand which methods examine the object and return results based on that examination but don't change the internal object state and which methods, by contrast, perform their function but updating or changing internal object state."""
-    return cls
+    __java__ = "org.firstinspires.ftc.robotcore.external.Const"
+    def __new__(cls, target: type[_AnnotationTargetT]) -> type[_AnnotationTargetT]:
+        return target
 
 
 class Consumer(Generic[T]):
@@ -70,30 +73,38 @@ class Event:
         ...
 
 
-def ExportAprilTagLibraryToBlocks(*, color: int = 289, heading: str = 'call', comment: str = '', tooltip: str = '', parameterLabels: list[str], parameterDefaultValues: list[str]) -> Callable[[type], type]:
+class ExportAprilTagLibraryToBlocks:
     """ExportAprilTagLibraryToBlocks indicates that a method that returns an AprilTagLibrary is exported to the Blocks programming environment. This annotation provides a way for the Java coder to specify some UI attributes of the \"call Java method\" block. The corresponding block will appear in the Blocks toolbox along with the built-in tag libraries. The method must satisfy all of these requirements:"""
-    def _decorator(cls: type) -> type:
-        return cls
-    return _decorator
+    __java__ = "org.firstinspires.ftc.robotcore.external.ExportAprilTagLibraryToBlocks"
+    def __init__(self, *, color: int = 289, heading: str = 'call', comment: str = '', tooltip: str = '', parameterLabels: list[str], parameterDefaultValues: list[str]) -> None:
+        ...
+    def __call__(self, target: type[_AnnotationTargetT]) -> type[_AnnotationTargetT]:
+        return target
 
 
-def ExportClassToBlocks(cls: type) -> type:
+class ExportClassToBlocks:
     """ExportClassToBlocks indicates that the class contains methods which are exported to blocks. Exported methods must be annotated with ExportToBlocks"""
-    return cls
+    __java__ = "org.firstinspires.ftc.robotcore.external.ExportClassToBlocks"
+    def __new__(cls, target: type[_AnnotationTargetT]) -> type[_AnnotationTargetT]:
+        return target
 
 
-def ExportEnumToBlocks(*, color: int = 151) -> Callable[[type], type]:
+class ExportEnumToBlocks:
     """ExportEnumToBlocks indicates that an enum is exported to the Blocks programming environment. This annotation provides a way for the Java coder to specify the color of the enum block. The enum must satisfy all of these requirements:"""
-    def _decorator(cls: type) -> type:
-        return cls
-    return _decorator
+    __java__ = "org.firstinspires.ftc.robotcore.external.ExportEnumToBlocks"
+    def __init__(self, *, color: int = 151) -> None:
+        ...
+    def __call__(self, target: type[_AnnotationTargetT]) -> type[_AnnotationTargetT]:
+        return target
 
 
-def ExportToBlocks(*, color: int = 289, heading: str = 'call Java method', comment: str = '', tooltip: str = '', parameterLabels: list[str], parameterDefaultValues: list[str]) -> Callable[[type], type]:
+class ExportToBlocks:
     """ExportToBlocks indicates that a method is exported to the Blocks programming environment. This annotation provides a way for the Java coder to specify some UI attributes of the \"call Java method\" block. If the method is not in a hardware device class, it must satisfy all of these requirements:"""
-    def _decorator(cls: type) -> type:
-        return cls
-    return _decorator
+    __java__ = "org.firstinspires.ftc.robotcore.external.ExportToBlocks"
+    def __init__(self, *, color: int = 289, heading: str = 'call Java method', comment: str = '', tooltip: str = '', parameterLabels: list[str], parameterDefaultValues: list[str]) -> None:
+        ...
+    def __call__(self, target: type[_AnnotationTargetT]) -> type[_AnnotationTargetT]:
+        return target
 
 
 class Func(Generic[T]):
@@ -408,9 +419,11 @@ class JavaUtil:
         ...
 
 
-def NonConst(cls: type) -> type:
+class NonConst:
     """NonConst documents a method that performs its function by updating internal state of the method receiver. Documenting methods in this way helps programmers understand which methods examine the object and return results based on that examination but don't change the internal object state and which methods, by contrast, perform their function but updating or changing internal object state."""
-    return cls
+    __java__ = "org.firstinspires.ftc.robotcore.external.NonConst"
+    def __new__(cls, target: type[_AnnotationTargetT]) -> type[_AnnotationTargetT]:
+        return target
 
 
 class Predicate(Generic[T]):

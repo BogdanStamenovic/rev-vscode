@@ -479,7 +479,8 @@ class Orientation:
         ...
 
     @overload
-    def getRotationMatrix(self) -> OpenGLMatrix:
+    @staticmethod
+    def getRotationMatrix() -> OpenGLMatrix:
         """Returns the rotation matrix associated with the receiver Orientation."""
         ...
     @overload
@@ -487,7 +488,8 @@ class Orientation:
     def getRotationMatrix(axesReference: AxesReference, axesOrder: AxesOrder, unit: AngleUnit, firstAngle: float, secondAngle: float, thirdAngle: float) -> OpenGLMatrix:
         """Returns the rotation matrix associated with a particular set of three rotational angles."""
         ...
-    def getRotationMatrix(self, *args: Any, **kwargs: Any) -> Any:
+    @staticmethod
+    def getRotationMatrix(*args: Any, **kwargs: Any) -> Any:
         ...
 
     @overload

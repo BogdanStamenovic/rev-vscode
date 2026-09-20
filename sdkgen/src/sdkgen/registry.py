@@ -43,6 +43,11 @@ class Registry:
     by_package: dict[str, list[str]] = field(default_factory=dict)
     parse_failures: list[tuple[Path, str]] = field(default_factory=list)
     files_parsed: int = 0
+    # fqn -> transitive extends/implements closure, memoized by resolve.py's
+    # _ancestor_fqns (superclass-inherited nested-type resolution). Lives
+    # here rather than as a module-level dict so it can never leak between
+    # two Registry instances built in the same process (e.g. under pytest).
+    ancestor_cache: dict[str, list[str]] = field(default_factory=dict)
 
     def children_simple_names(self, outer_fqn: str) -> list[str]:
         prefix = outer_fqn + "."

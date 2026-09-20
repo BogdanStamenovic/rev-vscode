@@ -66,22 +66,20 @@ EXTERNAL_PREFIXES = (
     "com.google.gson.", "org.xmlpull.", "org.openftc.", "org.threeten.",
 )
 
-# Pre-existing, out-of-scope bug: sdkgen/src/sdkgen/resolve.py's simple-name
-# resolution (TypeContext.resolve_simple_name) only looks at the *lexical*
-# outer-class chain, not a superclass's nested types -- so a method that
-# refers to an inherited nested type by simple name (legal in Java) resolves
-# to nothing, and resolve_or_java_lang() falls back to a wrong
-# `java.lang.<Name>`/`<package>.<Outer>.<Name>` FQN. That string is baked
-# into the DB already wrong; closure only ever walks *correct* FQNs, so it
-# can't fix these. Exact FQNs only (not a prefix) so a real new gap
-# elsewhere under these packages still fails this test loudly. Most land
-# under java.lang.* and are covered by that prefix already; these three
-# don't (they look like real SDK types), so they're listed explicitly.
-KNOWN_RESOLVER_FALLBACK_BUGS = {
-    "com.qualcomm.robotcore.hardware.DcMotor.Direction",
-    "com.qualcomm.robotcore.hardware.usb.RobotUsbModule.ARMINGSTATE",
-    "com.qualcomm.robotcore.wifi.WifiDirectAssistant.ConnectStatus",
-}
+# Fixed: sdkgen/src/sdkgen/resolve.py's simple-name resolution used to look
+# only at the *lexical* outer-class chain, never a superclass's nested types
+# -- so a method referring to an inherited nested type by simple name (legal
+# in Java, e.g. `Direction` inside DcMotorImpl, which implements DcMotor,
+# which extends DcMotorSimple -- the class that actually declares Direction)
+# resolved to a fabricated `java.lang.<Name>` FQN, and a *qualified* form
+# like `DcMotor.Direction` was blindly concatenated with no existence check
+# at all, landing an FQN that isn't in the registry (`...DcMotor.Direction`)
+# straight in the DB. resolve.py now walks the extends/implements chain (see
+# TypeContext.resolve_simple_name and resolve_qualified_chain). These three
+# exact FQNs (the ones named in the original ticket) must never reappear;
+# see test_no_known_resolver_fallback_bugs_remain and
+# test_dcmotor_direction_resolves_to_correct_fqn below.
+KNOWN_RESOLVER_FALLBACK_BUGS: set[str] = set()
 
 
 def _split_top_level_commas(s: str) -> list[str]:
@@ -208,6 +206,143 @@ def test_previously_dead_ending_types_are_now_stubbed(classes: dict, fqn: str) -
     type, not just an aggregate count."""
     assert fqn in classes, f"{fqn} is missing from the type database entirely"
     assert _module_reachable(fqn, classes), f"{fqn} is in the DB but not reachable to any ftc.* module"
+
+
+def test_dcmotor_direction_resolves_to_correct_fqn(classes: dict) -> None:
+    """setDirection(Direction) is in almost every OpMode, and the generated
+    starter pack uses it too. DcMotor itself never declares Direction -- it
+    extends DcMotorSimple, which does -- so `Direction` inside DcMotorImpl
+    (`implements DcMotor`) is a name resolved purely through inheritance.
+    Before the resolve.py fix this fell all the way through to a fabricated
+    `java.lang.Direction`; verify it now lands on the real declaring class,
+    and that the never-valid `DcMotor.Direction` FQN was never created."""
+    dc_motor_impl = classes["com.qualcomm.robotcore.hardware.DcMotorImpl"]
+    set_direction = next(m for m in dc_motor_impl["methods"] if m["name"] == "setDirection")
+    assert set_direction["params"][0]["type"] == "com.qualcomm.robotcore.hardware.DcMotorSimple.Direction"
+    assert "com.qualcomm.robotcore.hardware.DcMotorSimple.Direction" in classes
+    assert "com.qualcomm.robotcore.hardware.DcMotor.Direction" not in classes
+
+
+def test_dcmotor_direction_qualified_reference_resolves_correctly(classes: dict) -> None:
+    """The other half of defect 3: CRServoImplEx's own constructor spells
+    this type as the literal two-segment source text `DcMotor.Direction`.
+    resolve.py's type_node_to_string used to resolve just the first segment
+    and blindly concatenate the rest (`base = ".".join([first_resolved] +
+    names[1:])`) with no existence check at all -- guaranteed to produce an
+    FQN absent from the registry, since Direction is declared on
+    DcMotorSimple, not DcMotor. resolve_qualified_chain now walks each
+    segment against the current FQN's own nested types and its ancestors."""
+    ctor_impl = classes["com.qualcomm.robotcore.hardware.CRServoImplEx"]
+    four_arg_ctor = next(c for c in ctor_impl["constructors"] if len(c["params"]) == 4)
+    assert four_arg_ctor["params"][2]["type"] == "com.qualcomm.robotcore.hardware.DcMotorSimple.Direction"
+
+
+def test_robotusbmodule_armingstate_resolves_through_superclass(classes: dict) -> None:
+    """RobotUsbModule extends RobotArmingStateNotifier, which is where
+    ARMINGSTATE is actually declared; LynxModule/LynxController/
+    LynxUsbDeviceDelegate reference it by simple name through that chain
+    (defect 3's single-segment path, same mechanism as DcMotor.Direction)."""
+    lynx_module = classes["com.qualcomm.hardware.lynx.LynxModule"]
+    get_arming_state = next(m for m in lynx_module["methods"] if m["name"] == "getArmingState")
+    assert get_arming_state["returns"] == "com.qualcomm.robotcore.hardware.usb.RobotArmingStateNotifier.ARMINGSTATE"
+
+
+def test_no_known_resolver_fallback_bugs_remain(classes: dict) -> None:
+    """The three exact FQNs from the ticket (DcMotor.Direction,
+    RobotUsbModule.ARMINGSTATE, WifiDirectAssistant.ConnectStatus) must
+    never appear as a type string anywhere in the DB again. Checked against
+    every stubbed class's signatures, not just the two pinned above --
+    WifiDirectAssistant isn't reachable by the current closure at all (its
+    package has no Contract-2 seed and nothing stubbed references it), so
+    this is the only check that would catch that one specifically if
+    closure's reach ever changes."""
+    bad_fqns = {
+        "com.qualcomm.robotcore.hardware.DcMotor.Direction",
+        "com.qualcomm.robotcore.hardware.usb.RobotUsbModule.ARMINGSTATE",
+        "com.qualcomm.robotcore.wifi.WifiDirectAssistant.ConnectStatus",
+    }
+    seen: set[str] = set()
+    for c in classes.values():
+        for ts in _iter_type_strings(c):
+            base, _ = _base_and_args(ts)
+            seen.add(base)
+    hit = seen & bad_fqns
+    assert not hit, f"a resolver fallback bug resurfaced for: {sorted(hit)}"
+
+
+def _method_groups_by_name(class_node: ast.ClassDef) -> dict[str, list[ast.FunctionDef]]:
+    groups: dict[str, list[ast.FunctionDef]] = {}
+    for stmt in class_node.body:
+        if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            groups.setdefault(stmt.name, []).append(stmt)
+    return groups
+
+
+def _has_staticmethod_decorator(fn) -> bool:
+    return any(isinstance(d, ast.Name) and d.id == "staticmethod" for d in fn.decorator_list)
+
+
+def test_no_mixed_static_instance_overloads() -> None:
+    """Java allows one method name to be overloaded between a static and an
+    instance member (e.g. VectorF.length(): int vs static
+    VectorF.length(int): VectorF; Orientation.getRotationMatrix()). Pyright
+    rejects a Python overload set that mixes @staticmethod with instance
+    form (reportInconsistentOverload) -- reproducible pre-fix on
+    Orientation.getRotationMatrix in ftc/navigation.py. stubgen.py now
+    renders a whole name-group as @staticmethod as soon as any one overload
+    is static; verify no generated class still mixes the two within one
+    name."""
+    offenders = []
+    for path in sorted(FTC_DIR.glob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.ClassDef):
+                continue
+            for name, fns in _method_groups_by_name(node).items():
+                statics = {_has_staticmethod_decorator(fn) for fn in fns}
+                if len(statics) > 1:
+                    offenders.append(f"{path.name}:{node.name}.{name}")
+    assert not offenders, f"mixed static/instance overloads remain: {offenders}"
+
+
+def _annotation_fqns(classes: dict) -> list[str]:
+    return [fqn for fqn, c in classes.items() if c["kind"] == "annotation"]
+
+
+def test_annotation_types_render_as_classes_usable_in_type_position(classes: dict) -> None:
+    """Java `@interface` types are used two ways in FTC code: as a class
+    decorator (`@TeleOp(name=...)`, bare `@Disabled`) and as an ordinary
+    parameter type (`processAnnotation(motorType: MotorType)`). The old
+    rendering (a plain function returning a function, or returning `cls`
+    directly for a marker) satisfied only the decorator use; pyright
+    rejected the type-position use with "Expected class". Every
+    annotation-kind entry in the DB must now be a real `class` in its
+    module, with the decorator behavior implemented as `__call__`
+    (annotations with elements, called as `@X(...)`) or `__new__` (marker
+    annotations applied bare as `@X`, which Python calls directly with no
+    intervening `()`)."""
+    parsed = {
+        path.stem: ast.parse(path.read_text(encoding="utf-8")) for path in FTC_DIR.glob("*.py")
+    }
+    problems = []
+    for fqn in _annotation_fqns(classes):
+        c = classes[fqn]
+        module = c["module"]
+        if module is None:
+            problems.append(f"{fqn}: no module (nested annotation -- not expected in this SDK)")
+            continue
+        tree = parsed[module.split(".", 1)[1]]
+        node = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == c["simpleName"]), None)
+        if node is None:
+            problems.append(f"{fqn}: not rendered as a top-level class in {module}")
+            continue
+        method_names = {n.name for n in node.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
+        has_elements = bool(c.get("fields"))  # extract.py models annotation elements as fields
+        if has_elements and not ({"__init__", "__call__"} <= method_names):
+            problems.append(f"{fqn}: has elements but is missing __init__/__call__ ({sorted(method_names)})")
+        if not has_elements and "__new__" not in method_names:
+            problems.append(f"{fqn}: marker annotation missing __new__ ({sorted(method_names)})")
+    assert not problems, "\n".join(problems)
 
 
 def _ftc_modules() -> list[str]:
