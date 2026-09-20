@@ -18,7 +18,9 @@
     "onCommand:revFtc.deploy",
     "onCommand:revFtc.spawnStarterPack",
     "onCommand:revFtc.showGeneratedJava",
-    "onCommand:revFtc.refreshHubView"
+    "onCommand:revFtc.refreshHubView",
+    "onCommand:revFtc.checkAutocomplete",
+    "onCommand:revFtc.updateFromConfig"
   ],
   "contributes": {
     "commands": [
@@ -41,6 +43,15 @@
         "command": "revFtc.refreshHubView",
         "title": "REV FTC: Refresh Hub View",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "revFtc.checkAutocomplete",
+        "title": "REV FTC: Check Autocomplete"
+      },
+      {
+        "command": "revFtc.updateFromConfig",
+        "title": "REV FTC: Update Starter Pack From Hardware Configuration",
+        "icon": "$(sync)"
       }
     ],
     "viewsContainers": {
@@ -68,9 +79,14 @@
           "group": "navigation@1"
         },
         {
-          "command": "revFtc.refreshHubView",
+          "command": "revFtc.updateFromConfig",
           "when": "view == revFtcHub",
           "group": "navigation@2"
+        },
+        {
+          "command": "revFtc.refreshHubView",
+          "when": "view == revFtcHub",
+          "group": "navigation@3"
         }
       ],
       "editor/title": [
@@ -97,6 +113,12 @@
         },
         {
           "command": "revFtc.refreshHubView"
+        },
+        {
+          "command": "revFtc.checkAutocomplete"
+        },
+        {
+          "command": "revFtc.updateFromConfig"
         }
       ]
     },
@@ -130,6 +152,32 @@
           },
           "default": [],
           "description": "Advanced: override the command used to invoke the translator (e.g. to point at a test fixture) instead of '<pythonPath> -m pyftc'. Arguments like 'translate-project --root ...' are appended."
+        },
+        "revFtc.liveDiagnostics": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run the translator in the background on save (and optionally while typing) and show translation errors in the Problems panel before you deploy."
+        },
+        "revFtc.liveDiagnosticsTrigger": {
+          "type": "string",
+          "enum": ["save", "edit"],
+          "enumDescriptions": [
+            "Re-run the background translator only when a .py file is saved.",
+            "Also re-run on a debounce while typing (revFtc.liveDiagnosticsDebounceMs)."
+          ],
+          "default": "save",
+          "description": "When to re-run the background translator for live diagnostics."
+        },
+        "revFtc.liveDiagnosticsDebounceMs": {
+          "type": "number",
+          "default": 750,
+          "minimum": 100,
+          "description": "Debounce delay (ms) before re-running the background translator after an edit. Only used when revFtc.liveDiagnosticsTrigger is 'edit'."
+        },
+        "revFtc.configWatch": {
+          "type": "boolean",
+          "default": true,
+          "description": "Watch the hub's active hardware configuration (on connect, on sidebar refresh, and before a deploy) and offer to update generated starter packs when it changes. The 'REV FTC: Update Starter Pack From Hardware Configuration' command still works by hand when this is off."
         }
       }
     }
@@ -139,11 +187,12 @@
     "watch": "node esbuild.js --watch",
     "typecheck": "tsc --noEmit -p .",
     "pretest": "tsc -p tsconfig.test.json",
-    "test": "node --test out-test/test/*.test.js",
+    "test": "NODE_PATH=test/vscode-shim node --test out-test/test/*.test.js",
     "prepackage": "node scripts/copy-python.mjs",
     "package": "npm run prepackage && npm run build && npx @vscode/vsce package --no-dependencies -o dist/rev-vscode.vsix",
     "smoke": "tsc -p tsconfig.test.json && NODE_PATH=test/vscode-shim node out-test/test/hub-smoke.js",
-    "e2e": "node test/e2e/run.mjs"
+    "e2e": "node test/e2e/run.mjs",
+    "e2e:fake": "node test/e2e/runFake.mjs"
   },
   "dependencies": {
     "fast-xml-parser": "^4.5.0"

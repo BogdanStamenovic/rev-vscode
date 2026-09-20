@@ -61,27 +61,61 @@ async function buildCommand(): Promise<string[]> {
   return [python, '-m', 'pyftc'];
 }
 
+/** Thrown when a caller-supplied AbortSignal killed the process before it
+ * exited on its own - used by live diagnostics (liveDiagnostics.ts) to tell
+ * "superseded by a newer run" apart from a real translator failure, so a
+ * cancelled background run never surfaces as an error toast or wipes
+ * diagnostics that the newer run hasn't replaced yet. */
+export class CliAbortedError extends Error {
+  constructor() {
+    super('pyftc process was aborted (superseded by a newer request)');
+    this.name = 'CliAbortedError';
+  }
+}
+
 interface SpawnCollectResult {
   stdout: string;
   stderr: string;
   code: number | null;
 }
 
-function spawnCollect(command: string[], env: NodeJS.ProcessEnv): Promise<SpawnCollectResult> {
+function spawnCollect(command: string[], env: NodeJS.ProcessEnv, signal?: AbortSignal): Promise<SpawnCollectResult> {
   return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new CliAbortedError());
+      return;
+    }
     const child = spawn(command[0], command.slice(1), { env });
     let stdout = '';
     let stderr = '';
+    let aborted = false;
+    const onAbort = () => {
+      aborted = true;
+      child.kill('SIGTERM');
+    };
+    signal?.addEventListener('abort', onAbort);
+    const cleanup = () => signal?.removeEventListener('abort', onAbort);
+
     child.stdout.on('data', (d) => (stdout += d.toString()));
     child.stderr.on('data', (d) => (stderr += d.toString()));
     child.on('error', (err) => {
-      if (isEnoent(err)) {
+      cleanup();
+      if (aborted) {
+        reject(new CliAbortedError());
+      } else if (isEnoent(err)) {
         reject(new Error(`Could not run '${command[0]}': ${err.message}`));
       } else {
         reject(err);
       }
     });
-    child.on('exit', (code) => resolve({ stdout, stderr, code }));
+    child.on('exit', (code) => {
+      cleanup();
+      if (aborted) {
+        reject(new CliAbortedError());
+        return;
+      }
+      resolve({ stdout, stderr, code });
+    });
   });
 }
 
@@ -96,7 +130,7 @@ export interface CliOutcome<T> {
   stderr: string;
 }
 
-export async function runPyftcJson<T>(args: string[]): Promise<CliOutcome<T>> {
+export async function runPyftcJson<T>(args: string[], signal?: AbortSignal): Promise<CliOutcome<T>> {
   const base = await buildCommand();
   const full = [...base, ...args];
   logCli(full);
@@ -107,7 +141,7 @@ export async function runPyftcJson<T>(args: string[]): Promise<CliOutcome<T>> {
     PYTHONPATH: process.env.PYTHONPATH ? `${extPythonDir}${path.delimiter}${process.env.PYTHONPATH}` : extPythonDir,
   };
 
-  const { stdout, stderr, code } = await spawnCollect(full, env);
+  const { stdout, stderr, code } = await spawnCollect(full, env, signal);
 
   if (code === 0 || code === 1) {
     try {

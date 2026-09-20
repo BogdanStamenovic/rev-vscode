@@ -33,3 +33,28 @@ export function translatorCommand(): string[] {
   const v = cfg().get<string[]>('translatorCommand');
   return Array.isArray(v) ? v.filter((s) => s.length > 0) : [];
 }
+
+/** Master switch for running translate-project in the background (see
+ * liveDiagnostics.ts). Default true. */
+export function liveDiagnostics(): boolean {
+  return cfg().get<boolean>('liveDiagnostics') ?? true;
+}
+
+/** 'save' (default): re-run only on save, debounced just enough to coalesce
+ * a "Save All". 'edit': also re-run on a debounce while typing. */
+export function liveDiagnosticsTrigger(): 'save' | 'edit' {
+  return cfg().get<string>('liveDiagnosticsTrigger') === 'edit' ? 'edit' : 'save';
+}
+
+export function liveDiagnosticsDebounceMs(): number {
+  const v = cfg().get<number>('liveDiagnosticsDebounceMs');
+  return typeof v === 'number' && v >= 0 ? v : 750;
+}
+
+/** Master switch for watching the hub's active hardware configuration for
+ * changes (configWatch.ts). Default true. Only gates the automatic checks
+ * (on connect / sidebar refresh / before deploy) - the revFtc.updateFromConfig
+ * command still works when run by hand regardless of this setting. */
+export function configWatch(): boolean {
+  return cfg().get<boolean>('configWatch') ?? true;
+}

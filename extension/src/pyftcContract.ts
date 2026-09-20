@@ -38,6 +38,61 @@ export interface TranslateProjectResult {
 export interface StarterResult {
   ok: boolean;
   python: string;
+  /** 16 hex chars, see ARCHITECTURE.md's "Fingerprint" section. Embedded by
+   * the CLI itself into `python`'s `# ── pyftc:config ... ──` header line -
+   * this field just saves us from re-parsing it back out for the man page
+   * write and other bookkeeping that happens at spawn time. */
+  fingerprint: string;
+  /** Markdown reference for this robot's configured hardware, written to
+   * `<Name>.md` next to `<Name>.py` (Contract 4 activity in the task brief). */
+  manual: string;
+}
+
+export interface ManualResult {
+  ok: boolean;
+  markdown: string;
+  fingerprint: string;
+}
+
+export interface ConfigFingerprintResult {
+  ok: boolean;
+  fingerprint: string;
+}
+
+export interface AddedDevice {
+  name: string;
+  field: string;
+  type: string;
+  control: string;
+}
+
+export interface RemovedDevice {
+  name: string;
+  field: string;
+}
+
+export interface HubAdded {
+  name: string;
+  address: string;
+}
+
+export interface StarterUpdateResult {
+  ok: boolean;
+  /** false when the fingerprint already matched the file's header - nothing
+   * to do. */
+  changed: boolean;
+  /** false when the file's markers (Contract 4) are gone: the CLI refused to
+   * touch the file. `python`/`manual` are absent in that case; `block` holds
+   * the code the user must place by hand instead. */
+  applied: boolean;
+  fingerprint: string;
+  python?: string;
+  block?: string;
+  manual?: string;
+  added: AddedDevice[];
+  removed: RemovedDevice[];
+  hubsAdded: HubAdded[];
+  notes: string[];
 }
 
 /** Strips the leading "/src/" (or "src/") a hubPath/tree path may carry, to

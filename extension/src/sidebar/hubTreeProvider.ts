@@ -9,6 +9,7 @@ import { getConnection, invalidateConnection, type HubConnection } from '../hub/
 import { fetchRcInfo, type RcInfo } from '../hub/rcinfo';
 import { fetchActiveConfigXml, parseActiveConfig } from '../hub/configFetch';
 import type { ParsedConfig } from '../hub/config';
+import { checkConfigChanges } from '../hub/configWatch';
 import { log } from '../output';
 
 type NodeKind = 'status' | 'device' | 'config' | 'group' | 'hub' | 'device-leaf' | 'message';
@@ -149,6 +150,10 @@ export class HubTreeProvider implements vscode.TreeDataProvider<TreeNode>, vscod
       }
 
       this.roots = buildTree(conn, rcInfo, this.lastConfig);
+      // Fire-and-forget: this is "on hub connect" / "on sidebar refresh" for
+      // configWatch.ts (see its header comment). It does its own adb/hub
+      // round trip, so it must not delay the tree's own 5s refresh cycle.
+      void checkConfigChanges();
     } catch (err) {
       invalidateConnection();
       this.roots = errorRoots((err as Error).message);

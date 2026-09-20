@@ -12,6 +12,7 @@ import { getDiagnosticCollection, addDiagnostics } from '../diagnostics';
 import { log } from '../output';
 import { HubUnreachableError } from '../hub/connection';
 import { resolveSourceRootDir } from '../workspaceRoot';
+import { checkConfigChanges } from '../hub/configWatch';
 
 const OUR_FOLDER_PREFIX = 'org/firstinspires/ftc/teamcode/pyftc/';
 
@@ -30,6 +31,13 @@ export async function runDeploy(): Promise<void> {
     async (progress) => {
       try {
         await saveDirtyPythonFiles();
+
+        // Third configWatch.ts trigger ("before a deploy"). Best-effort and
+        // non-blocking of the deploy itself: a slow/unreachable hub here
+        // just means no notification this time, not a failed deploy - the
+        // deploy's own hub calls below will surface any real connectivity
+        // problem on their own.
+        void checkConfigChanges();
 
         const root = resolveSourceRootDir();
 

@@ -6,7 +6,10 @@ import { HubTreeProvider } from './sidebar/hubTreeProvider';
 import { runDeploy } from './commands/deploy';
 import { runSpawnStarterPack } from './commands/spawnStarterPack';
 import { GeneratedJavaProvider, SCHEME as JAVA_SCHEME, runShowGeneratedJava } from './commands/showGeneratedJava';
-import { ensureAutocomplete } from './python/autocomplete';
+import { runUpdateFromConfig } from './commands/updateFromConfig';
+import { AutocompleteReportProvider, REPORT_SCHEME, runCheckAutocomplete } from './commands/checkAutocomplete';
+import { ensureAutocomplete, watchForFtcImports } from './python/autocomplete';
+import { LiveDiagnosticsController } from './liveDiagnostics';
 
 export function activate(context: vscode.ExtensionContext): void {
   setExtensionPath(context.extensionPath);
@@ -38,12 +41,23 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.registerTextDocumentContentProvider(JAVA_SCHEME, javaProvider)
   );
 
+  const reportProvider = new AutocompleteReportProvider();
+  context.subscriptions.push(
+    vscode.workspace.registerTextDocumentContentProvider(REPORT_SCHEME, reportProvider)
+  );
+
   context.subscriptions.push(
     vscode.commands.registerCommand('revFtc.deploy', () => runDeploy()),
-    vscode.commands.registerCommand('revFtc.spawnStarterPack', () => runSpawnStarterPack()),
+    vscode.commands.registerCommand('revFtc.spawnStarterPack', () => runSpawnStarterPack(context)),
     vscode.commands.registerCommand('revFtc.showGeneratedJava', () => runShowGeneratedJava(javaProvider)),
-    vscode.commands.registerCommand('revFtc.refreshHubView', () => hubTreeProvider.refresh(true))
+    vscode.commands.registerCommand('revFtc.refreshHubView', () => hubTreeProvider.refresh(true)),
+    vscode.commands.registerCommand('revFtc.updateFromConfig', () => runUpdateFromConfig()),
+    vscode.commands.registerCommand('revFtc.checkAutocomplete', () => runCheckAutocomplete(context, reportProvider))
   );
+
+  const liveDiagnostics = new LiveDiagnosticsController();
+  context.subscriptions.push(liveDiagnostics);
+  context.subscriptions.push(watchForFtcImports(context));
 
   const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
   statusBarItem.text = '$(play) Deploy to Hub';

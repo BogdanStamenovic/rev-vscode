@@ -3,15 +3,15 @@
 // Falls back to picking a config XML by hand when no hub is reachable at
 // all (offline generation).
 import * as vscode from 'vscode';
-import * as os from 'node:os';
 import * as path from 'node:path';
-import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
-import { getConnection, HubUnreachableError } from '../hub/connection';
-import { fetchRcInfo } from '../hub/rcinfo';
-import { fetchActiveConfigXml } from '../hub/configFetch';
+import { writeFile, readFile } from 'node:fs/promises';
+import { HubUnreachableError } from '../hub/connection';
+import { fetchHubConfigFiles } from '../hub/configFetch';
 import { runPyftcJson } from '../cli';
 import type { StarterResult } from '../pyftcContract';
 import { resolveSourceRootDir } from '../workspaceRoot';
+import { withTempDir } from '../tempDir';
+import { ensureAutocomplete } from '../python/autocomplete';
 import { log } from '../output';
 
 const PY_IDENTIFIER_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
@@ -43,24 +43,8 @@ async function promptClassName(): Promise<string | undefined> {
   });
 }
 
-async function withTempDir<T>(fn: (dir: string) => Promise<T>): Promise<T> {
-  const dir = await mkdtemp(path.join(os.tmpdir(), 'rev-vscode-'));
-  try {
-    return await fn(dir);
-  } finally {
-    await rm(dir, { recursive: true, force: true }).catch(() => undefined);
-  }
-}
-
 async function generateFromHub(dir: string): Promise<{ config: string; rcinfo: string } | undefined> {
-  const conn = await getConnection();
-  const rcInfo = await fetchRcInfo();
-  const { xml } = await fetchActiveConfigXml(conn, rcInfo.activeConfigName);
-
-  const rcinfoPath = path.join(dir, 'rcInfo.json');
-  const configPath = path.join(dir, `${rcInfo.activeConfigName}.xml`);
-  await writeFile(rcinfoPath, JSON.stringify(rcInfo, null, 2), 'utf8');
-  await writeFile(configPath, xml, 'utf8');
+  const { configPath, rcinfoPath } = await fetchHubConfigFiles(dir);
   return { config: configPath, rcinfo: rcinfoPath };
 }
 
@@ -99,7 +83,7 @@ async function generateOffline(dir: string): Promise<{ config: string; rcinfo: s
   return { config: configPath, rcinfo: rcinfoPath };
 }
 
-export async function runSpawnStarterPack(): Promise<void> {
+export async function runSpawnStarterPack(context?: vscode.ExtensionContext): Promise<void> {
   try {
     await withTempDir(async (dir) => {
       let inputs: { config: string; rcinfo: string } | undefined;
@@ -157,8 +141,22 @@ export async function runSpawnStarterPack(): Promise<void> {
       }
 
       await vscode.workspace.fs.writeFile(targetUri, Buffer.from(outcome.result.python, 'utf8'));
+
+      // Man page next to the .py, same name/folder, per the task brief -
+      // it's the CLI's own `manual` field, not something we generate.
+      const manualUri = vscode.Uri.file(path.join(sourceRootDir, `${name}.md`));
+      await vscode.workspace.fs.writeFile(manualUri, Buffer.from(outcome.result.manual, 'utf8'));
+
       const doc = await vscode.workspace.openTextDocument(targetUri);
       await vscode.window.showTextDocument(doc);
+
+      // A freshly spawned starter pack always imports ftc.* - this is the
+      // "right after a starter pack is spawned" trigger for automatic
+      // autocomplete wiring (python/autocomplete.ts), so users who skipped
+      // (or never saw) the activation-time scan still get it without asking.
+      if (context) {
+        await ensureAutocomplete(context);
+      }
     });
   } catch (err) {
     vscode.window.showErrorMessage(

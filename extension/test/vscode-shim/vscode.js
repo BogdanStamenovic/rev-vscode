@@ -74,9 +74,34 @@ const Uri = {
   },
 };
 
+// Minimal stand-in for vscode.DiagnosticCollection: a Map keyed by the
+// URI's string form, good enough for diagnostics.ts's get/set/delete/clear
+// usage (tests exercising it live in test/diagnostics.test.ts).
+function createDiagnosticCollection(_name) {
+  const store = new Map();
+  return {
+    get(uri) {
+      return store.get(uri.toString());
+    },
+    set(uri, diags) {
+      store.set(uri.toString(), diags);
+    },
+    delete(uri) {
+      store.delete(uri.toString());
+    },
+    clear() {
+      store.clear();
+    },
+    dispose() {
+      store.clear();
+    },
+  };
+}
+
 module.exports = {
   window: { createOutputChannel },
   workspace: { getConfiguration },
+  languages: { createDiagnosticCollection },
   EventEmitter,
   Position,
   Range,
