@@ -27,9 +27,10 @@ def _m(name: str, params: list[tuple[str, str]], returns: str, static: bool = Fa
 
 def _cls(fqn: str, kind: str = "class", type_params: list[str] | None = None,
          extends: list[str] | None = None, methods: list[dict[str, Any]] | None = None,
-         fields: list[dict[str, Any]] | None = None, ctors: list[list[tuple[str, str]]] | None = None) -> dict[str, Any]:
+         fields: list[dict[str, Any]] | None = None, ctors: list[list[tuple[str, str]]] | None = None,
+         module: str | None = None) -> dict[str, Any]:
     return {
-        "kind": kind, "simpleName": fqn.rsplit(".", 1)[-1], "outer": None, "module": None,
+        "kind": kind, "simpleName": fqn.rsplit(".", 1)[-1], "outer": None, "module": module,
         "typeParams": type_params or [], "extends": extends or [], "abstract": False,
         "methods": methods or [], "fields": fields or [], "enumConstants": [], "doc": "",
         "constructors": [{"params": [{"name": n, "type": t, "varargs": False} for n, t in c], "doc": ""}
@@ -111,6 +112,43 @@ JDK: dict[str, dict[str, Any]] = {
                                        ctors=[[], [("msg", "java.lang.String")]]),
     "java.lang.IllegalStateException": _cls("java.lang.IllegalStateException", extends=["java.lang.RuntimeException"],
                                             ctors=[[], [("msg", "java.lang.String")]]),
+
+    # `java.io.File` is a plain JDK class -- no FTC SDK artifact ships a
+    # *-sources.jar for the JDK itself, so sdkgen's registry has nothing to
+    # extract it from (see python/tests/test_stubs.py's EXTERNAL_PREFIXES,
+    # where "java.io." is documented as exactly this kind of gap). Hand-write
+    # the narrow slice the "save data across a power cycle" recipe needs:
+    # build a path and ask it basic questions, matching real java.io.File
+    # one-for-one for the members listed.
+    "java.io.File": _cls("java.io.File", module="ftc.io",
+        ctors=[[("pathname", "java.lang.String")],
+               [("parent", "java.io.File"), ("child", "java.lang.String")]],
+        methods=[_m("getName", [], "java.lang.String"), _m("getPath", [], "java.lang.String"),
+                 _m("getAbsolutePath", [], "java.lang.String"), _m("exists", [], "boolean"),
+                 _m("delete", [], "boolean"), _m("mkdirs", [], "boolean"), _m("length", [], "long")]),
+
+    # org.firstinspires.ftc.robotcore.internal.system.AppUtil *is* in the SDK
+    # sources (RobotCore-11.2.0-sources.jar) and was tried the preferred way
+    # first: seeding it into sdkgen's closure. Measured result (see the
+    # sdkgen probe run against sdkgen/.cache/src for 11.2.0): seeding AppUtil
+    # alone pulls in 27 more classes through its ~120 other public methods --
+    # dialog-box plumbing (DialogContext, DialogParams, DialogFlavor),
+    # websocket handling (WebSocketManager, FtcWebSocket, CloseCode, ...),
+    # progress-bar UI (ProgressParameters, UILocation), RobotCoreCommandList,
+    # Deadline, MemberwiseCloneable, ElapsedTime -- none of it reachable from
+    # a Python OpMode, none of it about files. That is a large, unrelated
+    # internal subtree to drag into what Contract 2 promises as a small,
+    # obvious "read/write a settings file" module, so AppUtil gets the same
+    # hand-written treatment as File: only the two members every team
+    # actually needs, verified by hand against SDK 11.2.0's real source
+    # (sdkgen/.cache/src/RobotCore/org/firstinspires/ftc/robotcore/internal/
+    # system/AppUtil.java):
+    #   public static AppUtil getInstance()                    (line 191)
+    #   public File getSettingsFile(String filename)            (line 418, INSTANCE method)
+    "org.firstinspires.ftc.robotcore.internal.system.AppUtil": _cls(
+        "org.firstinspires.ftc.robotcore.internal.system.AppUtil", module="ftc.io",
+        methods=[_m("getInstance", [], "org.firstinspires.ftc.robotcore.internal.system.AppUtil", static=True),
+                 _m("getSettingsFile", [("filename", "java.lang.String")], "java.io.File")]),
 }
 
 
@@ -153,6 +191,11 @@ class TypeDB:
     def module_export(self, module: str, name: str) -> str | None:
         if module == "ftc.gamepad" and name == "Gamepad":
             return self.module_export("ftc.hardware", name) or "com.qualcomm.robotcore.hardware.Gamepad"
+        if module == "ftc.io" and name == "ReadWriteFile":
+            # ReadWriteFile is a real SDK class stubbed in ftc.util; ftc.io
+            # just re-exports it (same precedent as ftc.gamepad above) so
+            # `from ftc.io import File, AppUtil, ReadWriteFile` is one import.
+            return self.module_export("ftc.util", name)
         return self._by_module.get(module, {}).get(name)
 
     def module_names(self, module: str) -> dict[str, str]:

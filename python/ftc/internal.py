@@ -4409,7 +4409,6 @@ UNSTUBBABLE_JAVA_TYPES = [
     "com.google.gson.stream.JsonReader",
     "com.google.gson.stream.JsonWriter",
     "java.io.Closeable",
-    "java.io.File",
     "java.io.InputStream",
     "java.io.OutputStream",
     "java.io.PrintWriter",

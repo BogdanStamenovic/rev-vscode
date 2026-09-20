@@ -81,7 +81,8 @@ def _ctor_to_dict(c, ctx: TypeContext, referenced: set[str], registry: Registry)
     return {"params": params, "doc": first_doc}
 
 
-def _field_to_dict(fd, declarator, ctx: TypeContext, referenced: set[str], registry: Registry) -> dict:
+def _field_to_dict(fd, declarator, ctx: TypeContext, referenced: set[str], registry: Registry,
+                    force_static_final: bool = False) -> dict:
     t = type_node_to_string(fd.type, ctx)
     extra_dims = len(getattr(declarator, "dimensions", None) or [])
     if extra_dims:
@@ -91,8 +92,17 @@ def _field_to_dict(fd, declarator, ctx: TypeContext, referenced: set[str], regis
     return {
         "name": declarator.name,
         "type": t,
-        "static": "static" in fd.modifiers,
-        "final": "final" in fd.modifiers,
+        # JLS 9.3: every field declared in the body of an interface is
+        # implicitly public, static and final, whether or not the source
+        # spells out the modifiers (and FTC SDK interfaces routinely don't,
+        # e.g. `double MAX_POSITION = 1.0;` inside `interface Servo`).
+        # javalang's `modifiers` only reports what's written, so a plain
+        # `"static" in fd.modifiers` check misses every one of these --
+        # `force_static_final` (set from the enclosing type's kind, below)
+        # is what makes ClassName.CONSTANT resolve as the static access it
+        # actually is instead of translating into a javac error.
+        "static": force_static_final or "static" in fd.modifiers,
+        "final": force_static_final or "final" in fd.modifiers,
         "doc": first_doc,
     }
 
@@ -131,7 +141,7 @@ def extract_full(entry: ClassEntry, registry: Registry, module: str | None,
             if _is_private(fd.modifiers):
                 continue
             for decl in fd.declarators:
-                fields.append(_field_to_dict(fd, decl, ctx, referenced, registry))
+                fields.append(_field_to_dict(fd, decl, ctx, referenced, registry, force_static_final=(kind == "interface")))
         enum_constants = [c.name for c in node.body.constants] if kind == "enum" else []
         if kind == "interface":
             abstract = True

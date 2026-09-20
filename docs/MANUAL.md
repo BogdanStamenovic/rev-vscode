@@ -23,6 +23,7 @@ so they are known to work. If you change an example, run the tests.
 - [13. Python rules cheat sheet](#13-python-rules-cheat-sheet)
 - [14. Troubleshooting](#14-troubleshooting)
 - [15. Extending the tool](#15-extending-the-tool)
+- [16. Saving data between matches](#16-saving-data-between-matches)
 
 ---
 
@@ -943,3 +944,90 @@ eval "$(scripts/javac-env.sh)"                            # JDK 17 + SDK jars fo
 cd python && uv run --no-project --with pytest pytest -q tests
 cd ../extension && npm test
 ```
+
+## 16. Saving data between matches
+
+Static fields don't survive a Robot Controller power cycle: the app process
+(and everything only ever held in memory) restarts between matches, sometimes
+even between OpModes. To carry a value from one match into the next -- a
+measured drift correction, a chosen autonomous path, anything that needs to
+outlive an app restart -- write it to a file and read it back at INIT.
+
+`ftc.io` wraps the SDK's own recipe for this: `AppUtil.getInstance()` finds a
+writable settings file, and `ReadWriteFile` (already in `ftc.util`) reads and
+writes its contents as plain text. A typical pair is an `Aftercare` OpMode run
+once after the match, and the main TeleOp reading the file back at the top of
+`runOpMode`:
+
+```python
+# example: aftercare/Aftercare.py
+from ftc.opmode import LinearOpMode, Autonomous
+from ftc.io import File, AppUtil, ReadWriteFile
+
+
+@Autonomous(name="Aftercare", group="pyftc")
+class Aftercare(LinearOpMode):
+    """Run this manually after a match to save whatever the next match should know."""
+
+    def runOpMode(self) -> None:
+        self.waitForStart()
+        f: File = AppUtil.getInstance().getSettingsFile("specs.txt")
+        ReadWriteFile.writeFile(f, "1.5,2.5")
+        self.telemetry.addLine("saved")
+        self.telemetry.update()
+```
+
+```python
+# example: aftercare/Main.py
+from ftc.opmode import LinearOpMode, TeleOp
+from ftc.io import File, AppUtil, ReadWriteFile
+
+
+@TeleOp(name="Main", group="pyftc")
+class Main(LinearOpMode):
+    heading: float = 0.0
+    distance: float = 0.0
+
+    def runOpMode(self) -> None:
+        f: File = AppUtil.getInstance().getSettingsFile("specs.txt")
+        if f.exists():
+            parts = ReadWriteFile.readFile(f).split(",")
+            self.heading = float(parts[0])
+            self.distance = float(parts[1])
+        # else: keep the defaults above -- first run, or a freshly wiped hub
+        self.waitForStart()
+        while self.opModeIsActive():
+            self.telemetry.addData("heading", self.heading)
+            self.telemetry.addData("distance", self.distance)
+            self.telemetry.update()
+```
+
+- **Where the file lives**: `AppUtil.getInstance().getSettingsFile(name)`
+  resolves a relative name against `AppUtil.ROBOT_SETTINGS`, which the SDK
+  source defines as `FIRST/settings/` under external storage -- on a Control
+  Hub that's `/sdcard/FIRST/settings/<name>`. That's the same `/sdcard/FIRST/`
+  folder the hardware configuration XML already lives in (see
+  ARCHITECTURE.md's verified hub facts), just a `settings` subfolder of it, so
+  it won't collide with the configuration file or OnBot Java's own sources.
+- **It survives a reboot.** It's a plain file on the hub's internal storage,
+  not app memory, so a power cycle (the whole point of this section) doesn't
+  touch it -- only deleting the file, or wiping the hub, does.
+- **Always check `exists()` before reading.** The first run after a fresh
+  install or a wiped hub, there's nothing to read yet; `Main` above falls back
+  to the class's own default field values (`heading`/`distance` at 0.0) when
+  the file isn't there.
+- **What's available**: only `File` (a handful of the real `java.io.File`
+  methods -- construct, `exists`, `delete`, `mkdirs`, name/path queries,
+  `length`) and `AppUtil.getInstance()`/`getSettingsFile(String)`. The rest of
+  `AppUtil` (dialogs, USB, websockets, ~120 other methods) isn't reachable
+  from a Python OpMode and was deliberately left out; see the comment above
+  the type database entry in `python/pyftc/typedb.py` for why.
+- **Not verified on real hardware.** Everything above is translated and
+  compiled against the real SDK jars (`python/tests/test_manual.py`), and the
+  paths quoted are read directly from the SDK's own source
+  (`AppUtil.ROOT_FOLDER`/`FIRST_FOLDER`/`ROBOT_SETTINGS`), but nobody has run
+  an `Aftercare` OpMode on a physical Control Hub, power-cycled it, and
+  confirmed the Robot Controller app can actually write to
+  `/sdcard/FIRST/settings/` at runtime and that the value is still there
+  after reboot. That's a claim only the real hub can settle -- treat it as
+  unverified until someone runs it at an event or on the bench.

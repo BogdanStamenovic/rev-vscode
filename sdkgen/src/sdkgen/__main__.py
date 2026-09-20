@@ -7,7 +7,7 @@ from pathlib import Path
 
 from .dbwrite import build_database, write_database
 from .download import ensure_sdk_cache
-from .handwritten import GAMEPAD_PY, INIT_PY, LANG_PY
+from .handwritten import GAMEPAD_PY, INIT_PY, IO_PY, LANG_PY
 from .pytypes import unresolved_bases
 from .registry import build_registry
 from .stubgen import generate_module_files
@@ -32,6 +32,15 @@ def _iter_type_strings(c: dict):
             yield tp.split(" extends ", 1)[1]
 
 
+#: Types this closure pass would flag as unresolved (nothing in any FTC SDK
+#: sources jar declares them, so `classes` has no entry) but that are in
+#: fact real, hand-written stubs living outside the generated ftc/*.py files
+#: sdkgen itself writes -- see python/pyftc/typedb.py's hand-written slice
+#: and python/ftc/io.py. Excluded here so a regenerate doesn't relist a type
+#: as an unstubbed gap when it's actually stubbed by hand.
+HAND_STUBBED_ELSEWHERE = {"java.io.File"}
+
+
 def _write_internal_type_list(classes: dict, ftc_dir: Path) -> int:
     """Appends a documented, sorted list of every Java type still rendering
     as `Any` in the generated stubs (module-level, in ftc/internal.py) --
@@ -41,6 +50,7 @@ def _write_internal_type_list(classes: dict, ftc_dir: Path) -> int:
     for c in classes.values():
         for ts in _iter_type_strings(c):
             causes |= unresolved_bases(ts, classes)
+    causes -= HAND_STUBBED_ELSEWHERE
     if not causes:
         return 0
     lines = [
@@ -100,6 +110,7 @@ def main(argv: list[str] | None = None) -> int:
     (ftc_dir / "lang.py").write_text(LANG_PY, encoding="utf-8")
     (ftc_dir / "__init__.py").write_text(INIT_PY, encoding="utf-8")
     (ftc_dir / "gamepad.py").write_text(GAMEPAD_PY, encoding="utf-8")
+    (ftc_dir / "io.py").write_text(IO_PY, encoding="utf-8")
 
     print(f"sdkgen: done in {time.time() - t0:.1f}s", file=sys.stderr)
     if registry.parse_failures:

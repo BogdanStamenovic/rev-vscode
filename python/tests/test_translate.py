@@ -328,3 +328,125 @@ def test_nested_class_constructor(translate):
         pytest.skip("fixture DB has no RevHubOrientationOnRobot; covered by the sdk variant")
     assert r["ok"], r["diagnostics"]
     assert "IMU.Parameters p = new IMU.Parameters(new RevHubOrientationOnRobot(" in java(r)
+
+
+# ---------------------------------------------------------------- ftc.io: saving data across a power cycle
+
+def test_aftercare_writes_settings_file_and_main_reads_it_with_fallback(translate):
+    """The real end-to-end recipe from docs/MANUAL.md: an Aftercare OpMode
+    writes a settings file after a match, and a Main OpMode reads it back at
+    INIT next time, falling back to the class's default field values when the
+    file doesn't exist yet (first run, or a fresh hub)."""
+    src = """
+from ftc.opmode import LinearOpMode, TeleOp, Autonomous
+from ftc.io import File, AppUtil, ReadWriteFile
+
+@Autonomous(name="Aftercare", group="pyftc")
+class Aftercare(LinearOpMode):
+    def runOpMode(self) -> None:
+        self.waitForStart()
+        f: File = AppUtil.getInstance().getSettingsFile("specs.txt")
+        ReadWriteFile.writeFile(f, "1.5,2.5")
+
+
+@TeleOp(name="Main", group="pyftc")
+class Main(LinearOpMode):
+    heading: float = 0.0
+    distance: float = 0.0
+
+    def runOpMode(self) -> None:
+        f: File = AppUtil.getInstance().getSettingsFile("specs.txt")
+        if f.exists():
+            parts = ReadWriteFile.readFile(f).split(",")
+            self.heading = float(parts[0])
+            self.distance = float(parts[1])
+        self.waitForStart()
+        while self.opModeIsActive():
+            self.telemetry.addData("heading", self.heading)
+            self.telemetry.addData("distance", self.distance)
+            self.telemetry.update()
+"""
+    r = translate(src)
+    assert r["ok"], r["diagnostics"]
+    by_name = {f["className"]: f["java"] for f in r["files"]}
+    assert 'File f = AppUtil.getInstance().getSettingsFile("specs.txt");' in by_name["Aftercare"]
+    assert 'ReadWriteFile.writeFile(f, "1.5,2.5");' in by_name["Aftercare"]
+    assert "import java.io.File;" in by_name["Aftercare"]
+    assert "if (f.exists()) {" in by_name["Main"]
+    assert 'String[] parts = ReadWriteFile.readFile(f).split(",");' in by_name["Main"]
+    assert "heading = Double.parseDouble(parts[0]);" in by_name["Main"]
+    assert "distance = Double.parseDouble(parts[1]);" in by_name["Main"]
+    assert "double heading = 0.0;" in by_name["Main"]
+    assert "double distance = 0.0;" in by_name["Main"]
+
+
+# ---------------------------------------------------------------- ClassVar: static fields, done deliberately
+
+def test_classvar_static_field_written_by_one_opmode_read_by_another(translate):
+    """A field one match's aftercare OpMode writes and the next match's main
+    OpMode reads has to be an actual Java `static` field -- Shared.field only
+    compiles when Shared declares it that way. ClassVar[...] is how a Python
+    OpMode author asks for that."""
+    shared = """
+from typing import ClassVar
+
+class Shared:
+    last_heading: ClassVar[float] = 0.0
+"""
+    main = """
+from ftc.opmode import LinearOpMode, TeleOp, Autonomous
+from Shared import Shared
+
+@Autonomous(name="Aftercare", group="pyftc")
+class Aftercare(LinearOpMode):
+    def runOpMode(self) -> None:
+        self.waitForStart()
+        Shared.last_heading = 12.0
+
+
+@TeleOp(name="Main", group="pyftc")
+class Main(LinearOpMode):
+    def runOpMode(self) -> None:
+        self.waitForStart()
+        while self.opModeIsActive():
+            self.telemetry.addData("heading", Shared.last_heading)
+            self.telemetry.update()
+"""
+    r = translate(main, extra={"Shared.py": shared})
+    assert r["ok"], r["diagnostics"]
+    by_name = {f["className"]: f["java"] for f in r["files"]}
+    assert "static double last_heading = 0.0;" in by_name["Shared"]
+    assert "Shared.last_heading = 12.0;" in by_name["Aftercare"]
+    assert 'telemetry.addData("heading", Shared.last_heading);' in by_name["Main"]
+
+
+def test_class_name_access_to_non_classvar_field_is_a_clear_error(translate):
+    """Without ClassVar, `last_heading` is an ordinary instance field;
+    `Shared.last_heading = ...` translates syntactically but javac would
+    reject it ('non-static variable ... cannot be referenced from a static
+    context'). This must be a translator diagnostic, not a broken build."""
+    shared = """
+class Shared:
+    last_heading: float = 0.0
+"""
+    main = body("Shared.last_heading = 12.0")
+    main = main.replace("import math", "import math\nfrom Shared import Shared")
+    r = translate(main, extra={"Shared.py": shared})
+    assert not r["ok"]
+    msgs = errors(r)
+    assert any("ClassVar" in m and "last_heading" in m for m in msgs), msgs
+
+
+def test_typing_import_of_unsupported_name_is_rejected(translate):
+    """`from typing import ...` used to `continue` unconditionally, silently
+    accepting any name (Union, Dict, Protocol, ...) with no effect at
+    runtime. Only the names resolve_annotation() actually implements are
+    legitimate; anything else must be a diagnostic."""
+    r = translate(body("pass").replace("import math", "import math\nfrom typing import Protocol"))
+    assert not r["ok"]
+    assert any("Protocol" in m and "typing" in m for m in errors(r))
+
+
+def test_typing_classvar_and_final_still_import_cleanly(translate):
+    r = translate(body("pass").replace("import math", "import math\nfrom typing import ClassVar, Optional, Final"))
+    assert r["ok"], r["diagnostics"]

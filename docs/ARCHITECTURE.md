@@ -123,6 +123,7 @@ Only public/protected API. `protected` members are kept because OpMode fields
 | `ftc.telemetry` | `org.firstinspires.ftc.robotcore.external` (Telemetry, Func, …)               |
 | `ftc.navigation`| `org.firstinspires.ftc.robotcore.external.navigation`                         |
 | `ftc.util`      | `com.qualcomm.robotcore.util`                                                 |
+| `ftc.io`        | hand-written: `File` (`java.io.File`, not in any SDK sources jar) and `AppUtil` (`org.firstinspires.ftc.robotcore.internal.system.AppUtil`, narrowed by hand to `getInstance()`/`getSettingsFile(String)` -- see python/pyftc/typedb.py); re-exports `ReadWriteFile` from `ftc.util` |
 | `ftc.vision`    | `org.firstinspires.ftc.vision`, `.apriltag`, `.opencv`                        |
 | `ftc.lang`      | hand-written: `long`, `short`, `byte`, `char` int aliases and `float32` for Java `float` |
 | `ftc.internal`  | no package of its own: catch-all for a class with no row above that a stubbed signature elsewhere still needs to resolve (transitive closure over methods/fields/extends/generic args from the packages above, e.g. `DcMotor.getMotorType() -> MotorConfigurationType`); not meant to be imported from directly |

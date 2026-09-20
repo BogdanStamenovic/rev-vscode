@@ -47,6 +47,12 @@ CATCH_EXCEPTIONS = {
     "ZeroDivisionError": "java.lang.ArithmeticException",
 }
 
+# The only names `from typing import ...` may bring in: exactly the ones
+# resolve_annotation() has a case for (ClassVar/Final -> static field
+# handling in _build_signature; all three unwrap to the inner type in an
+# annotation). Anything else from typing is a diagnostic, not a silent pass.
+TYPING_SUPPORTED = {"ClassVar", "Optional", "Final"}
+
 # Python method names on builtin containers -> Java. Only applied when the
 # receiver is known to be that Java type.
 LIST_METHODS = {"append": "add", "extend": "addAll", "insert": "add", "clear": "clear", "index": "indexOf", "remove": "remove"}
@@ -211,7 +217,20 @@ class ProjectTranslator:
                 continue
             if isinstance(node, ast.ImportFrom):
                 mod = node.module or ""
-                if mod == "__future__" or mod == "typing":
+                if mod == "__future__":
+                    continue
+                if mod == "typing":
+                    # Only the typing names resolve_annotation() actually
+                    # understands (ClassVar[...] -> a static field, Optional/
+                    # Final[...] -> unwrapped to the inner type) are real
+                    # here; anything else from typing was previously accepted
+                    # by accident (this whole branch used to `continue`
+                    # unconditionally) and silently did nothing at runtime on
+                    # the hub. Make that deliberate: name it or reject it.
+                    for alias in node.names:
+                        if alias.name == "*" or alias.name not in TYPING_SUPPORTED:
+                            self.diag(f, node, f"'{alias.name}' from typing is not supported by the translator; "
+                                               f"only {', '.join(sorted(TYPING_SUPPORTED))} are recognized")
                     continue
                 for alias in node.names:
                     local = alias.asname or alias.name
@@ -1252,6 +1271,23 @@ class ClassTranslator:
                 return Expr(f"{obj.code}.{attr}", JType(obj.cls.fqn))
             f = self.db.field(JType(obj.cls.fqn), attr)
             if f is not None:
+                if not f.data.get("static"):
+                    # ClassName.field on a non-static field translates fine
+                    # syntactically but javac rejects it ("non-static
+                    # variable ... cannot be referenced from a static
+                    # context") -- this tool must never hand that to javac
+                    # silently. A project class's own field can be fixed by
+                    # the user (ClassVar makes it a real static field); an
+                    # SDK class's field cannot, so only point at ClassVar
+                    # when it would actually help.
+                    simple = obj.cls.fqn.rsplit(".", 1)[-1]
+                    if obj.cls.fqn.startswith(f"{PACKAGE}."):
+                        raise self.fail(node, f"'{attr}' is an instance field, so {simple}.{attr} is not valid "
+                                              f"Java; declare it `{attr}: ClassVar[...] = ...` "
+                                              "(from typing import ClassVar) to make it a class-level field, "
+                                              "or access it through an instance instead")
+                    raise self.fail(node, f"'{attr}' is an instance field on {simple}; access it through "
+                                          "an instance, not the class name")
                 return Expr(f"{obj.code}.{_ident(attr)}", f.return_type())
             if obj.cls.fqn in self.db.classes:
                 raise self.fail(node, f"{obj.cls.fqn.rsplit('.', 1)[-1]} has no static field, enum constant or nested class '{attr}'")

@@ -1132,72 +1132,72 @@
       "fields": [
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "AMS_TCS34725_ADDRESS",
-          "static": false,
+          "static": true,
           "type": "com.qualcomm.robotcore.hardware.I2cAddr"
         },
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "AMS_TMD37821_ADDRESS",
-          "static": false,
+          "static": true,
           "type": "com.qualcomm.robotcore.hardware.I2cAddr"
         },
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "AMS_TCS34725_ID",
-          "static": false,
+          "static": true,
           "type": "byte"
         },
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "AMS_TMD37821_ID",
-          "static": false,
+          "static": true,
           "type": "byte"
         },
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "AMS_TMD37823_ID",
-          "static": false,
+          "static": true,
           "type": "byte"
         },
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "AMS_COLOR_COMMAND_BIT",
-          "static": false,
+          "static": true,
           "type": "int"
         },
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "AMS_COLOR_COMMAND_TYPE_REPEATED_BYTE",
-          "static": false,
+          "static": true,
           "type": "int"
         },
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "AMS_COLOR_COMMAND_TYPE_AUTO_INCREMENT",
-          "static": false,
+          "static": true,
           "type": "int"
         },
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "AMS_COLOR_COMMAND_TYPE_RESERVED",
-          "static": false,
+          "static": true,
           "type": "int"
         },
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "AMS_COLOR_COMMAND_TYPE_SPECIAL",
-          "static": false,
+          "static": true,
           "type": "int"
         }
       ],
@@ -7291,16 +7291,16 @@
       "fields": [
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "BROADCOM_APDS9151_ADDRESS",
-          "static": false,
+          "static": true,
           "type": "com.qualcomm.robotcore.hardware.I2cAddr"
         },
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "BROADCOM_APDS9151_ID",
-          "static": false,
+          "static": true,
           "type": "byte"
         }
       ],
@@ -9138,65 +9138,65 @@
       "fields": [
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "OCTOQUAD_CHIP_ID",
-          "static": false,
+          "static": true,
           "type": "byte"
         },
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "SUPPORTED_FW_VERSION_MAJ",
-          "static": false,
+          "static": true,
           "type": "int"
         },
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "ENCODER_FIRST",
-          "static": false,
+          "static": true,
           "type": "int"
         },
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "ENCODER_LAST",
-          "static": false,
+          "static": true,
           "type": "int"
         },
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "NUM_ENCODERS",
-          "static": false,
+          "static": true,
           "type": "int"
         },
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "MIN_VELOCITY_MEASUREMENT_INTERVAL_MS",
-          "static": false,
+          "static": true,
           "type": "int"
         },
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "MAX_VELOCITY_MEASUREMENT_INTERVAL_MS",
-          "static": false,
+          "static": true,
           "type": "int"
         },
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "MIN_PULSE_WIDTH_US",
-          "static": false,
+          "static": true,
           "type": "int"
         },
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "MAX_PULSE_WIDTH_US",
-          "static": false,
+          "static": true,
           "type": "int"
         }
       ],
@@ -31545,9 +31545,9 @@
       "fields": [
         {
           "doc": "The value to pass to #refreshUserTelemetry(TelemetryMessage, as the time interval parameter in order to cause a system default interval to be used.",
-          "final": false,
+          "final": true,
           "name": "TELEMETRY_DEFAULT_INTERVAL",
-          "static": false,
+          "static": true,
           "type": "double"
         }
       ],
@@ -32269,9 +32269,9 @@
       "fields": [
         {
           "doc": "When a device shuts down with ShutdownReason#ABNORMAL_ATTEMPT_REOPEN, this is the recommended duration of time to wait before attempting reopen. It was only heuristically determined, and might thus perhaps be shortened",
-          "final": false,
+          "final": true,
           "name": "msAbnormalReopenInterval",
-          "static": false,
+          "static": true,
           "type": "int"
         }
       ],
@@ -33205,9 +33205,9 @@
       "fields": [
         {
           "doc": "DEFAULT_OP_MODE_NAME is the (non-localized) name of the default OpMode, the one that automatically runs whenever no user OpMode is running.",
-          "final": false,
+          "final": true,
           "name": "DEFAULT_OP_MODE_NAME",
-          "static": false,
+          "static": true,
           "type": "java.lang.String"
         }
       ],
@@ -38732,9 +38732,9 @@
       "fields": [
         {
           "doc": "The value returned when a distance reading is not in fact available.",
-          "final": false,
+          "final": true,
           "name": "distanceOutOfRange",
-          "static": false,
+          "static": true,
           "type": "double"
         }
       ],
@@ -47821,16 +47821,16 @@
       "fields": [
         {
           "doc": "The minimum allowable position to which a servo can be moved",
-          "final": false,
+          "final": true,
           "name": "MIN_POSITION",
-          "static": false,
+          "static": true,
           "type": "double"
         },
         {
           "doc": "The maximum allowable position to which a servo can be moved",
-          "final": false,
+          "final": true,
           "name": "MAX_POSITION",
-          "static": false,
+          "static": true,
           "type": "double"
         }
       ],
@@ -55559,9 +55559,9 @@
       "fields": [
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "HEADER_LENGTH",
-          "static": false,
+          "static": true,
           "type": "int"
         }
       ],
@@ -70910,9 +70910,9 @@
       "fields": [
         {
           "doc": "A frame number that never appears in a real camera frame.",
-          "final": false,
+          "final": true,
           "name": "UnknownFrameNumber",
-          "static": false,
+          "static": true,
           "type": "long"
         }
       ],
@@ -78443,37 +78443,37 @@
       "fields": [
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "javaRoot",
-          "static": false,
+          "static": true,
           "type": "java.io.File"
         },
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "srcDir",
-          "static": false,
+          "static": true,
           "type": "java.io.File"
         },
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "statusDir",
-          "static": false,
+          "static": true,
           "type": "java.io.File"
         },
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "buildSuccessfulFile",
-          "static": false,
+          "static": true,
           "type": "java.io.File"
         },
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "controlDir",
-          "static": false,
+          "static": true,
           "type": "java.io.File"
         }
       ],
@@ -80011,16 +80011,16 @@
       "fields": [
         {
           "doc": "",
-          "final": false,
+          "final": true,
           "name": "SYSTEM_NAMESPACE",
-          "static": false,
+          "static": true,
           "type": "java.lang.String"
         },
         {
           "doc": "Version of the WebSocket core implementation. This value should be incremented any time a breaking change is made to the core functionality of our websockets (commands and messages). Clients will read this value from rcInfo.json to determine if they are compatible with WebSocket commands and messages.",
-          "final": false,
+          "final": true,
           "name": "WEBSOCKET_API_VERSION",
-          "static": false,
+          "static": true,
           "type": "int"
         }
       ],

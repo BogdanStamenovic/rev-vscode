@@ -93,6 +93,12 @@ FIXTURE = {
         c("com.qualcomm.robotcore.util.Range", module="ftc.util", methods=[
             m("clip", [("number", "double"), ("min", "double"), ("max", "double")], "double", static=True),
             m("clip", [("number", "int"), ("min", "int"), ("max", "int")], "int", static=True)]),
+        # Just the two members the ftc.io saving-data-between-matches recipe
+        # needs; the real class (and its many read*/write*OrThrow overloads)
+        # lives in the generated sdk-11.2.0.json, module ftc.util.
+        c("com.qualcomm.robotcore.util.ReadWriteFile", module="ftc.util", methods=[
+            m("readFile", [("file", "java.io.File")], "java.lang.String", static=True),
+            m("writeFile", [("file", "java.io.File"), ("data", "java.lang.String")], "void", static=True)]),
         c(f"{HW}.IMU", kind="interface", module="ftc.hardware", extends=[f"{HW}.HardwareDevice"], methods=[
             m("resetYaw")]),
     ]),
