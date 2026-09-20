@@ -4,6 +4,8 @@ from typing import Any, Callable, Generic, TypeVar, TYPE_CHECKING, overload
 import enum
 
 if TYPE_CHECKING:
+    from ftc.hardware import Heartbeat, PeerDiscovery
+    from ftc.internal import RobotControllerWebInfo, RobotCoreCommandList, RobotCoreException, WebHandler, WebObserver, WebSocketManager
     from ftc.telemetry import Predicate
 
 E = TypeVar("E")
@@ -147,6 +149,17 @@ class ClassUtil:
     TAG: str
 
 
+class PeerStatusCallback:
+    __java__ = "org.firstinspires.ftc.robotcore.internal.network.PeerStatusCallback"
+    def onPeerConnected(self) -> None:
+        """Notifies that a peer is newly connected (including if the peer just changed or the robot was restarted)."""
+        ...
+
+    def onPeerDisconnected(self) -> None:
+        """Notifies that the peer is newly disconnected."""
+        ...
+
+
 class GlobalWarningSource:
     """Instances of this interface can be registered with RobotLog as dynamic generators of robot warning messages."""
     __java__ = "com.qualcomm.robotcore.util.GlobalWarningSource"
@@ -171,7 +184,7 @@ class GlobalWarningSource:
         ...
 
 
-class ClockWarningSource(GlobalWarningSource):
+class ClockWarningSource(GlobalWarningSource, PeerStatusCallback):
     """This class is only used on the Robot Controller"""
     __java__ = "com.qualcomm.robotcore.util.ClockWarningSource"
     @staticmethod
@@ -181,7 +194,7 @@ class ClockWarningSource(GlobalWarningSource):
     def onPossibleRcClockUpdate(self) -> None:
         ...
 
-    def onDsHeartbeatReceived(self, dsHeartbeat: Any) -> None:
+    def onDsHeartbeatReceived(self, dsHeartbeat: Heartbeat) -> None:
         ...
 
     def getGlobalWarning(self) -> str:
@@ -423,7 +436,7 @@ class ImmersiveMode:
 class IncludedFirmwareFileInfo:
     __java__ = "com.qualcomm.robotcore.util.IncludedFirmwareFileInfo"
     HUMAN_READABLE_FW_VERSION: str
-    FW_IMAGE: Any
+    FW_IMAGE: RobotCoreCommandList.FWImage
 
 
 class Intents:
@@ -679,7 +692,7 @@ class ReadWriteFile:
         ...
 
     @staticmethod
-    def readBytes(fwImage: Any) -> list[int]:
+    def readBytes(fwImage: RobotCoreCommandList.FWImage) -> list[int]:
         ...
 
     @staticmethod
@@ -1048,7 +1061,7 @@ class RobotLog:
         ...
     @overload
     @staticmethod
-    def setGlobalErrorMsg(e: Any, message: str) -> None:
+    def setGlobalErrorMsg(e: RobotCoreException, message: str) -> None:
         ...
     @overload
     @staticmethod
@@ -1083,7 +1096,7 @@ class RobotLog:
 
     @overload
     @staticmethod
-    def setGlobalErrorMsgAndThrow(e: Any, message: str) -> None:
+    def setGlobalErrorMsgAndThrow(e: RobotCoreException, message: str) -> None:
         ...
     @overload
     @staticmethod
@@ -1422,7 +1435,7 @@ class ShortHash:
     """Max number that can be encoded with Hashids."""
 
 
-class SoftwareVersionWarningSource(GlobalWarningSource):
+class SoftwareVersionWarningSource(GlobalWarningSource, PeerStatusCallback):
     """This class is only used on the Robot Controller"""
     __java__ = "com.qualcomm.robotcore.util.SoftwareVersionWarningSource"
     class MismatchedAppsDetail:
@@ -1433,7 +1446,7 @@ class SoftwareVersionWarningSource(GlobalWarningSource):
     def getInstance() -> SoftwareVersionWarningSource:
         ...
 
-    def onReceivedPeerDiscoveryFromCurrentPeer(self, peerDiscoveryData: Any) -> None:
+    def onReceivedPeerDiscoveryFromCurrentPeer(self, peerDiscoveryData: PeerDiscovery) -> None:
         ...
 
     def onReceivedDriverHubOsVersionCode(self, dhOsVersionCode: int) -> None:
@@ -2117,15 +2130,15 @@ class WebHandlerManager:
     def getWebServer(self) -> WebServer:
         ...
 
-    def register(self, command: str, webHandler: Any) -> None:
+    def register(self, command: str, webHandler: WebHandler) -> None:
         """Register a key, value pair. Associate a String command with a WebHandler."""
         ...
 
-    def getRegistered(self, command: str) -> Any:
+    def getRegistered(self, command: str) -> WebHandler:
         """Returns if a web handler is already associated with a command."""
         ...
 
-    def registerObserver(self, key: str, webObserver: Any) -> None:
+    def registerObserver(self, key: str, webObserver: WebObserver) -> None:
         """Registers a observer as WebObserver for client requests into the robot web server. This allows for the detection of some client requests, but this method does not allow for WebObservers to return a server response. Successive calls with the same key use the last WebObserver that was used in a call. Therefore, different instances of active WebObserver require different keys."""
         ...
 
@@ -2147,10 +2160,87 @@ class WebServer:
         """stop the WebServer."""
         ...
 
-    def getConnectionInformation(self) -> Any:
+    def getConnectionInformation(self) -> RobotControllerWebInfo:
         """Get RobotControllerWebInfo"""
         ...
 
-    def getWebSocketManager(self) -> Any:
+    def getWebSocketManager(self) -> WebSocketManager:
         """Get the manager for the WebSockets associated with this WebServer"""
         ...
+
+
+class VendorProductSerialNumber(SerialNumber):
+    """A VendorProductSerialNumber is a made-up USB serial number derived from vendor and product identifiers together with the USB connection path (concatenation of USB port numbers through possibly various USB hubs). The general rule we have for devices with this kind of serial number is that if there's only one of them attached with a given (vid,pid) pair, then we allow that to move around from USB port to USB port, but if there's more than one with the same (vid,pid) identification then we require that all of them only be used on the USB phyical ports / connection paths on which they were originally configured / detected."""
+    __java__ = "org.firstinspires.ftc.robotcore.internal.usb.VendorProductSerialNumber"
+    @overload
+    def __init__(self, initializer: str) -> None:
+        ...
+    @overload
+    def __init__(self, vid: int, pid: int, connectionPath: str) -> None:
+        ...
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        ...
+
+    def matches(self, oPattern: object) -> bool:
+        ...
+
+    def toString(self) -> str:
+        ...
+
+    def isVendorProduct(self) -> bool:
+        ...
+
+    def getVendorId(self) -> int:
+        ...
+
+    def getProductId(self) -> int:
+        ...
+
+    def getConnectionPath(self) -> str:
+        ...
+
+    vendorId: int
+    productId: int
+    connectionPath: str
+
+
+class Deadline(ElapsedTime):
+    """Deadline enhances ElapsedTime with an explicit duration. A Deadline can also be cancelled, causing it to expire earlier than it originally would have."""
+    __java__ = "org.firstinspires.ftc.robotcore.internal.system.Deadline"
+    def __init__(self, duration: int, unit: Any) -> None:
+        ...
+
+    def reset(self) -> None:
+        ...
+
+    def cancel(self) -> None:
+        ...
+
+    def expire(self) -> None:
+        ...
+
+    def getDuration(self, unit: Any) -> int:
+        ...
+
+    def getDeadline(self, unit: Any) -> int:
+        ...
+
+    def timeRemaining(self, unit: Any) -> int:
+        ...
+
+    def hasExpired(self) -> bool:
+        ...
+
+    def await_(self, latch: Any) -> bool:
+        ...
+
+    def tryLock(self, lock: Any) -> bool:
+        ...
+
+    def tryAcquire(self, semaphore: Any) -> bool:
+        ...
+
+    nsDuration: int
+    nsDeadline: int
+    awaitUnit: Any
+    msPollInterval: int

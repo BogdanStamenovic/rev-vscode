@@ -4,12 +4,13 @@ from typing import Any, Callable, Generic, TypeVar, TYPE_CHECKING, overload
 import enum
 
 from ftc.opmode import LinearOpMode, OpModeManagerNotifier
-from ftc.util import GlobalWarningSource
+from ftc.util import GlobalWarningSource, PeerStatusCallback
 if TYPE_CHECKING:
+    from ftc.internal import AnalogSensorConfigurationType, ApChannel, CallbackResult, CameraCharacteristics, Consumer, Continuation, ControllerConfiguration, DeviceConfiguration, DigitalIoDeviceConfigurationType, EventLoop, EvictingBlockingQueue, ExpansionHubMotorControllerParamsState, GamepadUser, I2cDeviceConfigurationType, LynxCommand, LynxDatagram, LynxDekaInterfaceCommand, LynxI2cConfigureChannelCommand, LynxInterface, LynxMessage, LynxNack, LynxRespondable, LynxResponse, MotorConfigurationType, NetworkType, ProgressParameters, RobocolDatagram, RobocolDatagramSocket, RobotCoreCommandList, RobotCoreException, RobotState, RobotUsbDevice, RobotUsbManager, ServoConfigurationType, TargetPositionNotSetException, ThrowingSupplier, TimeWindow
     from ftc.navigation import Acceleration, AngleUnit, AngularVelocity, AxesOrder, AxesReference, Axis, CurrentUnit, DistanceUnit, MagneticFlux, Orientation, Pose2D, Pose3D, Position, Quaternion, TempUnit, Temperature, UnnormalizedAngleUnit, Velocity, VoltageUnit, YawPitchRollAngles
-    from ftc.opmode import OpMode, OpModeManagerImpl
+    from ftc.opmode import EventLoopManagerClient, OpMode, OpModeManagerImpl
     from ftc.telemetry import Consumer, Func
-    from ftc.util import ElapsedTime, LastKnown, SerialNumber, WeakReferenceSet
+    from ftc.util import Deadline, ElapsedTime, LastKnown, SerialNumber, VendorProductSerialNumber, WeakReferenceSet, WebServer
 
 DEVICE_CLIENT = TypeVar("DEVICE_CLIENT", bound="I2cDeviceSynchSimple")
 DEVICE_TYPE = TypeVar("DEVICE_TYPE", bound="HardwareDevice")
@@ -389,10 +390,10 @@ class CRServoImplEx(CRServoImpl, PwmControl):
     """CRServoEx provides access to extended functionality on continuous rotation servos. Implementations support both the CRServo and PwmControl interfaces."""
     __java__ = "com.qualcomm.robotcore.hardware.CRServoImplEx"
     @overload
-    def __init__(self, controller: ServoControllerEx, portNumber: int, servoType: Any) -> None:
+    def __init__(self, controller: ServoControllerEx, portNumber: int, servoType: ServoConfigurationType) -> None:
         ...
     @overload
-    def __init__(self, controller: ServoControllerEx, portNumber: int, direction: Any, servoType: Any) -> None:
+    def __init__(self, controller: ServoControllerEx, portNumber: int, direction: Any, servoType: ServoConfigurationType) -> None:
         ...
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         ...
@@ -419,56 +420,6 @@ class CRServoImplEx(CRServoImpl, PwmControl):
         ...
 
     controllerEx: ServoControllerEx
-
-
-class NormalizedColorSensor(HardwareDevice):
-    """NormalizedColorSensor returns color sensor data in standardized units, which provides a measure of absolute color color intensity beyond the relative intensities available using ColorSensor."""
-    __java__ = "com.qualcomm.robotcore.hardware.NormalizedColorSensor"
-    def getNormalizedColors(self) -> NormalizedRGBA:
-        """Reads the colors from the sensor"""
-        ...
-
-    def getGain(self) -> float:
-        ...
-
-    def setGain(self, newGain: float) -> None:
-        ...
-
-
-class ColorSensor(HardwareDevice):
-    """Color Sensor"""
-    __java__ = "com.qualcomm.robotcore.hardware.ColorSensor"
-    def red(self) -> int:
-        """Get the Red values detected by the sensor as an int."""
-        ...
-
-    def green(self) -> int:
-        """Get the Green values detected by the sensor as an int."""
-        ...
-
-    def blue(self) -> int:
-        """Get the Blue values detected by the sensor as an int."""
-        ...
-
-    def alpha(self) -> int:
-        """Get the amount of light detected by the sensor as an int."""
-        ...
-
-    def argb(self) -> int:
-        """Get the sensed ARGB color value from the sensor."""
-        ...
-
-    def enableLed(self, enable: bool) -> None:
-        """Enable the LED light"""
-        ...
-
-    def setI2cAddress(self, newAddress: I2cAddr) -> None:
-        """Set the I2C address to a new value."""
-        ...
-
-    def getI2cAddress(self) -> I2cAddr:
-        """Get the current I2C Address of this object. Not necessarily the same as the I2C address of the actual device. Return the current I2C address."""
-        ...
 
 
 class LightSensor(HardwareDevice):
@@ -509,6 +460,56 @@ class DistanceSensor(HardwareDevice):
 
     distanceOutOfRange: float
     """The value returned when a distance reading is not in fact available."""
+
+
+class ColorSensor(HardwareDevice):
+    """Color Sensor"""
+    __java__ = "com.qualcomm.robotcore.hardware.ColorSensor"
+    def red(self) -> int:
+        """Get the Red values detected by the sensor as an int."""
+        ...
+
+    def green(self) -> int:
+        """Get the Green values detected by the sensor as an int."""
+        ...
+
+    def blue(self) -> int:
+        """Get the Blue values detected by the sensor as an int."""
+        ...
+
+    def alpha(self) -> int:
+        """Get the amount of light detected by the sensor as an int."""
+        ...
+
+    def argb(self) -> int:
+        """Get the sensed ARGB color value from the sensor."""
+        ...
+
+    def enableLed(self, enable: bool) -> None:
+        """Enable the LED light"""
+        ...
+
+    def setI2cAddress(self, newAddress: I2cAddr) -> None:
+        """Set the I2C address to a new value."""
+        ...
+
+    def getI2cAddress(self) -> I2cAddr:
+        """Get the current I2C Address of this object. Not necessarily the same as the I2C address of the actual device. Return the current I2C address."""
+        ...
+
+
+class NormalizedColorSensor(HardwareDevice):
+    """NormalizedColorSensor returns color sensor data in standardized units, which provides a measure of absolute color color intensity beyond the relative intensities available using ColorSensor."""
+    __java__ = "com.qualcomm.robotcore.hardware.NormalizedColorSensor"
+    def getNormalizedColors(self) -> NormalizedRGBA:
+        """Reads the colors from the sensor"""
+        ...
+
+    def getGain(self) -> float:
+        ...
+
+    def setGain(self, newGain: float) -> None:
+        ...
 
 
 class ColorRangeSensor(ColorSensor, NormalizedColorSensor, DistanceSensor, OpticalDistanceSensor):
@@ -575,11 +576,11 @@ class DcMotor(DcMotorSimple):
             """Returns whether this RunMode is a PID-controlled mode or not"""
             ...
 
-    def getMotorType(self) -> Any:
+    def getMotorType(self) -> MotorConfigurationType:
         """Returns the assigned type for this motor. If no particular motor type has been configured, then MotorConfigurationType#getUnspecifiedMotorType() will be returned. Note that the motor type for a given motor is initially assigned in the robot configuration user interface, though it may subsequently be modified using methods herein."""
         ...
 
-    def setMotorType(self, motorType: Any) -> None:
+    def setMotorType(self, motorType: MotorConfigurationType) -> None:
         """Sets the assigned type of this motor. Usage of this method is very rare."""
         ...
 
@@ -635,11 +636,11 @@ class DcMotor(DcMotorSimple):
 class DcMotorController(HardwareDevice):
     """Interface for working with DC Motor Controllers"""
     __java__ = "com.qualcomm.robotcore.hardware.DcMotorController"
-    def setMotorType(self, motor: int, motorType: Any) -> None:
+    def setMotorType(self, motor: int, motorType: MotorConfigurationType) -> None:
         """Informs the motor controller of the type of a particular motor. This is normally used only as part of the initialization of a motor."""
         ...
 
-    def getMotorType(self, motor: int) -> Any:
+    def getMotorType(self, motor: int) -> MotorConfigurationType:
         """Retrieves the motor type configured for this motor"""
         ...
 
@@ -864,7 +865,7 @@ class DcMotorImpl(DcMotor):
         """Constructor"""
         ...
     @overload
-    def __init__(self, controller: DcMotorController, portNumber: int, direction: Any, motorType: Any) -> None:
+    def __init__(self, controller: DcMotorController, portNumber: int, direction: Any, motorType: MotorConfigurationType) -> None:
         """Constructor"""
         ...
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -888,10 +889,10 @@ class DcMotorImpl(DcMotor):
     def close(self) -> None:
         ...
 
-    def getMotorType(self) -> Any:
+    def getMotorType(self) -> MotorConfigurationType:
         ...
 
-    def setMotorType(self, motorType: Any) -> None:
+    def setMotorType(self, motorType: MotorConfigurationType) -> None:
         ...
 
     def getController(self) -> DcMotorController:
@@ -977,7 +978,7 @@ class DcMotorImpl(DcMotor):
     controller: DcMotorController
     portNumber: int
     direction: Any
-    motorType: Any
+    motorType: MotorConfigurationType
 
 
 class DcMotorImplEx(DcMotorImpl, DcMotorEx):
@@ -990,7 +991,7 @@ class DcMotorImplEx(DcMotorImpl, DcMotorEx):
     def __init__(self, controller: DcMotorController, portNumber: int, direction: Any) -> None:
         ...
     @overload
-    def __init__(self, controller: DcMotorController, portNumber: int, direction: Any, motorType: Any) -> None:
+    def __init__(self, controller: DcMotorController, portNumber: int, direction: Any, motorType: MotorConfigurationType) -> None:
         ...
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         ...
@@ -1086,36 +1087,36 @@ class DeviceManager:
         """Get a listing of currently connected USB devices"""
         ...
 
-    def createDcMotor(self, controller: DcMotorController, portNumber: int, motorType: Any, name: str) -> DcMotor:
+    def createDcMotor(self, controller: DcMotorController, portNumber: int, motorType: MotorConfigurationType, name: str) -> DcMotor:
         """Create an instance of a DcMotor"""
         ...
 
-    def createDcMotorEx(self, controller: DcMotorController, portNumber: int, motorType: Any, name: str) -> DcMotor:
+    def createDcMotorEx(self, controller: DcMotorController, portNumber: int, motorType: MotorConfigurationType, name: str) -> DcMotor:
         ...
 
-    def createServoEx(self, controller: ServoControllerEx, portNumber: int, name: str, servoType: Any) -> Servo:
+    def createServoEx(self, controller: ServoControllerEx, portNumber: int, name: str, servoType: ServoConfigurationType) -> Servo:
         """Create an instance of a Servo"""
         ...
 
-    def createCRServoEx(self, controller: ServoControllerEx, portNumber: int, name: str, servoType: Any) -> CRServo:
+    def createCRServoEx(self, controller: ServoControllerEx, portNumber: int, name: str, servoType: ServoConfigurationType) -> CRServo:
         ...
 
-    def createCustomServoDeviceInstances(self, controller: ServoControllerEx, portNumber: int, servoConfigurationType: Any) -> list[HardwareDevice]:
+    def createCustomServoDeviceInstances(self, controller: ServoControllerEx, portNumber: int, servoConfigurationType: ServoConfigurationType) -> list[HardwareDevice]:
         ...
 
-    def createAnalogSensorInstances(self, controller: AnalogInputController, channel: int, type: Any) -> list[HardwareDevice]:
+    def createAnalogSensorInstances(self, controller: AnalogInputController, channel: int, type: AnalogSensorConfigurationType) -> list[HardwareDevice]:
         ...
 
-    def createDigitalDeviceInstances(self, controller: DigitalChannelController, channel: int, type: Any) -> list[HardwareDevice]:
+    def createDigitalDeviceInstances(self, controller: DigitalChannelController, channel: int, type: DigitalIoDeviceConfigurationType) -> list[HardwareDevice]:
         ...
 
     def createPwmOutputDevice(self, controller: PWMOutputController, channel: int, name: str) -> PWMOutput:
         ...
 
-    def createI2cDeviceSynch(self, module: RobotCoreLynxModule, channel: Any, name: str) -> I2cDeviceSynch:
+    def createI2cDeviceSynch(self, module: RobotCoreLynxModule, channel: DeviceConfiguration.I2cChannel, name: str) -> I2cDeviceSynch:
         ...
 
-    def createI2cDeviceInstances(self, lynxModule: RobotCoreLynxModule, channel: Any, type: Any, name: str) -> list[HardwareDevice]:
+    def createI2cDeviceInstances(self, lynxModule: RobotCoreLynxModule, channel: DeviceConfiguration.I2cChannel, type: I2cDeviceConfigurationType, name: str) -> list[HardwareDevice]:
         ...
 
     def createLimelight3A(self, serialNumber: SerialNumber, name: str, ipAddress: Any) -> HardwareDevice:
@@ -1126,7 +1127,7 @@ class DeviceManager:
         """Creates an instance of a Lynx USB device"""
         ...
 
-    def createWebcamName(self, serialNumber: SerialNumber, name: str) -> Any:
+    def createWebcamName(self, serialNumber: SerialNumber, name: str) -> WebcamName:
         """Creates a WebcamName from the indicated serialized contents"""
         ...
 
@@ -1134,22 +1135,22 @@ class DeviceManager:
         """Create an instance of a Modern Robotics TouchSensor on a digital controller"""
         ...
 
-    def createMRI2cIrSeekerSensorV3(self, module: RobotCoreLynxModule, channel: Any, name: str) -> IrSeekerSensor:
+    def createMRI2cIrSeekerSensorV3(self, module: RobotCoreLynxModule, channel: DeviceConfiguration.I2cChannel, name: str) -> IrSeekerSensor:
         """Create an instance of a IrSeekerSensorV3"""
         ...
 
-    def createModernRoboticsI2cGyroSensor(self, module: RobotCoreLynxModule, channel: Any, name: str) -> GyroSensor:
+    def createModernRoboticsI2cGyroSensor(self, module: RobotCoreLynxModule, channel: DeviceConfiguration.I2cChannel, name: str) -> GyroSensor:
         """Create an instance of a GyroSensor"""
         ...
 
-    def createAdafruitI2cColorSensor(self, module: RobotCoreLynxModule, channel: Any, name: str) -> ColorSensor:
+    def createAdafruitI2cColorSensor(self, module: RobotCoreLynxModule, channel: DeviceConfiguration.I2cChannel, name: str) -> ColorSensor:
         """Create an instance of a ColorSensor"""
         ...
 
-    def createLynxColorRangeSensor(self, module: RobotCoreLynxModule, channel: Any, name: str) -> ColorSensor:
+    def createLynxColorRangeSensor(self, module: RobotCoreLynxModule, channel: DeviceConfiguration.I2cChannel, name: str) -> ColorSensor:
         ...
 
-    def createModernRoboticsI2cColorSensor(self, module: RobotCoreLynxModule, channel: Any, name: str) -> ColorSensor:
+    def createModernRoboticsI2cColorSensor(self, module: RobotCoreLynxModule, channel: DeviceConfiguration.I2cChannel, name: str) -> ColorSensor:
         """Create an instance of a ColorSensor"""
         ...
 
@@ -1320,7 +1321,108 @@ class Engagable:
         ...
 
 
-class Gamepad:
+class RobocolParsable:
+    """Interface implemented by objects that want to be sendable via a RobocolDatagram."""
+    __java__ = "com.qualcomm.robotcore.robocol.RobocolParsable"
+    class MsgType(enum.Enum):
+        """Message Type"""
+        __java__ = "com.qualcomm.robotcore.robocol.RobocolParsable.MsgType"
+        EMPTY = enum.auto()
+        HEARTBEAT = enum.auto()
+        GAMEPAD = enum.auto()
+        PEER_DISCOVERY = enum.auto()
+        COMMAND = enum.auto()
+        TELEMETRY = enum.auto()
+        KEEPALIVE = enum.auto()
+        @staticmethod
+        def fromByte(b: int) -> RobocolParsable.MsgType:
+            """Create a MsgType from a byte"""
+            ...
+
+        def asByte(self) -> int:
+            """Return this message type as a byte"""
+            ...
+
+    def getRobocolMsgType(self) -> RobocolParsable.MsgType:
+        """Get the Robocol MsgType of this RobocolParsable"""
+        ...
+
+    def getSequenceNumber(self) -> int:
+        """Returns the sequence number of this packet. Newly-created packets are numbered in a monotonically increasing fashion, independently, on both driver station and robot controller; there are thus two numbering spaces. Note that though the value here reports as an int, only two bytes are used to transmit the sequence number. Reported values will thus be in the range of 0..65535."""
+        ...
+
+    def setSequenceNumber(self) -> None:
+        """Sets/updates the sequence number of the parsable to be the next available value"""
+        ...
+
+    def shouldTransmit(self, nanotimeNow: int) -> bool:
+        """Returns whether or not this parsable is due for a (re)transmisison"""
+        ...
+
+    def toByteArrayForTransmission(self) -> list[int]:
+        """Serializes the object for the purposes of network transmission, which is assumed will take place virtually immediately. Internal state regarding the time of last transmission may thus be updated during this method."""
+        ...
+
+    def toByteArray(self) -> list[int]:
+        """Serializes the object for the purposes other than network transmission, such as creating a local copy by a subsequent invocation of fromByteArray() into another instance."""
+        ...
+
+    def fromByteArray(self, byteArray: list[int]) -> None:
+        """Populate the fields of this object based on values of this byte array."""
+        ...
+
+    HEADER_LENGTH: int
+
+
+class RobocolParsableBase(RobocolParsable):
+    """RobocolParsableBase is an implementation base class for Robocol elements, providing functionality that is common to all such elements."""
+    __java__ = "com.qualcomm.robotcore.robocol.RobocolParsableBase"
+    def __init__(self) -> None:
+        ...
+
+    @staticmethod
+    def initializeSequenceNumber(sequenceNumber: int) -> None:
+        """A utility function that helps us separate driver station from robot controller packets"""
+        ...
+
+    def getSequenceNumber(self) -> int:
+        ...
+
+    @overload
+    def setSequenceNumber(self, sequenceNumber: int) -> None:
+        ...
+    @overload
+    def setSequenceNumber(self) -> None:
+        ...
+    def setSequenceNumber(self, *args: Any, **kwargs: Any) -> Any:
+        ...
+
+    def toByteArrayForTransmission(self) -> list[int]:
+        """Serialize, but also record timestamp if for transmission"""
+        ...
+
+    def shouldTransmit(self, nanotimeNow: int) -> bool:
+        ...
+
+    def allocateWholeWriteBuffer(self, overallSize: int) -> Any:
+        ...
+
+    def getWholeReadBuffer(self, byteArray: list[int]) -> Any:
+        ...
+
+    def getWriteBuffer(self, payloadSize: int) -> Any:
+        ...
+
+    def getReadBuffer(self, byteArray: list[int]) -> Any:
+        ...
+
+    sequenceNumber: int
+    nanotimeTransmit: int
+    nanotimeTransmitInterval: int
+    nextSequenceNumber: Any
+
+
+class Gamepad(RobocolParsableBase):
     """Monitor a hardware gamepad."""
     __java__ = "com.qualcomm.robotcore.hardware.Gamepad"
     class Type(enum.Enum):
@@ -1411,10 +1513,10 @@ class Gamepad:
         """Get the threshold for determining if a trigger is pressed"""
         ...
 
-    def getUser(self) -> Any:
+    def getUser(self) -> GamepadUser:
         ...
 
-    def setUser(self, user: Any) -> None:
+    def setUser(self, user: GamepadUser) -> None:
         ...
 
     def setUserForEffects(self, userForEffects: int) -> None:
@@ -1794,9 +1896,9 @@ class Gamepad:
     """ID assigned to this gamepad by the OS. This value can change each time the device is plugged in."""
     timestamp: int
     """Relative timestamp of the last time an event was detected"""
-    ledQueue: Any
+    ledQueue: EvictingBlockingQueue[Gamepad.LedEffect]
     LED_DURATION_CONTINUOUS: int
-    rumbleQueue: Any
+    rumbleQueue: EvictingBlockingQueue[Gamepad.RumbleEffect]
     nextRumbleApproxFinishTime: int
     RUMBLE_DURATION_CONTINUOUS: int
 
@@ -2230,7 +2332,7 @@ class I2cDevice(HardwareDevice):
         """Returns access to the read-cache into which data from the controller is read. The returned byte array may be retained for repeated use; #getI2cReadCache() need not be repeatedly called. The lock returned by #getI2cReadCacheLock() must be held whenever the data in the returned byte array is accessed. Note that the returned byte array contains an initial header section, four bytes in size, which contains the information manipulated by #enableI2cReadMode(I2cAddr, and #enableI2cWriteMode(I2cAddr,."""
         ...
 
-    def getI2cReadCacheTimeWindow(self) -> Any:
+    def getI2cReadCacheTimeWindow(self) -> TimeWindow:
         """Returns the time window object into which time stamps are written when the read cache is updated"""
         ...
 
@@ -2524,7 +2626,44 @@ class I2cDeviceSynch(I2cDeviceSynchSimple, Engagable):
         ...
 
 
-class I2cDeviceSynchDevice(Generic[DEVICE_CLIENT], HardwareDevice):
+class RobotArmingStateNotifier:
+    """Created by bob on 2016-03-12."""
+    __java__ = "com.qualcomm.robotcore.hardware.usb.RobotArmingStateNotifier"
+    class ARMINGSTATE(enum.Enum):
+        __java__ = "com.qualcomm.robotcore.hardware.usb.RobotArmingStateNotifier.ARMINGSTATE"
+        ARMED = enum.auto()
+        PRETENDING = enum.auto()
+        DISARMED = enum.auto()
+        CLOSED = enum.auto()
+        TO_ARMED = enum.auto()
+        TO_PRETENDING = enum.auto()
+        TO_DISARMED = enum.auto()
+
+    class Callback:
+        """The Callback interface can be used to receive notifications when a module changes its arming state."""
+        __java__ = "com.qualcomm.robotcore.hardware.usb.RobotArmingStateNotifier.Callback"
+        def onModuleStateChange(self, module: RobotArmingStateNotifier, state: RobotArmingStateNotifier.ARMINGSTATE) -> None:
+            """Notifies the callback that a module with which it has registered for notifications has undergone a change of state."""
+            ...
+
+    def getSerialNumber(self) -> SerialNumber:
+        """Returns the serial number of this USB module"""
+        ...
+
+    def getArmingState(self) -> RobotArmingStateNotifier.ARMINGSTATE:
+        """Returns the current arming state of the object."""
+        ...
+
+    def registerCallback(self, callback: RobotArmingStateNotifier.Callback, doInitialCallback: bool) -> None:
+        """Registers a callback for arming state notifications from this module. If this callback is already registered for notifications from this module, this method has no effect. Note that multiple callbacks may be simultaneously registered with a given one module: they all receive state-change notifications, in an arbitrary order."""
+        ...
+
+    def unregisterCallback(self, callback: RobotArmingStateNotifier.Callback) -> None:
+        """Unregister a callback which has been registered for notifications with this module. If the callback was not previously registered, this method has no effect."""
+        ...
+
+
+class I2cDeviceSynchDevice(RobotArmingStateNotifier.Callback, HardwareDevice, Generic[DEVICE_CLIENT]):
     """I2cDeviceSynchDevice instances are I2c devices which are built on top of I2cDeviceSynchSimple instances or subclasses thereof. The class provides common and handy utility services for such devices."""
     __java__ = "com.qualcomm.robotcore.hardware.I2cDeviceSynchDevice"
     def __init__(self, deviceClient: DEVICE_CLIENT, deviceClientIsOwned: bool) -> None:
@@ -2542,7 +2681,7 @@ class I2cDeviceSynchDevice(Generic[DEVICE_CLIENT], HardwareDevice):
     def getDeviceClient(self) -> DEVICE_CLIENT:
         ...
 
-    def onModuleStateChange(self, module: Any, state: Any) -> None:
+    def onModuleStateChange(self, module: RobotArmingStateNotifier, state: RobotArmingStateNotifier.ARMINGSTATE) -> None:
         ...
 
     def initializeIfNecessary(self) -> None:
@@ -2572,7 +2711,7 @@ class I2cDeviceSynchDevice(Generic[DEVICE_CLIENT], HardwareDevice):
     isInitialized: bool
 
 
-class I2cDeviceSynchDeviceWithParameters(Generic[DEVICE_CLIENT, PARAMETERS], I2cDeviceSynchDevice[DEVICE_CLIENT]):
+class I2cDeviceSynchDeviceWithParameters(I2cDeviceSynchDevice[DEVICE_CLIENT], Generic[DEVICE_CLIENT, PARAMETERS]):
     """I2cDeviceSynchDeviceWithParameters adds to I2cDeviceSynchDevice support for sensors that can be publicly initialized with a particular parameters class."""
     __java__ = "com.qualcomm.robotcore.hardware.I2cDeviceSynchDeviceWithParameters"
     def __init__(self, deviceClient: DEVICE_CLIENT, deviceClientIsOwned: bool, defaultParameters: PARAMETERS) -> None:
@@ -3494,19 +3633,19 @@ class QuaternionBasedImuHelper:
     def quaternionFromZAxisRotation(rotation: float, angleUnit: AngleUnit) -> Quaternion:
         ...
 
-    def resetYaw(self, tag: str, imuCentricOrientationSupplier: Any, timeoutMs: int) -> None:
+    def resetYaw(self, tag: str, imuCentricOrientationSupplier: ThrowingSupplier[Quaternion, QuaternionBasedImuHelper.FailedToRetrieveQuaternionException], timeoutMs: int) -> None:
         ...
 
-    def getRobotOrientationAsQuaternionOrThrow(self, imuCentricOrientationSupplier: Any, applyYawOffset: bool) -> Quaternion:
+    def getRobotOrientationAsQuaternionOrThrow(self, imuCentricOrientationSupplier: ThrowingSupplier[Quaternion, QuaternionBasedImuHelper.FailedToRetrieveQuaternionException], applyYawOffset: bool) -> Quaternion:
         ...
 
-    def getRobotOrientationAsQuaternion(self, tag: str, imuCentricOrientationSupplier: Any, applyYawOffset: bool) -> Quaternion:
+    def getRobotOrientationAsQuaternion(self, tag: str, imuCentricOrientationSupplier: ThrowingSupplier[Quaternion, QuaternionBasedImuHelper.FailedToRetrieveQuaternionException], applyYawOffset: bool) -> Quaternion:
         ...
 
-    def getRobotYawPitchRollAngles(self, tag: str, imuCentricOrientationSupplier: Any) -> YawPitchRollAngles:
+    def getRobotYawPitchRollAngles(self, tag: str, imuCentricOrientationSupplier: ThrowingSupplier[Quaternion, QuaternionBasedImuHelper.FailedToRetrieveQuaternionException]) -> YawPitchRollAngles:
         ...
 
-    def getRobotOrientation(self, tag: str, imuCentricOrientationSupplier: Any, reference: AxesReference, order: AxesOrder, angleUnit: AngleUnit) -> Orientation:
+    def getRobotOrientation(self, tag: str, imuCentricOrientationSupplier: ThrowingSupplier[Quaternion, QuaternionBasedImuHelper.FailedToRetrieveQuaternionException], reference: AxesReference, order: AxesOrder, angleUnit: AngleUnit) -> Orientation:
         ...
 
     def getRobotAngularVelocity(self, rawAngularVelocity: AngularVelocity, angleUnit: AngleUnit) -> AngularVelocity:
@@ -3728,7 +3867,7 @@ class ServoControllerEx(ServoController):
         """Returns whether the PWM is energized for this particular servo"""
         ...
 
-    def setServoType(self, servo: int, servoType: Any) -> None:
+    def setServoType(self, servo: int, servoType: ServoConfigurationType) -> None:
         """Sets the servo type for a particular servo"""
         ...
 
@@ -3815,10 +3954,10 @@ class ServoImplEx(ServoImpl, PwmControl):
     """ServoImplEx provides access to extended functionality on servos. Instances support both the Servo and the PwmControl interfaces."""
     __java__ = "com.qualcomm.robotcore.hardware.ServoImplEx"
     @overload
-    def __init__(self, controller: ServoControllerEx, portNumber: int, servoType: Any) -> None:
+    def __init__(self, controller: ServoControllerEx, portNumber: int, servoType: ServoConfigurationType) -> None:
         ...
     @overload
-    def __init__(self, controller: ServoControllerEx, portNumber: int, direction: Any, servoType: Any) -> None:
+    def __init__(self, controller: ServoControllerEx, portNumber: int, direction: Any, servoType: ServoConfigurationType) -> None:
         ...
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         ...
@@ -3954,22 +4093,22 @@ class VoltageSensor(HardwareDevice):
 class HardwareDeviceManager(DeviceManager):
     """Scan for, and create instances of, hardware devices"""
     __java__ = "com.qualcomm.hardware.HardwareDeviceManager"
-    def __init__(self, context: Any, manager: Any) -> None:
+    def __init__(self, context: Any, manager: SyncdDevice.Manager) -> None:
         """HardwareDeviceManager constructor"""
         ...
 
     @staticmethod
-    def createUsbManager() -> Any:
+    def createUsbManager() -> RobotUsbManager:
         ...
 
     def scanForUsbDevices(self) -> ScannedDevices:
         """Returns a map from serial number to UsbDeviceType"""
         ...
 
-    def countVidPid(self, map: dict[Any, int], vendorProduct: Any) -> int:
+    def countVidPid(self, map: dict[Any, int], vendorProduct: VendorProductSerialNumber) -> int:
         ...
 
-    def addVidPid(self, map: dict[Any, int], vendorProduct: Any, delta: int) -> None:
+    def addVidPid(self, map: dict[Any, int], vendorProduct: VendorProductSerialNumber, delta: int) -> None:
         ...
 
     def scanForEthernetOverUsbDevices(self, scannedDevices: ScannedDevices) -> None:
@@ -3978,74 +4117,74 @@ class HardwareDeviceManager(DeviceManager):
     def scanForWebcams(self, scannedDevices: ScannedDevices) -> None:
         ...
 
-    def determineDeviceType(self, dev: Any, serialNumber: SerialNumber, deviceMap: ScannedDevices) -> None:
+    def determineDeviceType(self, dev: RobotUsbDevice, serialNumber: SerialNumber, deviceMap: ScannedDevices) -> None:
         ...
 
-    def getLynxDeviceType(self, dev: Any) -> Any:
+    def getLynxDeviceType(self, dev: RobotUsbDevice) -> Any:
         ...
 
     def createLynxUsbDevice(self, serialNumber: SerialNumber, name: str) -> RobotCoreLynxUsbDevice:
         """Note: unlike other creation methods, creating a Lynx USB device will succeed even if the device is already open (in which case it will return a new delegate to the existing instance)."""
         ...
 
-    def createDcMotor(self, controller: DcMotorController, portNumber: int, motorType: Any, name: str) -> DcMotor:
+    def createDcMotor(self, controller: DcMotorController, portNumber: int, motorType: MotorConfigurationType, name: str) -> DcMotor:
         ...
 
-    def createDcMotorEx(self, controller: DcMotorController, portNumber: int, motorType: Any, name: str) -> DcMotor:
+    def createDcMotorEx(self, controller: DcMotorController, portNumber: int, motorType: MotorConfigurationType, name: str) -> DcMotor:
         ...
 
-    def createServoEx(self, controller: ServoControllerEx, portNumber: int, name: str, servoType: Any) -> Servo:
+    def createServoEx(self, controller: ServoControllerEx, portNumber: int, name: str, servoType: ServoConfigurationType) -> Servo:
         ...
 
-    def createCRServoEx(self, controller: ServoControllerEx, portNumber: int, name: str, servoType: Any) -> CRServo:
+    def createCRServoEx(self, controller: ServoControllerEx, portNumber: int, name: str, servoType: ServoConfigurationType) -> CRServo:
         ...
 
-    def createCustomServoDeviceInstances(self, controller: ServoControllerEx, portNumber: int, servoConfigurationType: Any) -> list[HardwareDevice]:
+    def createCustomServoDeviceInstances(self, controller: ServoControllerEx, portNumber: int, servoConfigurationType: ServoConfigurationType) -> list[HardwareDevice]:
         ...
 
-    def createWebcamName(self, serialNumber: SerialNumber, name: str) -> Any:
+    def createWebcamName(self, serialNumber: SerialNumber, name: str) -> WebcamName:
         ...
 
     def createMRDigitalTouchSensor(self, digitalChannelController: DigitalChannelController, physicalPort: int, name: str) -> TouchSensor:
         ...
 
-    def createMRI2cIrSeekerSensorV3(self, lynxModule: RobotCoreLynxModule, channel: Any, name: str) -> IrSeekerSensor:
+    def createMRI2cIrSeekerSensorV3(self, lynxModule: RobotCoreLynxModule, channel: DeviceConfiguration.I2cChannel, name: str) -> IrSeekerSensor:
         ...
 
-    def createAnalogSensorInstances(self, controller: AnalogInputController, channel: int, type: Any) -> list[HardwareDevice]:
+    def createAnalogSensorInstances(self, controller: AnalogInputController, channel: int, type: AnalogSensorConfigurationType) -> list[HardwareDevice]:
         ...
 
-    def createDigitalDeviceInstances(self, controller: DigitalChannelController, channel: int, type: Any) -> list[HardwareDevice]:
+    def createDigitalDeviceInstances(self, controller: DigitalChannelController, channel: int, type: DigitalIoDeviceConfigurationType) -> list[HardwareDevice]:
         ...
 
     def createPwmOutputDevice(self, controller: PWMOutputController, channel: int, name: str) -> PWMOutput:
         ...
 
-    def createI2cDeviceInstances(self, lynxModule: RobotCoreLynxModule, bus: Any, type: Any, name: str) -> list[HardwareDevice]:
+    def createI2cDeviceInstances(self, lynxModule: RobotCoreLynxModule, bus: DeviceConfiguration.I2cChannel, type: I2cDeviceConfigurationType, name: str) -> list[HardwareDevice]:
         ...
 
     def createLimelight3A(self, serialNumber: SerialNumber, name: str, ipAddress: Any) -> HardwareDevice:
         ...
 
-    def createAdafruitI2cColorSensor(self, lynxModule: RobotCoreLynxModule, channel: Any, name: str) -> ColorSensor:
+    def createAdafruitI2cColorSensor(self, lynxModule: RobotCoreLynxModule, channel: DeviceConfiguration.I2cChannel, name: str) -> ColorSensor:
         ...
 
-    def createLynxColorRangeSensor(self, lynxModule: RobotCoreLynxModule, channel: Any, name: str) -> ColorSensor:
+    def createLynxColorRangeSensor(self, lynxModule: RobotCoreLynxModule, channel: DeviceConfiguration.I2cChannel, name: str) -> ColorSensor:
         ...
 
-    def createModernRoboticsI2cColorSensor(self, lynxModule: RobotCoreLynxModule, channel: Any, name: str) -> ColorSensor:
+    def createModernRoboticsI2cColorSensor(self, lynxModule: RobotCoreLynxModule, channel: DeviceConfiguration.I2cChannel, name: str) -> ColorSensor:
         ...
 
-    def createModernRoboticsI2cGyroSensor(self, lynxModule: RobotCoreLynxModule, channel: Any, name: str) -> GyroSensor:
+    def createModernRoboticsI2cGyroSensor(self, lynxModule: RobotCoreLynxModule, channel: DeviceConfiguration.I2cChannel, name: str) -> GyroSensor:
         ...
 
     def createLED(self, controller: DigitalChannelController, channel: int, name: str) -> LED:
         ...
 
-    def createI2cDeviceSynch(self, lynxModule: RobotCoreLynxModule, channel: Any, name: str) -> I2cDeviceSynch:
+    def createI2cDeviceSynch(self, lynxModule: RobotCoreLynxModule, channel: DeviceConfiguration.I2cChannel, name: str) -> I2cDeviceSynch:
         ...
 
-    def createI2cDeviceSynchSimple(self, lynxModule: RobotCoreLynxModule, channel: Any, name: str) -> I2cDeviceSynchSimple:
+    def createI2cDeviceSynchSimple(self, lynxModule: RobotCoreLynxModule, channel: DeviceConfiguration.I2cChannel, name: str) -> I2cDeviceSynchSimple:
         ...
 
     TAG: str
@@ -4059,11 +4198,11 @@ class HardwareFactory:
     def __init__(self, context: Any) -> None:
         ...
 
-    def createHardwareMap(self, manager: Any, opModeNotifier: OpModeManagerNotifier) -> HardwareMap:
+    def createHardwareMap(self, manager: SyncdDevice.Manager, opModeNotifier: OpModeManagerNotifier) -> HardwareMap:
         """Create a hardware map"""
         ...
 
-    def mapControllerConfiguration(self, map: HardwareMap, deviceMgr: DeviceManager, ctrlConf: Any) -> None:
+    def mapControllerConfiguration(self, map: HardwareMap, deviceMgr: DeviceManager, ctrlConf: ControllerConfiguration) -> None:
         ...
 
     def setXmlPullParser(self, xmlPullParser: Any) -> None:
@@ -7702,7 +7841,7 @@ class NavxMicroNavigationSensor(I2cDeviceSynchDeviceWithParameters, IntegratingG
     def getDeviceName(self) -> str:
         ...
 
-    def getFirmwareVersion(self) -> Any:
+    def getFirmwareVersion(self) -> RobotUsbDevice.FirmwareVersion:
         ...
 
     def ensureReadWindow(self, needed: I2cDeviceSynch.ReadWindow) -> None:
@@ -8473,52 +8612,6 @@ class Limelight3A(HardwareDevice):
         ...
 
 
-class LynxModuleIntf(RobotCoreLynxModule, Engagable):
-    """LynxModuleIntf is an interface to LynxModule so as to allow for an alternate substitution of PretendLynxModule when necessary."""
-    __java__ = "com.qualcomm.hardware.lynx.LynxModuleIntf"
-    def acquireI2cLockWhile(self, supplier: Supplier[T]) -> T:
-        ...
-
-    def acquireNetworkTransmissionLock(self, message: Any) -> None:
-        ...
-
-    def releaseNetworkTransmissionLock(self, message: Any) -> None:
-        ...
-
-    def validateCommand(self, lynxMessage: Any) -> None:
-        ...
-
-    def isCommandSupported(self, command: type[Any]) -> bool:
-        ...
-
-    def isOpen(self) -> bool:
-        ...
-
-    def sendCommand(self, message: Any) -> None:
-        ...
-
-    def resetPingTimer(self, message: Any) -> None:
-        ...
-
-    def retransmit(self, message: Any) -> None:
-        ...
-
-    def finishedWithMessage(self, message: Any) -> None:
-        ...
-
-    def setAttentionRequired(self, attentionRequired: bool) -> None:
-        ...
-
-    def noteNotResponding(self) -> None:
-        ...
-
-    def isNotResponding(self) -> bool:
-        ...
-
-    def getInterface(self, interfaceName: str) -> Any:
-        ...
-
-
 class LynxCommExceptionHandler:
     """Created by bob on 2016-12-11."""
     __java__ = "com.qualcomm.hardware.lynx.LynxCommExceptionHandler"
@@ -8542,7 +8635,7 @@ class LynxCommExceptionHandler:
     def handleSpecificException(self, e: Any) -> None:
         ...
     @overload
-    def handleSpecificException(self, e: Any) -> None:
+    def handleSpecificException(self, e: TargetPositionNotSetException) -> None:
         ...
     @overload
     def handleSpecificException(self, e: Any) -> None:
@@ -8556,7 +8649,53 @@ class LynxCommExceptionHandler:
     tag: str
 
 
-class LynxController(LynxCommExceptionHandler, RobotCoreLynxController, Engagable, HardwareDeviceHealth):
+class LynxModuleIntf(RobotCoreLynxModule, Engagable):
+    """LynxModuleIntf is an interface to LynxModule so as to allow for an alternate substitution of PretendLynxModule when necessary."""
+    __java__ = "com.qualcomm.hardware.lynx.LynxModuleIntf"
+    def acquireI2cLockWhile(self, supplier: Supplier[T]) -> T:
+        ...
+
+    def acquireNetworkTransmissionLock(self, message: LynxMessage) -> None:
+        ...
+
+    def releaseNetworkTransmissionLock(self, message: LynxMessage) -> None:
+        ...
+
+    def validateCommand(self, lynxMessage: LynxMessage) -> None:
+        ...
+
+    def isCommandSupported(self, command: type[LynxCommand]) -> bool:
+        ...
+
+    def isOpen(self) -> bool:
+        ...
+
+    def sendCommand(self, message: LynxMessage) -> None:
+        ...
+
+    def resetPingTimer(self, message: LynxMessage) -> None:
+        ...
+
+    def retransmit(self, message: LynxMessage) -> None:
+        ...
+
+    def finishedWithMessage(self, message: LynxMessage) -> None:
+        ...
+
+    def setAttentionRequired(self, attentionRequired: bool) -> None:
+        ...
+
+    def noteNotResponding(self) -> None:
+        ...
+
+    def isNotResponding(self) -> bool:
+        ...
+
+    def getInterface(self, interfaceName: str) -> LynxInterface:
+        ...
+
+
+class LynxController(LynxCommExceptionHandler, RobotCoreLynxController, Engagable, HardwareDeviceHealth, RobotArmingStateNotifier.Callback, RobotArmingStateNotifier):
     """Created by bob on 2016-03-07."""
     __java__ = "com.qualcomm.hardware.lynx.LynxController"
     class PretendLynxModule(LynxModuleIntf):
@@ -8591,22 +8730,22 @@ class LynxController(LynxCommExceptionHandler, RobotCoreLynxController, Engagabl
         def acquireI2cLockWhile(self, supplier: Supplier[T]) -> T:
             ...
 
-        def acquireNetworkTransmissionLock(self, message: Any) -> None:
+        def acquireNetworkTransmissionLock(self, message: LynxMessage) -> None:
             ...
 
-        def releaseNetworkTransmissionLock(self, message: Any) -> None:
+        def releaseNetworkTransmissionLock(self, message: LynxMessage) -> None:
             ...
 
-        def sendCommand(self, command: Any) -> None:
+        def sendCommand(self, command: LynxMessage) -> None:
             ...
 
-        def retransmit(self, message: Any) -> None:
+        def retransmit(self, message: LynxMessage) -> None:
             ...
 
-        def finishedWithMessage(self, message: Any) -> None:
+        def finishedWithMessage(self, message: LynxMessage) -> None:
             ...
 
-        def resetPingTimer(self, message: Any) -> None:
+        def resetPingTimer(self, message: LynxMessage) -> None:
             ...
 
         def getModuleAddress(self) -> int:
@@ -8615,16 +8754,16 @@ class LynxController(LynxCommExceptionHandler, RobotCoreLynxController, Engagabl
         def setAttentionRequired(self, attentionRequired: bool) -> None:
             ...
 
-        def getInterface(self, interfaceName: str) -> Any:
+        def getInterface(self, interfaceName: str) -> LynxInterface:
             ...
 
         def isParent(self) -> bool:
             ...
 
-        def validateCommand(self, lynxMessage: Any) -> None:
+        def validateCommand(self, lynxMessage: LynxMessage) -> None:
             ...
 
-        def isCommandSupported(self, command: type[Any]) -> bool:
+        def isCommandSupported(self, command: type[LynxCommand]) -> bool:
             ...
 
         def isOpen(self) -> bool:
@@ -8659,7 +8798,7 @@ class LynxController(LynxCommExceptionHandler, RobotCoreLynxController, Engagabl
     def finishConstruction(self) -> None:
         ...
 
-    def onModuleStateChange(self, module: Any, state: Any) -> None:
+    def onModuleStateChange(self, module: RobotArmingStateNotifier, state: Any) -> None:
         ...
 
     def moduleNowArmedOrPretending(self) -> None:
@@ -8797,10 +8936,10 @@ class LynxDcMotorController(LynxController, DcMotorControllerEx):
         lastKnownZeroPowerBehavior: LastKnown[DcMotor.ZeroPowerBehavior]
         lastKnownEnable: LastKnown[bool]
         lastKnownCurrentAlert: LastKnown[float]
-        motorType: Any
-        internalMotorType: Any
-        desiredPIDParams: dict[DcMotor.RunMode, Any]
-        originalPIDParams: dict[DcMotor.RunMode, Any]
+        motorType: MotorConfigurationType
+        internalMotorType: MotorConfigurationType
+        desiredPIDParams: dict[DcMotor.RunMode, ExpansionHubMotorControllerParamsState]
+        originalPIDParams: dict[DcMotor.RunMode, ExpansionHubMotorControllerParamsState]
 
     def __init__(self, context: Any, module: LynxModule) -> None:
         ...
@@ -8838,13 +8977,13 @@ class LynxDcMotorController(LynxController, DcMotorControllerEx):
     def resetDeviceConfigurationForOpMode(self, motor: int) -> None:
         ...
 
-    def getMotorType(self, motor: int) -> Any:
+    def getMotorType(self, motor: int) -> MotorConfigurationType:
         ...
 
-    def setMotorType(self, motor: int, motorType: Any) -> None:
+    def setMotorType(self, motor: int, motorType: MotorConfigurationType) -> None:
         ...
 
-    def rememberPIDParams(self, motorZ: int, params: Any) -> None:
+    def rememberPIDParams(self, motorZ: int, params: ExpansionHubMotorControllerParamsState) -> None:
         ...
 
     def updateMotorParams(self, motorZ: int) -> None:
@@ -9068,7 +9207,7 @@ class LynxFirmwareUpdater:
     def __init__(self, device: Any) -> None:
         ...
 
-    def updateFirmware(self, image: Any, requestId: str, progressConsumer: Consumer[Any]) -> Any:
+    def updateFirmware(self, image: RobotCoreCommandList.FWImage, requestId: str, progressConsumer: Consumer[ProgressParameters]) -> RobotCoreCommandList.LynxFirmwareUpdateResp:
         ...
 
     def enterFirmwareUpdateModeControlHub(self) -> bool:
@@ -9126,7 +9265,7 @@ class LynxI2cDeviceSynch(LynxController):
         __java__ = "com.qualcomm.hardware.lynx.LynxI2cDeviceSynch.BusSpeed"
         STANDARD_100K = enum.auto()
         FAST_400K = enum.auto()
-        def toSpeedCode(self) -> Any:
+        def toSpeedCode(self) -> LynxI2cConfigureChannelCommand.SpeedCode:
             ...
 
     def __init__(self, context: Any, module: LynxModule, bus: int) -> None:
@@ -9255,7 +9394,7 @@ class LynxI2cDeviceSynch(LynxController):
     def isWriteCoalescingEnabled(self) -> bool:
         ...
 
-    def sendI2cTransaction(self, transactionSupplier: Supplier[Any]) -> None:
+    def sendI2cTransaction(self, transactionSupplier: Supplier[LynxCommand[object]]) -> None:
         """Waits for the current I2C transaction to finish, then executes the supplied transaction."""
         ...
 
@@ -9296,7 +9435,7 @@ class LynxI2cDeviceSynchV2(LynxI2cDeviceSynch):
         ...
 
 
-class LynxModule(LynxCommExceptionHandler, LynxModuleIntf, Blinker, VisuallyIdentifiableHardwareDevice):
+class LynxModule(LynxCommExceptionHandler, LynxModuleIntf, RobotArmingStateNotifier, RobotArmingStateNotifier.Callback, Blinker, VisuallyIdentifiableHardwareDevice):
     """LynxModule represents the connection between the host and a particular Lynx controller module. Multiple Lynx controller modules may be chained together over RS-485 and share a common USB connection."""
     __java__ = "com.qualcomm.hardware.lynx.LynxModule"
     class MessageClassAndCtor:
@@ -9305,7 +9444,7 @@ class LynxModule(LynxCommExceptionHandler, LynxModuleIntf, Blinker, VisuallyIden
         def assignCtor(self) -> None:
             ...
 
-        clazz: type[Any]
+        clazz: type[LynxMessage]
         ctor: Any
 
     class BlinkerPolicy:
@@ -9409,15 +9548,15 @@ class LynxModule(LynxCommExceptionHandler, LynxModuleIntf, Blinker, VisuallyIden
         ...
 
     @staticmethod
-    def addStandardMessage(clazz: type[Any]) -> None:
+    def addStandardMessage(clazz: type[LynxMessage]) -> None:
         ...
 
     @staticmethod
-    def correlateStandardResponse(commandClass: type[Any]) -> None:
+    def correlateStandardResponse(commandClass: type[LynxCommand]) -> None:
         ...
 
     @staticmethod
-    def correlateResponse(commandClass: type[Any], responseClass: type[Any]) -> None:
+    def correlateResponse(commandClass: type[LynxCommand], responseClass: type[LynxResponse]) -> None:
         ...
 
     def toString(self) -> str:
@@ -9525,7 +9664,7 @@ class LynxModule(LynxCommExceptionHandler, LynxModuleIntf, Blinker, VisuallyIden
     def unregisterCallback(self, callback: Any) -> None:
         ...
 
-    def onModuleStateChange(self, module: Any, state: Any) -> None:
+    def onModuleStateChange(self, module: RobotArmingStateNotifier, state: Any) -> None:
         ...
 
     def engage(self) -> None:
@@ -9589,18 +9728,18 @@ class LynxModule(LynxCommExceptionHandler, LynxModuleIntf, Blinker, VisuallyIden
     def pingInitialContact(self) -> None:
         ...
 
-    def validateCommand(self, lynxMessage: Any) -> None:
+    def validateCommand(self, lynxMessage: LynxMessage) -> None:
         ...
 
-    def isCommandSupported(self, clazz: type[Any]) -> bool:
+    def isCommandSupported(self, clazz: type[LynxCommand]) -> bool:
         """Answers as to whether the command is actively supported by the module, at least in SOME interface, or as a standard command"""
         ...
 
-    def queryInterface(self, theInterface: Any) -> bool:
+    def queryInterface(self, theInterface: LynxInterface) -> bool:
         """Issues a query interface for the indicated interface and processes the results. This method is idempotent, and copes with a module changing its mind about command numbering."""
         ...
 
-    def getInterface(self, interfaceName: str) -> Any:
+    def getInterface(self, interfaceName: str) -> LynxInterface:
         """Returns null if the interface has not been queried or is not supported"""
         ...
 
@@ -9616,7 +9755,7 @@ class LynxModule(LynxCommExceptionHandler, LynxModuleIntf, Blinker, VisuallyIden
     def getMsModulePingInterval(self) -> int:
         ...
 
-    def resetPingTimer(self, message: Any) -> None:
+    def resetPingTimer(self, message: LynxMessage) -> None:
         ...
 
     def startPingTimer(self) -> None:
@@ -9663,10 +9802,10 @@ class LynxModule(LynxCommExceptionHandler, LynxModuleIntf, Blinker, VisuallyIden
         ...
 
     @overload
-    def recordBulkCachingCommandIntent(self, command: Any) -> LynxModule.BulkData:
+    def recordBulkCachingCommandIntent(self, command: LynxDekaInterfaceCommand[object]) -> LynxModule.BulkData:
         ...
     @overload
-    def recordBulkCachingCommandIntent(self, command: Any, tag: str) -> LynxModule.BulkData:
+    def recordBulkCachingCommandIntent(self, command: LynxDekaInterfaceCommand[object], tag: str) -> LynxModule.BulkData:
         ...
     def recordBulkCachingCommandIntent(self, *args: Any, **kwargs: Any) -> Any:
         ...
@@ -9716,26 +9855,26 @@ class LynxModule(LynxCommExceptionHandler, LynxModuleIntf, Blinker, VisuallyIden
     def acquireI2cLockWhile(self, supplier: Supplier[T]) -> T:
         ...
 
-    def acquireNetworkTransmissionLock(self, message: Any) -> None:
+    def acquireNetworkTransmissionLock(self, message: LynxMessage) -> None:
         ...
 
-    def releaseNetworkTransmissionLock(self, message: Any) -> None:
+    def releaseNetworkTransmissionLock(self, message: LynxMessage) -> None:
         ...
 
-    def sendCommand(self, command: Any) -> None:
+    def sendCommand(self, command: LynxMessage) -> None:
         """Sends a command to the module, scheduling retransmissions as necessary."""
         ...
 
-    def retransmit(self, message: Any) -> None:
+    def retransmit(self, message: LynxMessage) -> None:
         ...
 
-    def finishedWithMessage(self, message: Any) -> None:
+    def finishedWithMessage(self, message: LynxMessage) -> None:
         ...
 
     def pretendFinishExtantCommands(self) -> None:
         ...
 
-    def onIncomingDatagramReceived(self, datagram: Any) -> None:
+    def onIncomingDatagramReceived(self, datagram: LynxDatagram) -> None:
         ...
 
     def abandonUnfinishedCommands(self) -> None:
@@ -9750,7 +9889,7 @@ class LynxModule(LynxCommExceptionHandler, LynxModuleIntf, Blinker, VisuallyIden
     msKeepAliveTimeout: int
     moduleStatusPersistentBits: int
     standardMessages: dict[int, LynxModule.MessageClassAndCtor]
-    responseClasses: dict[type[Any], LynxModule.MessageClassAndCtor]
+    responseClasses: dict[type[LynxCommand], LynxModule.MessageClassAndCtor]
     lynxUsbDevice: LynxUsbDevice
     controllers: list[LynxController]
     addrAndSerialLock: object
@@ -9770,7 +9909,7 @@ class LynxModule(LynxCommExceptionHandler, LynxModuleIntf, Blinker, VisuallyIden
     """maps message number to command we've issued with said number"""
     commandClasses: Any
     """for all the commands we know about (standard + QueryInterface), maps command number to class which implements same. Only commands known to be supported by the module are populated"""
-    supportedCommands: set[type[Any]]
+    supportedCommands: set[type[LynxCommand]]
     interfacesQueried: Any
     i2cLock: object
     """This lock prevents concurrency problems that would arrive from interleaving messages of the (asynchronous) i2c protocol. In particular it makes sure that once we issue a read, we can actually read that data before we get back in there and, say, issue a write on another bus."""
@@ -9789,7 +9928,7 @@ class LynxModule(LynxCommExceptionHandler, LynxModuleIntf, Blinker, VisuallyIden
     ftdiResetWatchdogActiveWhenEngaged: bool
     bulkCachingLock: object
     bulkCachingMode: LynxModule.BulkCachingMode
-    bulkCachingHistory: dict[str, list[Any]]
+    bulkCachingHistory: dict[str, list[LynxDekaInterfaceCommand[object]]]
     lastBulkData: LynxModule.BulkData
 
 
@@ -9892,21 +10031,21 @@ class LynxNackException(Exception):
     """LynxNackExceptions are thrown in response to the receipt by the host of a 'nack' packet from the module when a command is sent."""
     __java__ = "com.qualcomm.hardware.lynx.LynxNackException"
     @overload
-    def __init__(self, command: Any, message: str) -> None:
+    def __init__(self, command: LynxRespondable, message: str) -> None:
         ...
     @overload
-    def __init__(self, command: Any, format: str, *args: object) -> None:
+    def __init__(self, command: LynxRespondable, format: str, *args: object) -> None:
         ...
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         ...
 
-    def wrap(self) -> Any:
+    def wrap(self) -> RobotCoreException:
         ...
 
-    def getCommand(self) -> Any:
+    def getCommand(self) -> LynxRespondable:
         ...
 
-    def getNack(self) -> Any:
+    def getNack(self) -> LynxNack:
         ...
 
 
@@ -10007,7 +10146,7 @@ class LynxServoController(LynxController, ServoControllerEx):
     def isServoPwmEnabled(self, servo: int) -> bool:
         ...
 
-    def setServoType(self, servo: int, servoType: Any) -> None:
+    def setServoType(self, servo: int, servoType: ServoConfigurationType) -> None:
         ...
 
     def setServoPosition(self, servo: int, position: float) -> None:
@@ -10049,20 +10188,78 @@ class LynxServoController(LynxController, ServoControllerEx):
 class LynxUnsupportedCommandException(Exception):
     """Created by bob on 2/6/2017."""
     __java__ = "com.qualcomm.hardware.lynx.LynxUnsupportedCommandException"
-    def __init__(self, module: LynxModule, lynxMessage: Any) -> None:
+    def __init__(self, module: LynxModule, lynxMessage: LynxMessage) -> None:
         ...
 
     def getCommandNumber(self) -> int:
         ...
 
-    def getClazz(self) -> type[Any]:
+    def getClazz(self) -> type[LynxMessage]:
         ...
 
     def getLynxModule(self) -> LynxModuleIntf:
         ...
 
 
-class LynxUsbDevice(GlobalWarningSource, RobotCoreLynxUsbDevice, HardwareDevice, Engagable):
+class SyncdDevice:
+    """SyncdDevice is for a device that wants to be in sync with the event loop. If there is sync'd device registered with the event loop manager then the event loop manager will run the event loop in this manner:"""
+    __java__ = "com.qualcomm.robotcore.eventloop.SyncdDevice"
+    class ShutdownReason(enum.Enum):
+        """ShutdownReason indicates the health of the shutdown of the device."""
+        __java__ = "com.qualcomm.robotcore.eventloop.SyncdDevice.ShutdownReason"
+        NORMAL = enum.auto()
+        ABNORMAL = enum.auto()
+        ABNORMAL_ATTEMPT_REOPEN = enum.auto()
+
+    class Manager:
+        __java__ = "com.qualcomm.robotcore.eventloop.SyncdDevice.Manager"
+        def registerSyncdDevice(self, device: SyncdDevice) -> None:
+            ...
+
+        def unregisterSyncdDevice(self, device: SyncdDevice) -> None:
+            ...
+
+    def getShutdownReason(self) -> SyncdDevice.ShutdownReason:
+        """Has this device shutdown abnormally? Note that even if this method returns true that a close() will still be necessary to fully clean up associated resources."""
+        ...
+
+    def setOwner(self, owner: RobotUsbModule) -> None:
+        """Records the owning module of this sync'd device. The owner of the device is the party that is responsible for the device's lifetime management, and thus who should be involved if the device experiences problems and needs to be shutdown or restarted."""
+        ...
+
+    def getOwner(self) -> RobotUsbModule:
+        """Retrieves the owning module of this sync'd device."""
+        ...
+
+    msAbnormalReopenInterval: int
+    """When a device shuts down with ShutdownReason#ABNORMAL_ATTEMPT_REOPEN, this is the recommended duration of time to wait before attempting reopen. It was only heuristically determined, and might thus perhaps be shortened"""
+
+
+class RobotUsbModule(RobotArmingStateNotifier):
+    """This interface can be used to control the activeness or aliveness of an object that controls a piece of hardware such as a motor or servo controller. The object can be transitioned amongst a series of states in which various degrees of functionality are available. The states are as follows: armed: the object controlling the hardware is fully functional in its intended, usual way. In this state, the object 'owns' full control of the hardware it represents. disarmed: the object is quiescent, not manipulating or controlling the hardware. In this state, it is conceivable that some *other* object instance might be created and then be successfully armed on the same underlying hardware. In contrast, it is not expected that two object instances may be simultaneously armed against the same piece of hardware. pretending: the object pretends as best it can to act as if it were armed on an actual underlying piece of hardware, but in reality the object is just making it all up: writes may be sent to the bit-bucket, reads might always return zeros, and so on. Though this may sound odd, having a hardware-controlling object function in this mode might minimize impact on upper software layers in the event that the desired actual hardware is disconnected or otherwise unavailable. closed: this is much like disarmed, but more serious and permanent shutdown steps might be taken as an object transitions to the closed state. Transient 'toX' states are also present. The legal state transitions are as follows: disarmed -&gt; toArmed toArmed -&gt; armed disarmed -&gt; toPretending toPretending -&gt; pretending armed -&gt; toDisarmed toArmed -&gt; toDisarmed pretending -&gt; toDisarmed toPretending -&gt; toDisarmed toDisarmed -&gt; disarmed armed -&gt; closed toArmed -&gt; closed pretending -&gt; closed toPretending -&gt; closed toDisarmed -&gt; closed disarmed -&gt; closed Notice that once closed, no further state transitions are possible. Conversely, it is possible to close from any state and to disarm from any state except from closed. In particular, it is possible to close or disarm from the transitional toArmed and toPretending states: implementations *must* take care to ensure this is always possible. Typically, when first instantiated, an object is in the disarmed state. Objects should, generally, minimize the time they are in the disarmed state, as to many clients they will appear dysfunctional and error prone in that state, since those clients may not have been coded correctly to deal with an object that doesn't service read()s or write()s *at*all*."""
+    __java__ = "com.qualcomm.robotcore.hardware.usb.RobotUsbModule"
+    def arm(self) -> None:
+        """Causes the module to attempt to enter the armed state. If the module is already armed, this method has no effect."""
+        ...
+
+    def pretend(self) -> None:
+        """Causes the module to attempt to enter the pretending state. If the module is already pretending, this method has no effect."""
+        ...
+
+    def armOrPretend(self) -> None:
+        """Causes the module to attempt to enter the armed state, but if that is not possible, to enter the pretending state."""
+        ...
+
+    def disarm(self) -> None:
+        """Causes the module to attempt to enter the disarmed state. If the module is already disarmed, this method has no effect."""
+        ...
+
+    def close(self) -> None:
+        """Causes the module to attempt to enter the closed state. If the module is already closed, this method has no effect."""
+        ...
+
+
+class LynxUsbDevice(RobotUsbModule, GlobalWarningSource, RobotCoreLynxUsbDevice, HardwareDevice, SyncdDevice, Engagable):
     """The working interface to Lynx USB Devices. Separating out the interface like this allows us to create delegators where we need to."""
     __java__ = "com.qualcomm.hardware.lynx.LynxUsbDevice"
     class SystemOperationHandle:
@@ -10093,7 +10290,7 @@ class LynxUsbDevice(GlobalWarningSource, RobotCoreLynxUsbDevice, HardwareDevice,
         parentModule: LynxModule
         closed: bool
 
-    def getRobotUsbDevice(self) -> Any:
+    def getRobotUsbDevice(self) -> RobotUsbDevice:
         ...
 
     def isSystemSynthetic(self) -> bool:
@@ -10133,13 +10330,13 @@ class LynxUsbDevice(GlobalWarningSource, RobotCoreLynxUsbDevice, HardwareDevice,
     def discoverModules(self, checkForImus: bool) -> LynxModuleMetaList:
         ...
 
-    def acquireNetworkTransmissionLock(self, message: Any) -> None:
+    def acquireNetworkTransmissionLock(self, message: LynxMessage) -> None:
         ...
 
-    def releaseNetworkTransmissionLock(self, message: Any) -> None:
+    def releaseNetworkTransmissionLock(self, message: LynxMessage) -> None:
         ...
 
-    def transmit(self, message: Any) -> None:
+    def transmit(self, message: LynxMessage) -> None:
         ...
 
     def setupControlHubEmbeddedModule(self) -> bool:
@@ -10148,7 +10345,7 @@ class LynxUsbDevice(GlobalWarningSource, RobotCoreLynxUsbDevice, HardwareDevice,
     def getDelegationTarget(self) -> Any:
         ...
 
-    def updateFirmware(self, image: Any, requestId: str, progressConsumer: Consumer[Any]) -> Any:
+    def updateFirmware(self, image: RobotCoreCommandList.FWImage, requestId: str, progressConsumer: Consumer[ProgressParameters]) -> RobotCoreCommandList.LynxFirmwareUpdateResp:
         ...
 
 
@@ -10176,7 +10373,7 @@ class LynxUsbDeviceDelegate(LynxUsbDevice, HardwareDeviceCloseOnTearDown):
     def isEngaged(self) -> bool:
         ...
 
-    def getRobotUsbDevice(self) -> Any:
+    def getRobotUsbDevice(self) -> RobotUsbDevice:
         ...
 
     def isSystemSynthetic(self) -> bool:
@@ -10218,19 +10415,19 @@ class LynxUsbDeviceDelegate(LynxUsbDevice, HardwareDeviceCloseOnTearDown):
     def discoverModules(self, checkForImus: bool) -> LynxModuleMetaList:
         ...
 
-    def acquireNetworkTransmissionLock(self, message: Any) -> None:
+    def acquireNetworkTransmissionLock(self, message: LynxMessage) -> None:
         ...
 
-    def releaseNetworkTransmissionLock(self, message: Any) -> None:
+    def releaseNetworkTransmissionLock(self, message: LynxMessage) -> None:
         ...
 
-    def transmit(self, message: Any) -> None:
+    def transmit(self, message: LynxMessage) -> None:
         ...
 
     def setupControlHubEmbeddedModule(self) -> bool:
         ...
 
-    def updateFirmware(self, image: Any, requestId: str, progressConsumer: Consumer[Any]) -> Any:
+    def updateFirmware(self, image: RobotCoreCommandList.FWImage, requestId: str, progressConsumer: Consumer[ProgressParameters]) -> RobotCoreCommandList.LynxFirmwareUpdateResp:
         ...
 
     def getDeviceName(self) -> str:
@@ -10251,10 +10448,10 @@ class LynxUsbDeviceDelegate(LynxUsbDevice, HardwareDeviceCloseOnTearDown):
     def getShutdownReason(self) -> Any:
         ...
 
-    def setOwner(self, owner: Any) -> None:
+    def setOwner(self, owner: RobotUsbModule) -> None:
         ...
 
-    def getOwner(self) -> Any:
+    def getOwner(self) -> RobotUsbModule:
         ...
 
     def getSerialNumber(self) -> SerialNumber:
@@ -10318,7 +10515,7 @@ class LynxUsbUtil:
             ...
 
     @staticmethod
-    def openUsbDevice(doScan: bool, robotUsbManager: Any, serialNumber: SerialNumber) -> Any:
+    def openUsbDevice(doScan: bool, robotUsbManager: RobotUsbManager, serialNumber: SerialNumber) -> RobotUsbDevice:
         ...
 
     @staticmethod
@@ -10360,10 +10557,10 @@ class MessageKeyedLock:
     def reset(self) -> None:
         ...
 
-    def acquire(self, message: Any) -> None:
+    def acquire(self, message: LynxMessage) -> None:
         ...
 
-    def release(self, message: Any) -> None:
+    def release(self, message: LynxMessage) -> None:
         ...
 
     def lockAcquisitions(self) -> None:
@@ -11960,3 +12157,840 @@ class SparkFunOTOS(I2cDeviceSynchDevice[I2cDeviceSynch]):
     INT16_TO_RPSS: float
     _distanceUnit: DistanceUnit
     _angularUnit: AngleUnit
+
+
+class CameraName:
+    """CameraName identifies a HardwareDevice which is a camera."""
+    __java__ = "org.firstinspires.ftc.robotcore.external.hardware.camera.CameraName"
+    def isWebcam(self) -> bool:
+        """Returns whether or not this name is that of a webcam. If true, then the CameraName can be cast to a WebcamName."""
+        ...
+
+    def isCameraDirection(self) -> bool:
+        """Returns whether or not this name is that of a builtin phone camera. If true, then the CameraName can be cast to a BuiltinCameraName."""
+        ...
+
+    def isSwitchable(self) -> bool:
+        """Returns whether this name is one representing the ability to switch amongst a series of member cameras. If true, then the receiver can be cast to a SwitchableCameraName."""
+        ...
+
+    def isUnknown(self) -> bool:
+        """Returns whether or not this name represents that of an unknown or indeterminate camera."""
+        ...
+
+    def asyncRequestCameraPermission(self, context: Any, deadline: Deadline, continuation: Continuation[Consumer[bool]]) -> None:
+        """Requests from the user permission to use the camera if same has not already been granted. This may take a long time, as interaction with the user may be necessary. When the outcome is known, the reportResult continuation is called with the result. The report may occur either before or after the call to #asyncRequestCameraPermission has itself returned. The report will be delivered using the indicated Continuation"""
+        ...
+
+    def requestCameraPermission(self, deadline: Deadline) -> bool:
+        """Requests from the user permission to use the camera if same has not already been granted. This may take a long time, as interaction with the user may be necessary. The call is made synchronously: the calling thread blocks until an answer is obtained."""
+        ...
+
+    def getCameraCharacteristics(self) -> CameraCharacteristics:
+        """Query the capabilities of a camera device. These capabilities are immutable for a given camera."""
+        ...
+
+
+class WebcamName(CameraName, HardwareDevice):
+    __java__ = "org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName"
+    def getSerialNumber(self) -> SerialNumber:
+        """Returns the USB serial number of the webcam"""
+        ...
+
+    def getUsbDeviceNameIfAttached(self) -> str:
+        """Returns the USB device path currently associated with this webcam. May be null if the webcam is not presently attached."""
+        ...
+
+    def isAttached(self) -> bool:
+        """Returns whether this camera currently attached to the robot controller"""
+        ...
+
+
+class PeerDiscovery(RobocolParsableBase):
+    __java__ = "com.qualcomm.robotcore.robocol.PeerDiscovery"
+    class PeerType(enum.Enum):
+        """Peer type"""
+        __java__ = "com.qualcomm.robotcore.robocol.PeerDiscovery.PeerType"
+        NOT_SET = enum.auto()
+        PEER = enum.auto()
+        GROUP_OWNER = enum.auto()
+        NOT_CONNECTED_DUE_TO_PREEXISTING_CONNECTION = enum.auto()
+        @staticmethod
+        def fromByte(b: int) -> PeerDiscovery.PeerType:
+            """Create a PeerType from a byte"""
+            ...
+
+        def asByte(self) -> int:
+            """Return this peer type as a byte"""
+            ...
+
+    @staticmethod
+    def forReceive() -> PeerDiscovery:
+        ...
+
+    @staticmethod
+    def forTransmission(peerType: PeerDiscovery.PeerType) -> PeerDiscovery:
+        ...
+
+    def getPeerType(self) -> PeerDiscovery.PeerType:
+        ...
+
+    def getSdkBuildMonth(self) -> Any:
+        ...
+
+    def isSdkBuildMonthValid(self) -> bool:
+        """Checks if the build month was set correctly without allocating"""
+        ...
+
+    def getSdkMajorVersion(self) -> int:
+        ...
+
+    def getSdkMinorVersion(self) -> int:
+        ...
+
+    def getRobocolMsgType(self) -> Any:
+        ...
+
+    def toByteArray(self) -> list[int]:
+        ...
+
+    def fromByteArray(self, byteArray: list[int]) -> None:
+        ...
+
+    def toString(self) -> str:
+        ...
+
+    TAG: str
+    cbBufferHistorical: int
+    cbPayloadHistorical: int
+
+
+class SwitchableCameraName(CameraName):
+    __java__ = "org.firstinspires.ftc.robotcore.internal.camera.delegating.SwitchableCameraName"
+    def getMembers(self) -> list[CameraName]:
+        """Returns the ordered list of member CameraNames in this SwitchableCameraName."""
+        ...
+
+    def allMembersAreWebcams(self) -> bool:
+        """Returns true if all members of this SwitchableCameraName are webcams."""
+        ...
+
+
+class Heartbeat(RobocolParsableBase):
+    """Heartbeat message"""
+    __java__ = "com.qualcomm.robotcore.robocol.Heartbeat"
+    def __init__(self) -> None:
+        ...
+
+    def cbPayload(self) -> int:
+        ...
+
+    def getTimeZoneId(self) -> str:
+        ...
+
+    def setTimeZoneId(self, timeZoneId: str) -> None:
+        ...
+
+    @staticmethod
+    def createWithTimeStamp() -> Heartbeat:
+        ...
+
+    def getTimestamp(self) -> int:
+        """Timestamp this Heartbeat was created at"""
+        ...
+
+    def getElapsedSeconds(self) -> float:
+        """Number of seconds since Heartbeat was created"""
+        ...
+
+    def getRobocolMsgType(self) -> Any:
+        """Get Robocol message type"""
+        ...
+
+    def getRobotState(self) -> int:
+        """Get RobotState"""
+        ...
+
+    def setRobotState(self, state: RobotState) -> None:
+        """Set RobotState"""
+        ...
+
+    def toByteArray(self) -> list[int]:
+        """Convert this Heartbeat into a byte array"""
+        ...
+
+    def fromByteArray(self, byteArray: list[int]) -> None:
+        """Populate this Heartbeat from a byte array"""
+        ...
+
+    def toString(self) -> str:
+        """String containing sequence number and timestamp"""
+        ...
+
+    BASE_PAYLOAD_SIZE: int
+    t0: int
+    t1: int
+    t2: int
+
+
+class NetworkConnection:
+    __java__ = "com.qualcomm.robotcore.wifi.NetworkConnection"
+    class NetworkEvent(enum.Enum):
+        __java__ = "com.qualcomm.robotcore.wifi.NetworkConnection.NetworkEvent"
+        DISCOVERING_PEERS = enum.auto()
+        PEERS_AVAILABLE = enum.auto()
+        GROUP_CREATED = enum.auto()
+        CONNECTING = enum.auto()
+        CONNECTED_AS_PEER = enum.auto()
+        CONNECTED_AS_GROUP_OWNER = enum.auto()
+        DISCONNECTED = enum.auto()
+        CONNECTION_INFO_AVAILABLE = enum.auto()
+        AP_CREATED = enum.auto()
+        ERROR = enum.auto()
+        UNKNOWN = enum.auto()
+
+    class NetworkConnectionCallback:
+        __java__ = "com.qualcomm.robotcore.wifi.NetworkConnection.NetworkConnectionCallback"
+        def onNetworkConnectionEvent(self, event: NetworkConnection.NetworkEvent) -> CallbackResult:
+            ...
+
+    def __init__(self, context: Any) -> None:
+        ...
+
+    def getNetworkType(self) -> NetworkType:
+        ...
+
+    def enable(self) -> None:
+        ...
+
+    def disable(self) -> None:
+        ...
+
+    def discoverPotentialConnections(self) -> None:
+        ...
+
+    def cancelPotentialConnections(self) -> None:
+        ...
+
+    def createConnection(self) -> None:
+        ...
+
+    @overload
+    def connect(self, deviceAddress: str) -> None:
+        ...
+    @overload
+    def connect(self, connectionName: str, connectionPassword: str) -> None:
+        ...
+    def connect(self, *args: Any, **kwargs: Any) -> Any:
+        ...
+
+    def detectWifiReset(self) -> None:
+        ...
+
+    def getConnectionOwnerAddress(self) -> Any:
+        ...
+
+    def getConnectionOwnerName(self) -> str:
+        ...
+
+    def getConnectionOwnerMacAddress(self) -> str:
+        ...
+
+    def isConnected(self) -> bool:
+        ...
+
+    def getDeviceName(self) -> str:
+        ...
+
+    def getInfo(self) -> str:
+        ...
+
+    def getFailureReason(self) -> str:
+        ...
+
+    def getPassphrase(self) -> str:
+        ...
+
+    def getConnectStatus(self) -> Any:
+        ...
+
+    def onWaitForConnection(self) -> None:
+        ...
+
+    def setNetworkSettings(self, deviceName: str, password: str, channel: ApChannel) -> None:
+        """Should only be called on Robot Controller"""
+        ...
+
+    @staticmethod
+    def isDeviceNameValid(deviceName: str) -> bool:
+        """Return true if the device name is valid. A valid device name is greater than 0 characters and contains only alphanumeric or punctuation characters only."""
+        ...
+
+    def setCallback(self, callback: NetworkConnection.NetworkConnectionCallback) -> None:
+        ...
+
+    def getCallback(self) -> NetworkConnection.NetworkConnectionCallback:
+        ...
+
+    def getWifiChannel(self) -> int:
+        ...
+
+    def sendEvent(self, event: NetworkConnection.NetworkEvent) -> None:
+        """sendEvent Unicast to a single listener. No support for multicast."""
+        ...
+
+    lastEvent: NetworkConnection.NetworkEvent
+    callback: NetworkConnection.NetworkConnectionCallback
+    callbackLock: object
+    wifiManager: Any
+    context: Any
+
+
+class RecvLoopRunnable:
+    __java__ = "org.firstinspires.ftc.robotcore.internal.network.RecvLoopRunnable"
+    class RecvLoopCallback:
+        __java__ = "org.firstinspires.ftc.robotcore.internal.network.RecvLoopRunnable.RecvLoopCallback"
+        def packetReceived(self, packet: RobocolDatagram) -> CallbackResult:
+            ...
+
+        def peerDiscoveryEvent(self, packet: RobocolDatagram) -> CallbackResult:
+            ...
+
+        def heartbeatEvent(self, packet: RobocolDatagram) -> CallbackResult:
+            ...
+
+        def commandEvent(self, command: Command) -> CallbackResult:
+            ...
+
+        def telemetryEvent(self, packet: RobocolDatagram) -> CallbackResult:
+            ...
+
+        def gamepadEvent(self, packet: RobocolDatagram) -> CallbackResult:
+            ...
+
+        def emptyEvent(self, packet: RobocolDatagram) -> CallbackResult:
+            ...
+
+        def reportGlobalError(self, error: str, recoverable: bool) -> CallbackResult:
+            ...
+
+    def __init__(self, callback: RecvLoopRunnable.RecvLoopCallback, socket: RobocolDatagramSocket, lastRecvPacket: ElapsedTime) -> None:
+        ...
+
+    def setCallback(self, callback: RecvLoopRunnable.RecvLoopCallback) -> None:
+        ...
+
+    def injectReceivedCommand(self, cmd: Command) -> None:
+        ...
+
+    def getBytesPerSecond(self) -> int:
+        ...
+
+    def calculateBytesPerMilli(self) -> None:
+        ...
+
+    def run(self) -> None:
+        ...
+
+    TAG: str
+    DEBUG: bool
+    lastRecvPacket: ElapsedTime
+    packetProcessingTimer: ElapsedTime
+    commandProcessingTimer: ElapsedTime
+    msCommandProcessingTimerReportingThreshold: float
+    msPacketProcessingTimerReportingThreshold: float
+    socket: RobocolDatagramSocket
+    callback: RecvLoopRunnable.RecvLoopCallback
+    packetsToProcess: Any
+    commandsToProcess: Any
+
+
+class EventLoopManager(RecvLoopRunnable.RecvLoopCallback, NetworkConnection.NetworkConnectionCallback, PeerStatusCallback, SyncdDevice.Manager):
+    """Event Loop Manager"""
+    __java__ = "com.qualcomm.robotcore.eventloop.EventLoopManager"
+    class EventLoopMonitor:
+        """Callback to monitor when event loop changes state"""
+        __java__ = "com.qualcomm.robotcore.eventloop.EventLoopManager.EventLoopMonitor"
+        def onStateChange(self, state: RobotState) -> None:
+            ...
+
+        def onTelemetryTransmitted(self) -> None:
+            ...
+
+        def onPeerConnected(self) -> None:
+            ...
+
+        def onPeerDisconnected(self) -> None:
+            ...
+
+    def __init__(self, context: Any, eventLoopManagerClient: EventLoopManagerClient, idleEventLoop: EventLoop) -> None:
+        """Constructor"""
+        ...
+
+    def getWebServer(self) -> WebServer:
+        ...
+
+    def setMonitor(self, monitor: EventLoopManager.EventLoopMonitor) -> None:
+        """Set a monitor for this event loop, which will immediately have the appropriate method called to indicate the current peer status."""
+        ...
+
+    def getMonitor(self) -> EventLoopManager.EventLoopMonitor:
+        """return any event loop monitor previously set"""
+        ...
+
+    def getEventLoop(self) -> EventLoop:
+        """Get the current event loop"""
+        ...
+
+    def getGamepad(self, port: int) -> Gamepad:
+        """Get the gamepad connected to a particular user"""
+        ...
+
+    def getOpModeGamepads(self) -> list[Gamepad]:
+        """Get the Gamepad instances used by user code"""
+        ...
+
+    def getLatestGamepad1Data(self) -> Gamepad:
+        """Get a Gamepad instance with the latest gamepad data available for user 1"""
+        ...
+
+    def getLatestGamepad2Data(self) -> Gamepad:
+        """Get a Gamepad instance with the latest gamepad data available for user 1"""
+        ...
+
+    def getHeartbeat(self) -> Heartbeat:
+        """Get the current heartbeat state"""
+        ...
+
+    def telemetryEvent(self, packet: RobocolDatagram) -> CallbackResult:
+        ...
+
+    def reportGlobalError(self, error: str, recoverable: bool) -> CallbackResult:
+        ...
+
+    def packetReceived(self, packet: RobocolDatagram) -> CallbackResult:
+        ...
+
+    def refreshSystemTelemetryNow(self) -> None:
+        """Forces an immediate refresh of the system telemetry"""
+        ...
+
+    def refreshSystemTelemetry(self) -> None:
+        """Do our best to maintain synchrony of the system error / warning state between applications without incurring undo overhead."""
+        ...
+
+    def onNetworkConnectionEvent(self, event: NetworkConnection.NetworkEvent) -> CallbackResult:
+        ...
+
+    def start(self, eventLoop: EventLoop) -> None:
+        """Starts up the EventLoopManager. This mostly involves setting up the network connections and listeners and senders, then getting the event loop thread going. Note that shutting down the EventLoopManager does not do a full complete inverse. Rather, it leaves the underlying network connection alive and running, as this, among other things, helps remote toasts to continue to function correctly. Thus, we must be aware of that possibility here as we start."""
+        ...
+
+    def shutdown(self) -> None:
+        """Performs the logical inverse of #start(EventLoop)."""
+        ...
+
+    def close(self) -> None:
+        ...
+
+    def registerSyncdDevice(self, device: SyncdDevice) -> None:
+        """Register a sync'd device"""
+        ...
+
+    def unregisterSyncdDevice(self, device: SyncdDevice) -> None:
+        """Unregisters a device from this event loop. It is specifically permitted to unregister a device which is not currently registered; such an operation has no effect."""
+        ...
+
+    def setEventLoop(self, eventLoop: EventLoop) -> None:
+        """Replace the current event loop with a new event loop"""
+        ...
+
+    def sendTelemetryData(self, telemetry: TelemetryMessage) -> None:
+        """Send telemetry data"""
+        ...
+
+    def gamepadEvent(self, packet: RobocolDatagram) -> CallbackResult:
+        ...
+
+    def heartbeatEvent(self, packet: RobocolDatagram) -> CallbackResult:
+        ...
+
+    def onPeerConnected(self) -> None:
+        ...
+
+    def onPeerDisconnected(self) -> None:
+        ...
+
+    def peerDiscoveryEvent(self, packet: RobocolDatagram) -> CallbackResult:
+        ...
+
+    def commandEvent(self, command: Command) -> CallbackResult:
+        ...
+
+    def emptyEvent(self, packet: RobocolDatagram) -> CallbackResult:
+        ...
+
+    def buildAndSendTelemetry(self, tag: str, msg: str) -> None:
+        ...
+
+    TAG: str
+    SYSTEM_NONE_KEY: str
+    SYSTEM_ERROR_KEY: str
+    SYSTEM_WARNING_KEY: str
+    ROBOT_BATTERY_LEVEL_KEY: str
+    RC_BATTERY_STATUS_KEY: str
+    state: RobotState
+
+
+class Command(RobocolParsableBase):
+    """Class used to send and receive commands"""
+    __java__ = "com.qualcomm.robotcore.robocol.Command"
+    @overload
+    def __init__(self, name: str) -> None:
+        """Constructs a Command for transmission."""
+        ...
+    @overload
+    def __init__(self, name: str, extra: str) -> None:
+        """Constructs a Command for transmission."""
+        ...
+    @overload
+    def __init__(self, packet: RobocolDatagram) -> None:
+        """Constructs a Command from a received RobocolDatagram."""
+        ...
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        ...
+
+    def acknowledge(self) -> None:
+        """The receiver should call this method before sending this command back to the sender"""
+        ...
+
+    def isAcknowledged(self) -> bool:
+        """Check if this command has been acknowledged"""
+        ...
+
+    def getName(self) -> str:
+        """Get the command name as a string"""
+        ...
+
+    def getExtra(self) -> str:
+        """Get the extra data as a string"""
+        ...
+
+    def getAttempts(self) -> int:
+        """Number of times this command was packaged into a byte array"""
+        ...
+
+    def hasExpired(self) -> bool:
+        ...
+
+    def getRobocolMsgType(self) -> Any:
+        ...
+
+    def isInjected(self) -> bool:
+        ...
+
+    def setIsInjected(self, isInjected: bool) -> None:
+        ...
+
+    def setTransmissionDeadline(self, deadline: Deadline) -> None:
+        ...
+
+    def getSender(self) -> Any:
+        ...
+
+    def toByteArray(self) -> list[int]:
+        ...
+
+    def getPayloadSize(self, nameBytesLength: int, extraBytesLength: int) -> int:
+        ...
+
+    def fromByteArray(self, byteArray: list[int]) -> None:
+        ...
+
+    def toString(self) -> str:
+        ...
+
+    def equals(self, o: object) -> bool:
+        ...
+
+    def hashCode(self) -> int:
+        ...
+
+    def compareTo(self, another: Command) -> int:
+        ...
+
+    def compare(self, c1: Command, c2: Command) -> int:
+        ...
+
+    @staticmethod
+    def generateTimestamp() -> int:
+        ...
+
+    mName: str
+    mExtra: str
+    mTimestamp: int
+    mAcknowledged: bool
+    mAttempts: int
+    mIsInjected: bool
+    mTransmissionDeadline: Deadline
+    mSender: Any
+
+
+class WifiDirectAssistant(NetworkConnection):
+    __java__ = "com.qualcomm.robotcore.wifi.WifiDirectAssistant"
+    @staticmethod
+    def getWifiDirectAssistant(context: Any) -> WifiDirectAssistant:
+        ...
+
+    def getNetworkType(self) -> NetworkType:
+        ...
+
+    def enable(self) -> None:
+        ...
+
+    def disable(self) -> None:
+        ...
+
+    def discoverPotentialConnections(self) -> None:
+        ...
+
+    def createConnection(self) -> None:
+        ...
+
+    def cancelPotentialConnections(self) -> None:
+        ...
+
+    def getInfo(self) -> str:
+        ...
+
+    def isEnabled(self) -> bool:
+        ...
+
+    def getConnectStatus(self) -> Any:
+        ...
+
+    def getPeers(self) -> list[Any]:
+        ...
+
+    def getDeviceMacAddress(self) -> str:
+        """Get the device mac address"""
+        ...
+
+    def getDeviceName(self) -> str:
+        """Get the device name"""
+        ...
+
+    def getConnectionOwnerAddress(self) -> Any:
+        ...
+
+    def getGroupOwnerAddress(self) -> Any:
+        """Get the IP address of the group owner"""
+        ...
+
+    def getConnectionOwnerMacAddress(self) -> str:
+        ...
+
+    def getConnectionOwnerName(self) -> str:
+        ...
+
+    def getGroupOwnerName(self) -> str:
+        """Get the group owners device name. Example: '417-Z-RC'"""
+        ...
+
+    def getPassphrase(self) -> str:
+        """Return the passphrase for this network; only valid if this device is the group owner"""
+        ...
+
+    def getGroupInterface(self) -> str:
+        """Get the group owners interface used. Example. 'p2p0'"""
+        ...
+
+    def getGroupNetworkName(self) -> str:
+        """Get the group network name. Example: 'DIRECT-dR-417-Z-RC'"""
+        ...
+
+    def isWifiP2pEnabled(self) -> bool:
+        ...
+
+    def isConnected(self) -> bool:
+        """Returns true if connected, or group owner"""
+        ...
+
+    def isGroupOwner(self) -> bool:
+        """Returns true if this device is the group owner"""
+        ...
+
+    def discoverPeers(self) -> None:
+        """Discover Wi-Fi Direct peers"""
+        ...
+
+    def cancelDiscoverPeers(self) -> None:
+        """Cancel discover Wi-Fi Direct peers request"""
+        ...
+
+    def createGroup(self) -> None:
+        """Create a Wi-Fi Direct group"""
+        ...
+
+    def removeGroup(self) -> None:
+        """Remove a Wi-Fi Direct group"""
+        ...
+
+    @overload
+    def connect(self, deviceAddress: str, notSupported: str) -> None:
+        ...
+    @overload
+    def connect(self, deviceAddress: str) -> None:
+        ...
+    def connect(self, *args: Any, **kwargs: Any) -> Any:
+        ...
+
+    def getFailureReason(self) -> str:
+        ...
+
+    @staticmethod
+    def failureReasonToString(reason: int) -> str:
+        ...
+
+    def sendEvent(self, event: Any) -> None:
+        ...
+
+    def onWaitForConnection(self) -> None:
+        """Degenerate implementations"""
+        ...
+
+    def setNetworkSettings(self, deviceName: str, password: str, channel: ApChannel) -> None:
+        ...
+
+    def detectWifiReset(self) -> None:
+        ...
+
+    TAG: str
+
+
+class TelemetryMessage(RobocolParsableBase):
+    """Hold telemtry data"""
+    __java__ = "com.qualcomm.robotcore.robocol.TelemetryMessage"
+    @overload
+    def __init__(self) -> None:
+        ...
+    @overload
+    def __init__(self, byteArray: list[int]) -> None:
+        ...
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        ...
+
+    def getTimestamp(self) -> int:
+        """Timestamp this message was sent. Timestamp is in wall time."""
+        ...
+
+    def isSorted(self) -> bool:
+        """Returns whether this telemetry should be sorted by keys on the driver station or not. If not sorted, then data is displayed in the order in which it was added to the telemetry."""
+        ...
+
+    def setSorted(self, isSorted: bool) -> None:
+        """Sets whether the telemetry should be sorted by its keys on the driver station or not."""
+        ...
+
+    def getRobotState(self) -> RobotState:
+        ...
+
+    def setRobotState(self, robotState: RobotState) -> None:
+        ...
+
+    def setTag(self, tag: str) -> None:
+        """Set the optional tag value."""
+        ...
+
+    def getTag(self) -> str:
+        """Get the optional tag value"""
+        ...
+
+    @overload
+    def addData(self, key: str, msg: str) -> None:
+        """Add a data point"""
+        ...
+    @overload
+    def addData(self, key: str, msg: object) -> None:
+        """Add a data point"""
+        ...
+    @overload
+    def addData(self, key: str, msg: float) -> None:
+        """Add a data point"""
+        ...
+    @overload
+    def addData(self, key: str, msg: float) -> None:
+        """Add a data point"""
+        ...
+    def addData(self, *args: Any, **kwargs: Any) -> Any:
+        ...
+
+    def getDataStrings(self) -> dict[str, str]:
+        """Get a reference to the map of messages"""
+        ...
+
+    def getDataNumbers(self) -> dict[str, float]:
+        ...
+
+    def hasData(self) -> bool:
+        """Return true if this telemetry object has data added to it"""
+        ...
+
+    def clearData(self) -> None:
+        """Clear all messages"""
+        ...
+
+    def getRobocolMsgType(self) -> Any:
+        ...
+
+    def toByteArray(self) -> list[int]:
+        ...
+
+    def fromByteArray(self, byteArray: list[int]) -> None:
+        ...
+
+    @staticmethod
+    def putCount(buffer: Any, count: int) -> None:
+        ...
+
+    @staticmethod
+    def getCount(buffer: Any) -> int:
+        ...
+
+    @staticmethod
+    def putTagLen(buffer: Any, cbTag: int) -> None:
+        ...
+
+    @staticmethod
+    def getTagLen(buffer: Any) -> int:
+        ...
+
+    @staticmethod
+    def putKeyLen(buffer: Any, cbKey: int) -> None:
+        ...
+
+    @staticmethod
+    def getKeyLen(buffer: Any) -> int:
+        ...
+
+    @staticmethod
+    def putValueLen(buffer: Any, cbValue: int) -> None:
+        ...
+
+    @staticmethod
+    def getValueLen(buffer: Any) -> int:
+        ...
+
+    DEFAULT_TAG: str
+    cbTimestamp: int
+    cbSorted: int
+    cbRobotState: int
+    cbTagLen: int
+    cbCountLen: int
+    cbKeyLen: int
+    cbValueLen: int
+    cbFloat: int
+    cbTagMax: int
+    cCountMax: int
+    cbKeyMax: int
+    cbValueMax: int

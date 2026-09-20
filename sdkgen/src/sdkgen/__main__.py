@@ -8,10 +8,59 @@ from pathlib import Path
 from .dbwrite import build_database, write_database
 from .download import ensure_sdk_cache
 from .handwritten import GAMEPAD_PY, INIT_PY, LANG_PY
+from .pytypes import unresolved_bases
 from .registry import build_registry
 from .stubgen import generate_module_files
 
 DEFAULT_CACHE_DIR = Path(__file__).resolve().parent.parent.parent / ".cache"
+
+
+def _iter_type_strings(c: dict):
+    for m in c.get("methods") or []:
+        for p in m.get("params") or []:
+            yield p["type"]
+        yield m.get("returns", "void")
+    for ctor in c.get("constructors") or []:
+        for p in ctor.get("params") or []:
+            yield p["type"]
+    for f in c.get("fields") or []:
+        yield f["type"]
+    for e in c.get("extends") or []:
+        yield e
+    for tp in c.get("typeParams") or []:
+        if " extends " in tp:
+            yield tp.split(" extends ", 1)[1]
+
+
+def _write_internal_type_list(classes: dict, ftc_dir: Path) -> int:
+    """Appends a documented, sorted list of every Java type still rendering
+    as `Any` in the generated stubs (module-level, in ftc/internal.py) --
+    per ARCHITECTURE.md's closure requirement, these gaps must be visible,
+    not silent. Returns the count for the stderr summary."""
+    causes: set[str] = set()
+    for c in classes.values():
+        for ts in _iter_type_strings(c):
+            causes |= unresolved_bases(ts, classes)
+    if not causes:
+        return 0
+    lines = [
+        "",
+        "",
+        "# Referenced from a stubbed signature somewhere in ftc.*, but not",
+        "# extractable: no declaration for these exists in any FTC SDK",
+        "# *-sources.jar artifact (Android framework, OpenCV, org.json, the",
+        "# JDK itself, or a couple of third-party libraries the SDK depends",
+        "# on without shipping sources for). A signature naming one of these",
+        "# still renders `Any` for that parameter/return/field -- this list",
+        "# exists so that's a documented gap, not a silent one.",
+        "UNSTUBBABLE_JAVA_TYPES = [",
+    ]
+    lines.extend(f'    "{fqn}",' for fqn in sorted(causes))
+    lines.append("]")
+    path = ftc_dir / "internal.py"
+    with open(path, "a", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+    return len(causes)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -43,6 +92,10 @@ def main(argv: list[str] | None = None) -> int:
     counts = generate_module_files(db["classes"], registry, ftc_dir)
     for module, n in counts.items():
         print(f"sdkgen: {module}: {n} top-level classes", file=sys.stderr)
+
+    n_unstubbable = _write_internal_type_list(db["classes"], ftc_dir)
+    print(f"sdkgen: {n_unstubbable} distinct Java types remain unstubbed (Any) -- "
+          f"see ftc/internal.py:UNSTUBBABLE_JAVA_TYPES", file=sys.stderr)
 
     (ftc_dir / "lang.py").write_text(LANG_PY, encoding="utf-8")
     (ftc_dir / "__init__.py").write_text(INIT_PY, encoding="utf-8")

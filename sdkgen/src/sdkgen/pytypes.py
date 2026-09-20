@@ -67,6 +67,33 @@ COLLECTION_MAP = {"java.util.Map", "java.util.HashMap", "java.util.TreeMap",
                    "java.util.SortedMap", "java.util.LinkedHashMap"}
 
 
+def unresolved_bases(type_str: str, classes: dict) -> set[str]:
+    """Every base type inside `type_str` that render() would turn into `Any`
+    (nothing else does: primitives, java.lang/collection special cases and
+    known `classes` entries all resolve to something real). Used only for
+    reporting -- see __main__.py's summary and the ftc.internal type list --
+    so callers can see *which* Java types are the reason, instead of an
+    unexplained `Any`."""
+    node = parse_type_str(type_str)
+    return _unresolved_bases_node(node, classes)
+
+
+def _unresolved_bases_node(node: TypeNode, classes: dict) -> set[str]:
+    out: set[str] = set()
+    base = node.base
+    if "." in base:
+        known = (
+            base in JAVA_LANG_MAP or base == "java.lang.Class"
+            or base in COLLECTION_LIST or base in COLLECTION_SET or base in COLLECTION_MAP
+            or base in classes
+        )
+        if not known:
+            out.add(base)
+    for a in node.args:
+        out |= _unresolved_bases_node(a, classes)
+    return out
+
+
 @dataclass
 class RenderContext:
     """Shared across all type renders within one output module file."""

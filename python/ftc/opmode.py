@@ -4,7 +4,8 @@ from typing import Any, Callable, Generic, TypeVar, TYPE_CHECKING, overload
 import enum
 
 if TYPE_CHECKING:
-    from ftc.hardware import Gamepad, HardwareMap
+    from ftc.hardware import EventLoopManager, Gamepad, HardwareMap, TelemetryMessage
+    from ftc.internal import OnBotJavaHelper, OpModeMeta, RobotState
     from ftc.telemetry import Telemetry
     from ftc.util import WeakReferenceSet, WebServer
 
@@ -16,7 +17,7 @@ class OpModeManager:
         """Registers a class for display on the driver station and availability for game play. New instances of this class will be created as needed."""
         ...
     @overload
-    def register(self, name: Any, opModeClass: type[OpMode]) -> None:
+    def register(self, name: OpModeMeta, opModeClass: type[OpMode]) -> None:
         """Registers a class for display on the driver station and availability for game play. New instances of this class will be created as needed."""
         ...
     @overload
@@ -24,7 +25,7 @@ class OpModeManager:
         """Register an *instance* of a class for display on the driver station and availability for game play. You won't likely use this method very often."""
         ...
     @overload
-    def register(self, name: Any, opModeInstance: OpMode) -> None:
+    def register(self, name: OpModeMeta, opModeInstance: OpMode) -> None:
         """Register an *instance* of a class for display on the driver station and availability for game play. You won't likely use this method very often."""
         ...
     def register(self, *args: Any, **kwargs: Any) -> Any:
@@ -68,14 +69,14 @@ class EventLoopManagerClient:
     def getWebServer(self) -> WebServer:
         ...
 
-    def getOnBotJavaHelper(self) -> Any:
+    def getOnBotJavaHelper(self) -> OnBotJavaHelper:
         ...
 
 
 class FtcRobotControllerServiceState(EventLoopManagerClient):
     """Created by David on 7/7/2017."""
     __java__ = "com.qualcomm.robotcore.eventloop.opmode.FtcRobotControllerServiceState"
-    def getEventLoopManager(self) -> Any:
+    def getEventLoopManager(self) -> EventLoopManager:
         ...
 
 
@@ -130,7 +131,7 @@ class OpModeInternal:
     """Mapping of configured device names to Java objects that can be used to access them"""
     msStuckDetectStop: int
     executorService: Any
-    internalOpModeServices: Any
+    internalOpModeServices: OpModeServices
     isStarted: bool
     stopRequested: bool
     opModeThreadFinished: bool
@@ -189,7 +190,7 @@ class OpMode(OpModeInternal):
     def newGamepadDataAvailable(self, latestGamepad1Data: Gamepad, latestGamepad2Data: Gamepad) -> None:
         ...
 
-    def internalUpdateTelemetryNow(self, telemetry: Any) -> None:
+    def internalUpdateTelemetryNow(self, telemetry: TelemetryMessage) -> None:
         """This is an internal SDK method, not intended for use by user opmodes."""
         ...
 
@@ -318,7 +319,18 @@ class OpModeManagerNotifier:
         ...
 
 
-class OpModeManagerImpl(OpModeManagerNotifier):
+class OpModeServices:
+    __java__ = "org.firstinspires.ftc.robotcore.internal.opmode.OpModeServices"
+    def refreshUserTelemetry(self, telemetry: TelemetryMessage, sInterval: float) -> None:
+        """Update's the user portion of the driver station screen with the contents of the telemetry object here provided if a sufficiently long duration has passed since the last update."""
+        ...
+
+    def requestOpModeStop(self, opModeToStopIfActive: OpMode) -> None:
+        """If the indicated OpMode is the currently active OpMode, cause that OpMode to stop as if the stop button had been pressed on the driver station"""
+        ...
+
+
+class OpModeManagerImpl(OpModeServices, OpModeManagerNotifier):
     """OpModeManagerImpl is the owner of the concept of a 'current' OpMode."""
     __java__ = "com.qualcomm.robotcore.eventloop.opmode.OpModeManagerImpl"
     class OpModeStateTransition:
@@ -329,7 +341,7 @@ class OpModeManagerImpl(OpModeManagerNotifier):
         def copy(self) -> OpModeManagerImpl.OpModeStateTransition:
             ...
 
-        queuedOpModeMetadata: Any
+        queuedOpModeMetadata: OpModeMeta
         opModeSwapNeeded: bool
         callToInitNeeded: bool
         gamepadResetNeeded: bool
@@ -405,7 +417,7 @@ class OpModeManagerImpl(OpModeManagerNotifier):
     def getOpModeManagerOfActivity(activity: Any) -> OpModeManagerImpl:
         ...
 
-    def init(self, eventLoopManager: Any) -> None:
+    def init(self, eventLoopManager: EventLoopManager) -> None:
         ...
 
     def teardown(self) -> None:
@@ -426,7 +438,7 @@ class OpModeManagerImpl(OpModeManagerNotifier):
     def getHardwareMap(self) -> HardwareMap:
         ...
 
-    def getRobotState(self) -> Any:
+    def getRobotState(self) -> RobotState:
         ...
 
     def getActiveOpModeName(self) -> str:
@@ -490,11 +502,11 @@ class OpModeManagerImpl(OpModeManagerNotifier):
         ...
 
     @staticmethod
-    def updateTelemetryNow(opMode: OpMode, telemetry: Any) -> None:
+    def updateTelemetryNow(opMode: OpMode, telemetry: TelemetryMessage) -> None:
         """For the use of TelemetryImpl."""
         ...
 
-    def refreshUserTelemetry(self, telemetry: Any, sInterval: float) -> None:
+    def refreshUserTelemetry(self, telemetry: TelemetryMessage, sInterval: float) -> None:
         ...
 
     def requestOpModeStop(self, opModeToStopIfActive: OpMode) -> None:
@@ -508,9 +520,9 @@ class OpModeManagerImpl(OpModeManagerNotifier):
     context: Any
     activeOpModeName: str
     activeOpMode: OpModeInternal
-    queuedOpModeMetadata: Any
+    queuedOpModeMetadata: OpModeMeta
     hardwareMap: HardwareMap
-    eventLoopManager: Any
+    eventLoopManager: EventLoopManager
     listeners: WeakReferenceSet[OpModeManagerNotifier.Notifications]
     stuckMonitor: OpModeManagerImpl.OpModeStuckCodeMonitor
     peerWasConnected: bool

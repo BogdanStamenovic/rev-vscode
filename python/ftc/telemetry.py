@@ -4,7 +4,8 @@ from typing import Any, Callable, Generic, TypeVar, TYPE_CHECKING, overload
 import enum
 
 if TYPE_CHECKING:
-    from ftc.hardware import Gamepad, HardwareMap
+    from ftc.hardware import CameraName, Gamepad, HardwareMap
+    from ftc.internal import CameraManager
     from ftc.opmode import LinearOpMode, OpMode
 
 EXCEPTION = TypeVar("EXCEPTION", bound="Any")
@@ -39,12 +40,12 @@ class ClassFactory:
     def getInstance() -> ClassFactory:
         ...
 
-    def getCameraManager(self) -> Any:
+    def getCameraManager(self) -> CameraManager:
         """Returns a CameraManager which can be used to access the USB webcams attached to the robot controller."""
         ...
 
     @staticmethod
-    def createSwitchableCameraNameForAllWebcams(hardwareMap: HardwareMap) -> Any:
+    def createSwitchableCameraNameForAllWebcams(hardwareMap: HardwareMap) -> CameraName:
         """Returns a name of a virtual camera comprised of all the webcams configured in the given hardware map."""
         ...
 

@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import Any, Callable, Generic, TypeVar, TYPE_CHECKING, overload
 import enum
 
+if TYPE_CHECKING:
+    from ftc.internal import MatrixF, OpenGLMatrix, VectorF
 
 class Acceleration:
     """Instances of Acceleration represent the second derivative of Position over time. This is also to say that Position is a double integration of Acceleration with respect to time."""
@@ -477,12 +479,12 @@ class Orientation:
         ...
 
     @overload
-    def getRotationMatrix(self) -> Any:
+    def getRotationMatrix(self) -> OpenGLMatrix:
         """Returns the rotation matrix associated with the receiver Orientation."""
         ...
     @overload
     @staticmethod
-    def getRotationMatrix(axesReference: AxesReference, axesOrder: AxesOrder, unit: AngleUnit, firstAngle: float, secondAngle: float, thirdAngle: float) -> Any:
+    def getRotationMatrix(axesReference: AxesReference, axesOrder: AxesOrder, unit: AngleUnit, firstAngle: float, secondAngle: float, thirdAngle: float) -> OpenGLMatrix:
         """Returns the rotation matrix associated with a particular set of three rotational angles."""
         ...
     def getRotationMatrix(self, *args: Any, **kwargs: Any) -> Any:
@@ -490,12 +492,12 @@ class Orientation:
 
     @overload
     @staticmethod
-    def getOrientation(rot: Any, axesReference: AxesReference, axesOrder: AxesOrder, unit: AngleUnit) -> Orientation:
+    def getOrientation(rot: MatrixF, axesReference: AxesReference, axesOrder: AxesOrder, unit: AngleUnit) -> Orientation:
         """Given a rotation matrix, and an AxesReference and AxesOrder, returns an orientation that would produce that rotation matrix."""
         ...
     @overload
     @staticmethod
-    def getOrientation(rot: Any, axesReference: AxesReference, axesOrder: AxesOrder, unit: AngleUnit, angleSet: Orientation.AngleSet) -> Orientation:
+    def getOrientation(rot: MatrixF, axesReference: AxesReference, axesOrder: AxesOrder, unit: AngleUnit, angleSet: Orientation.AngleSet) -> Orientation:
         """Given a rotation matrix, and an AxesReference and AxesOrder, returns an orientation that would produce that rotation matrix."""
         ...
     @staticmethod
@@ -612,7 +614,7 @@ class Quaternion:
         ...
 
     @staticmethod
-    def fromMatrix(m: Any, acquisitionTime: int) -> Quaternion:
+    def fromMatrix(m: MatrixF, acquisitionTime: int) -> Quaternion:
         ...
 
     def magnitude(self) -> float:
@@ -633,11 +635,11 @@ class Quaternion:
     def multiply(self, q: Quaternion, acquisitionTime: int) -> Quaternion:
         ...
 
-    def applyToVector(self, vector: Any) -> Any:
+    def applyToVector(self, vector: VectorF) -> VectorF:
         """Apply this rotation to the given vector"""
         ...
 
-    def toMatrix(self) -> Any:
+    def toMatrix(self) -> MatrixF:
         ...
 
     def toOrientation(self, axesReference: AxesReference, axesOrder: AxesOrder, angleUnit: AngleUnit) -> Orientation:

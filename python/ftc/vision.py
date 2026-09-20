@@ -5,12 +5,22 @@ import enum
 
 from ftc.opmode import OpModeManagerNotifier
 if TYPE_CHECKING:
+    from ftc.hardware import CameraName, WebcamName
+    from ftc.internal import BuiltinCameraDirection, CameraCalibration, Consumer, Continuation, MatrixF, OpenGLMatrix, VectorF
     from ftc.navigation import AngleUnit, DistanceUnit, Pose3D, Position, Quaternion, YawPitchRollAngles
     from ftc.opmode import OpMode
     from ftc.util import SortOrder
 
 T = TypeVar("T")
-class VisionPortal:
+class CameraStreamSource:
+    """Interface representing an on-demand source of frames (i.e., bitmaps)."""
+    __java__ = "org.firstinspires.ftc.robotcore.external.stream.CameraStreamSource"
+    def getFrameBitmap(self, continuation: Continuation[Consumer[Any]]) -> None:
+        """Requests a single frame bitmap. Here's a brief example implementation using the now-removed VuforiaLocalizer class:"""
+        ...
+
+
+class VisionPortal(CameraStreamSource):
     __java__ = "org.firstinspires.ftc.vision.VisionPortal"
     class StreamFormat(enum.Enum):
         """StreamFormat is only applicable if using a webcam"""
@@ -28,11 +38,11 @@ class VisionPortal:
     class Builder:
         __java__ = "org.firstinspires.ftc.vision.VisionPortal.Builder"
         @overload
-        def setCamera(self, camera: Any) -> VisionPortal.Builder:
+        def setCamera(self, camera: CameraName) -> VisionPortal.Builder:
             """Configure the portal to use a webcam"""
             ...
         @overload
-        def setCamera(self, cameraDirection: Any) -> VisionPortal.Builder:
+        def setCamera(self, cameraDirection: BuiltinCameraDirection) -> VisionPortal.Builder:
             """Configure the portal to use an internal camera"""
             ...
         def setCamera(self, *args: Any, **kwargs: Any) -> Any:
@@ -97,12 +107,12 @@ class VisionPortal:
 
     @overload
     @staticmethod
-    def easyCreateWithDefaults(cameraDirection: Any, *processors: VisionProcessor) -> VisionPortal:
+    def easyCreateWithDefaults(cameraDirection: BuiltinCameraDirection, *processors: VisionProcessor) -> VisionPortal:
         """Create a VisionPortal for an internal camera using default configuration parameters, and skipping the use of the Builder pattern."""
         ...
     @overload
     @staticmethod
-    def easyCreateWithDefaults(cameraName: Any, *processors: VisionProcessor) -> VisionPortal:
+    def easyCreateWithDefaults(cameraName: CameraName, *processors: VisionProcessor) -> VisionPortal:
         """Create a VisionPortal for a webcam using default configuration parameters, and skipping the use of the Builder pattern."""
         ...
     @staticmethod
@@ -148,11 +158,11 @@ class VisionPortal:
         """Get a camera control handle ONLY APPLICABLE TO WEBCAMS"""
         ...
 
-    def setActiveCamera(self, webcamName: Any) -> None:
+    def setActiveCamera(self, webcamName: WebcamName) -> None:
         """Switches the active camera to the indicated camera. ONLY APPLICABLE IF USING A SWITCHABLE WEBCAM"""
         ...
 
-    def getActiveCamera(self) -> Any:
+    def getActiveCamera(self) -> WebcamName:
         """Returns the name of the currently active camera ONLY APPLIES IF USING A SWITCHABLE WEBCAM"""
         ...
 
@@ -190,13 +200,13 @@ class VisionPortalImpl(VisionPortal):
         def onDrawFrame(self, canvas: Any, onscreenWidth: int, onscreenHeight: int, scaleBmpPxToCanvasPx: float, scaleCanvasDensity: float, userContext: object) -> None:
             ...
 
-    def __init__(self, camera: Any, cameraMonitorViewId: int, autoPauseCameraMonitor: bool, cameraResolution: Any, webcamStreamFormat: Any, autoStartStream: bool, showStats: bool, processors: list[VisionProcessor]) -> None:
+    def __init__(self, camera: CameraName, cameraMonitorViewId: int, autoPauseCameraMonitor: bool, cameraResolution: Any, webcamStreamFormat: Any, autoStartStream: bool, showStats: bool, processors: list[VisionProcessor]) -> None:
         ...
 
     def startCamera(self) -> None:
         ...
 
-    def createCamera(self, cameraName: Any, cameraMonitorViewId: int) -> None:
+    def createCamera(self, cameraName: CameraName, cameraMonitorViewId: int) -> None:
         ...
 
     def setProcessorEnabled(self, processor: VisionProcessor, enabled: bool) -> None:
@@ -208,16 +218,16 @@ class VisionPortalImpl(VisionPortal):
     def getCameraState(self) -> Any:
         ...
 
-    def setActiveCamera(self, webcamName: Any) -> None:
+    def setActiveCamera(self, webcamName: WebcamName) -> None:
         ...
 
-    def getActiveCamera(self) -> Any:
+    def getActiveCamera(self) -> WebcamName:
         ...
 
     def getCameraControl(self, controlType: type[T]) -> T:
         ...
 
-    def getFrameBitmap(self, continuation: Any) -> None:
+    def getFrameBitmap(self, continuation: Continuation[Consumer[Any]]) -> None:
         ...
 
     def saveNextFrameRaw(self, filepath: str) -> None:
@@ -246,7 +256,7 @@ class VisionPortalImpl(VisionPortal):
     cameraState: Any
     processors: list[VisionProcessor]
     processorsEnabled: list[bool]
-    calibration: Any
+    calibration: CameraCalibration
     autoPauseCameraMonitor: bool
     autoStartStream: bool
     showStats: bool
@@ -264,7 +274,7 @@ class VisionPortalImpl(VisionPortal):
 class VisionProcessorInternal:
     """Internal interface"""
     __java__ = "org.firstinspires.ftc.vision.VisionProcessorInternal"
-    def init(self, width: int, height: int, calibration: Any) -> None:
+    def init(self, width: int, height: int, calibration: CameraCalibration) -> None:
         ...
 
     def processFrame(self, frame: Any, captureTimeNanos: int) -> object:
@@ -381,7 +391,7 @@ class AprilTagLibrary:
             """Add a tag to this tag library"""
             ...
         @overload
-        def addTag(self, id: int, name: str, size: float, fieldPosition: Any, distanceUnit: DistanceUnit, fieldOrientation: Quaternion) -> AprilTagLibrary.Builder:
+        def addTag(self, id: int, name: str, size: float, fieldPosition: VectorF, distanceUnit: DistanceUnit, fieldOrientation: Quaternion) -> AprilTagLibrary.Builder:
             """Add a tag to this tag library"""
             ...
         @overload
@@ -411,7 +421,7 @@ class AprilTagLibrary:
 class AprilTagMetadata:
     __java__ = "org.firstinspires.ftc.vision.apriltag.AprilTagMetadata"
     @overload
-    def __init__(self, id: int, name: str, tagsize: float, fieldPosition: Any, distanceUnit: DistanceUnit, fieldOrientation: Quaternion) -> None:
+    def __init__(self, id: int, name: str, tagsize: float, fieldPosition: VectorF, distanceUnit: DistanceUnit, fieldOrientation: Quaternion) -> None:
         """Add a tag to this tag library"""
         ...
     @overload
@@ -425,7 +435,7 @@ class AprilTagMetadata:
     tagsize: float
     name: str
     distanceUnit: DistanceUnit
-    fieldPosition: Any
+    fieldPosition: VectorF
     fieldOrientation: Quaternion
 
 
@@ -457,7 +467,7 @@ class AprilTagPoseFtc:
 
 class AprilTagPoseRaw:
     __java__ = "org.firstinspires.ftc.vision.apriltag.AprilTagPoseRaw"
-    def __init__(self, x: float, y: float, z: float, R: Any) -> None:
+    def __init__(self, x: float, y: float, z: float, R: MatrixF) -> None:
         ...
 
     x: float
@@ -466,7 +476,7 @@ class AprilTagPoseRaw:
     """Y translation"""
     z: float
     """Z translation"""
-    R: Any
+    R: MatrixF
     """3x3 rotation matrix"""
 
 
@@ -583,13 +593,13 @@ class AprilTagProcessorImpl(AprilTagProcessor):
         rvec: Any
         tvec: Any
 
-    def __init__(self, robotInCameraFrame: Any, fx: float, fy: float, cx: float, cy: float, outputUnitsLength: DistanceUnit, outputUnitsAngle: AngleUnit, tagLibrary: AprilTagLibrary, drawAxes: bool, drawCube: bool, drawOutline: bool, drawTagID: bool, tagFamily: Any, threads: int, suppressCalibrationWarnings: bool) -> None:
+    def __init__(self, robotInCameraFrame: OpenGLMatrix, fx: float, fy: float, cx: float, cy: float, outputUnitsLength: DistanceUnit, outputUnitsAngle: AngleUnit, tagLibrary: AprilTagLibrary, drawAxes: bool, drawCube: bool, drawOutline: bool, drawTagID: bool, tagFamily: Any, threads: int, suppressCalibrationWarnings: bool) -> None:
         ...
 
     def finalize(self) -> None:
         ...
 
-    def init(self, width: int, height: int, calibration: Any) -> None:
+    def init(self, width: int, height: int, calibration: CameraCalibration) -> None:
         ...
 
     def processFrame(self, input: Any, captureTimeNanos: int) -> object:
@@ -907,7 +917,7 @@ class ColorBlobLocatorProcessorImpl(ColorBlobLocatorProcessor):
     def __init__(self, colorRange: ColorRange, roiImg: ImageRegion, contourMode: Any, morphOperationType: Any, erodeSize: int, dilateSize: int, drawContours: bool, blurSize: int, boundingBoxColor: int, circleFitColor: int, roiColor: int, contourColor: int) -> None:
         ...
 
-    def init(self, width: int, height: int, calibration: Any) -> None:
+    def init(self, width: int, height: int, calibration: CameraCalibration) -> None:
         ...
 
     def processFrame(self, frame: Any, captureTimeNanos: int) -> object:
@@ -1064,7 +1074,7 @@ class PredominantColorProcessorImpl(PredominantColorProcessor):
     def __init__(self, roi: ImageRegion, swatches: list[Any]) -> None:
         ...
 
-    def init(self, width: int, height: int, calibration: Any) -> None:
+    def init(self, width: int, height: int, calibration: CameraCalibration) -> None:
         ...
 
     def processFrame(self, frame: Any, captureTimeNanos: int) -> object:

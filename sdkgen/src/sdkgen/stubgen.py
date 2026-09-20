@@ -22,7 +22,20 @@ from .pytypes import RenderContext
 from .registry import Registry
 from .resolve import TypeContext, type_node_to_string, _collect_type_params
 
-MODULES = ["ftc.opmode", "ftc.hardware", "ftc.telemetry", "ftc.navigation", "ftc.util", "ftc.vision"]
+MODULES = ["ftc.opmode", "ftc.hardware", "ftc.telemetry", "ftc.navigation", "ftc.util", "ftc.vision",
+           "ftc.internal"]
+
+# ftc.internal has no Contract-2 package mapping of its own (see
+# sdkgen/src/sdkgen/dbwrite.py FALLBACK_MODULE): it's the catch-all for a
+# class that closure pulled in only because a stubbed signature mentions it.
+MODULE_DOCSTRINGS = {
+    "ftc.internal": (
+        "Types pulled in only so a stubbed signature elsewhere (e.g. "
+        "DcMotor.getMotorType() -> MotorConfigurationType) resolves to a "
+        "real class instead of Any. None of these have a Contract-2 package "
+        "mapping of their own; users don't normally import from here directly."
+    ),
+}
 
 JAVA_EXCEPTION_BASES = {
     "java.lang.RuntimeException": "Exception",
@@ -320,11 +333,6 @@ class ModuleWriter:
     def _render_bases(self, fqn: str, type_param_names: list[str]) -> list[str]:
         c = self.classes[fqn]
         bases: list[str] = []
-        if c["kind"] == "enum":
-            self.needs_enum = True
-            bases.append("enum.Enum")
-        if type_param_names:
-            bases.append(f"Generic[{', '.join(type_param_names)}]")
         extends_fqns = _dedupe_preserve_order(_strip_generics_arrays(e) for e in c["extends"])
         extends_fqns = self._dedupe_redundant_bases(fqn, extends_fqns)
         extends_fqns = self._resolve_consistent_bases(fqn, extends_fqns)
@@ -389,6 +397,25 @@ class ModuleWriter:
                     print(f"sdkgen: dropping generic args of base {base_fqn} on {fqn} "
                           f"(self-referential: {sorted(unemitted)})", file=sys.stderr)
             bases.append(expr)
+        if type_param_names:
+            # Generic[...] goes *after* real bases, not before: it has to
+            # for the same MRO-ordering reason as enum.Enum below -- listing
+            # it first was fine while every generic stubbed class had zero
+            # or one same-kind base, but closure pulled in
+            # Continuation.Dispatcher(Generic[S], MemberwiseCloneable),
+            # where Generic-first is an unresolvable MRO for CPython.
+            bases.append(f"Generic[{', '.join(type_param_names)}]")
+        if c["kind"] == "enum":
+            self.needs_enum = True
+            # enum.Enum must come *last*: mixing it with another base (a
+            # Java enum implementing an interface) only works in Python if
+            # the plain classes come first and Enum-derived closes the MRO
+            # (see enum.EnumMeta._get_mixins_) -- putting it first, as a
+            # single unconditional `bases.append("enum.Enum")` up front used
+            # to do, raises "new enumerations should be created as
+            # EnumName([mixin_type, ...] [data_type,] enum_type)" the first
+            # time closure pulls in an enum that implements something.
+            bases.append("enum.Enum")
         return bases
 
     @staticmethod
@@ -488,7 +515,11 @@ class ModuleWriter:
 
         if kind == "enum":
             for const in c["enumConstants"]:
-                body.append(f"{indent}    {const} = enum.auto()")
+                # A Java enum constant can legally be spelled `None`, `True`,
+                # etc. (they're ordinary identifiers in Java, not reserved) --
+                # e.g. org.firstinspires...Camera.Error.None. sanitize_ident
+                # is what keeps that from being a Python SyntaxError.
+                body.append(f"{indent}    {sanitize_ident(const)} = enum.auto()")
 
         # Nested classes first (so later members that reference them as types
         # within the same class don't matter -- Python doesn't need forward
@@ -571,7 +602,16 @@ class ModuleWriter:
         return header + "\n" + "\n".join(self.body_lines).rstrip() + "\n"
 
     def _build_header(self) -> str:
-        lines = ["from __future__ import annotations", ""]
+        lines = []
+        module_doc = MODULE_DOCSTRINGS.get(self.module)
+        if module_doc:
+            # A module docstring is allowed before `from __future__ import
+            # annotations` (the one exception to "future imports must be the
+            # first statement"), so this doesn't disturb the future import.
+            lines.append(f'"""{module_doc}"""')
+            lines.append("")
+        lines.append("from __future__ import annotations")
+        lines.append("")
         lines.append("from typing import Any, Callable, Generic, TypeVar, TYPE_CHECKING, overload")
         if self.needs_enum:
             lines.append("import enum")

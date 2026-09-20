@@ -154,30 +154,3 @@ def extract_full(entry: ClassEntry, registry: Registry, module: str | None,
         "enumConstants": enum_constants,
         "doc": first_doc,
     }
-
-
-def extract_minimal(entry: ClassEntry) -> dict:
-    """A stub entry for a class referenced from a wanted class's public API
-    surface but that lives outside our target packages (e.g. an SDK-internal
-    type). Keeps type resolution from hitting a missing FQN, without pulling
-    in a member list we won't expose to Python users."""
-    node = entry.node
-    kind = KIND_BY_NODE[type(node)]
-    enum_constants = []
-    if kind == "enum":
-        enum_constants = [c.name for c in node.body.constants]
-    first_doc, _ = clean_javadoc(getattr(node, "documentation", None))
-    return {
-        "kind": kind,
-        "simpleName": entry.simple_name,
-        "outer": entry.outer_fqn,
-        "module": None,
-        "typeParams": [],
-        "extends": [],
-        "abstract": kind == "interface",
-        "methods": [],
-        "constructors": [],
-        "fields": [],
-        "enumConstants": enum_constants,
-        "doc": first_doc,
-    }
