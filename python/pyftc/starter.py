@@ -1,6 +1,10 @@
 """Starter OpMode generated from the hub's active hardware configuration: a
 field and a hardwareMap lookup per configured device, with comments listing
-where each device is plugged in and everything its Java type can do."""
+where each device is plugged in and everything its Java type can do.
+
+The generated file carries the Contract 4 markers (docs/ARCHITECTURE.md) so
+`starter-update` can extend it later without touching a line the user wrote;
+see markers.py for the marker format and update.py for how they get used."""
 
 from __future__ import annotations
 
@@ -12,7 +16,8 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
-from .controls import plan_controls
+from . import markers
+from .controls import GAMEPAD_READOUT, plan_controls
 from .jtypes import JType, parse_type
 from .translate import JAVA_KEYWORDS
 from .typedb import TypeDB
@@ -59,14 +64,18 @@ def generate(db: TypeDB, config_xml: str, rcinfo: dict[str, Any], class_name: st
     detected = {str(h.get("moduleAddress")): h for h in rcinfo.get("revHubNamesAndVersions", [])}
     config_name = rcinfo.get("activeConfigName", "?")
     robot = rcinfo.get("deviceName", "the robot")
+    fingerprint = markers.compute_fingerprint(config_xml)
+    generated = date.today().isoformat()
 
     L: list[str] = []
-    L.append(f'"""Starter pack for {robot}, generated {date.today().isoformat()} from hardware configuration '
+    L.append(f'"""Starter pack for {robot}, generated {generated} from hardware configuration '
              f'"{config_name}".')
     L.append("")
     L.append("Press INIT on the Driver Hub: everything above waitForStart() runs once.")
     L.append("Press START: the while loop runs until STOP.")
     L.append('"""')
+    L.append("")
+    L.append(markers.render_config_line(config_name, fingerprint, generated))
     L.append("")
 
     controls = plan_controls(devices)
@@ -78,8 +87,11 @@ def generate(db: TypeDB, config_xml: str, rcinfo: dict[str, Any], class_name: st
             c = db.get(d.java_type) or {}
             if c.get("module"):
                 imports.setdefault(c["module"], set()).add(c["simpleName"])
+
+    L.append(markers.render_begin("imports"))
     for mod in sorted(imports):
         L.append(f"from {mod} import {', '.join(sorted(imports[mod]))}")
+    L.append(markers.render_end("imports"))
     L.append("")
     L.append("")
 
@@ -87,6 +99,7 @@ def generate(db: TypeDB, config_xml: str, rcinfo: dict[str, Any], class_name: st
     L.extend(f"#   {line}" for line in controls.table)
     L.append("#")
     L.append("# ── Connected hardware " + "─" * 55)
+    L.append(markers.render_begin("hardware"))
     if not hubs and not devices:
         L.append("# The active configuration has no devices. Configure the robot on the Driver Hub first.")
     for hub_name, addr in hubs:
@@ -102,6 +115,7 @@ def generate(db: TypeDB, config_xml: str, rcinfo: dict[str, Any], class_name: st
         L.append("# Other devices")
         for d in loose:
             L.extend("#   " + line for line in _device_lines(db, d))
+    L.append(markers.render_end("hardware"))
     L.append("#")
 
     types_seen: list[str] = []
@@ -122,14 +136,17 @@ def generate(db: TypeDB, config_xml: str, rcinfo: dict[str, Any], class_name: st
 
     L.append(f'@TeleOp(name="{_title(class_name)}", group="pyftc")')
     L.append(f"class {class_name}(LinearOpMode):")
+    L.append(markers.render_begin("devices", "    "))
     for d in devices:
         if d.java_type:
             L.append(f"    {d.field}: {(db.get(d.java_type) or {}).get('simpleName', 'object')}")
+    L.append(markers.render_end("devices", "    "))
     L.append("")
     L.extend(controls.constants)
     L.append("")
     L.append("    def runOpMode(self) -> None:")
     L.append("        # ── On ready: runs once when INIT is pressed ──")
+    L.append(markers.render_begin("init", "        "))
     for d in devices:
         if not d.java_type:
             L.append(f"        # {d.name!r}: {d.tag} is not a known device type, so it has no Python type")
@@ -137,15 +154,24 @@ def generate(db: TypeDB, config_xml: str, rcinfo: dict[str, Any], class_name: st
         simple = (db.get(d.java_type) or {}).get("simpleName")
         L.append(f'        self.{d.field} = self.hardwareMap.get({simple}, "{_py_str(d.name)}")')
     L.extend(("        " + ln) if ln else "" for ln in controls.init)
+    # before_loop (e.g. a servo's starting position) is folded into init: it
+    # only ever runs once and nothing observes it between waitForStart() and
+    # the loop, so moving it a few lines earlier changes nothing at runtime,
+    # and it means starter-update only has one region to insert new device
+    # state into instead of an unmarked gap between two markers.
+    L.extend(("        " + ln) if ln else "" for ln in controls.before_loop)
+    L.append(markers.render_end("init", "        "))
     L.append("")
     L.append('        self.telemetry.addLine("Ready. Press START.")')
     L.append("        self.telemetry.update()")
     L.append("        self.waitForStart()")
     L.append("")
     L.append("        # ── On start: loops until STOP is pressed ──")
-    L.extend("        " + ln for ln in controls.before_loop)
     L.append("        while self.opModeIsActive():")
+    L.append(markers.render_begin("loop", "            "))
     L.extend(("            " + ln) if ln else "" for ln in controls.loop)
+    L.append(markers.render_end("loop", "            "))
+    L.extend("            " + ln for ln in GAMEPAD_READOUT)
     L.append('            self.telemetry.addData("Runtime", f"{self.getRuntime():.1f} s")')
     L.append("            self.telemetry.update()")
     return "\n".join(L) + "\n"

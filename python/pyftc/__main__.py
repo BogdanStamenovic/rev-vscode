@@ -30,8 +30,34 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--sdk", default=DEFAULT_SDK)
     s.add_argument("--typedb", type=Path)
 
+    mn = sub.add_parser("manual", help="regenerate just the man page for an already-spawned starter pack")
+    mn.add_argument("--config", type=Path, required=True)
+    mn.add_argument("--rcinfo", type=Path)
+    mn.add_argument("--name", default="StarterPack")
+    mn.add_argument("--sdk", default=DEFAULT_SDK)
+    mn.add_argument("--typedb", type=Path)
+
+    cf = sub.add_parser("config-fingerprint", help="fingerprint a hardware configuration (no SDK database needed)")
+    cf.add_argument("--config", type=Path, required=True)
+
+    u = sub.add_parser("starter-update", help="extend an existing starter pack's markers in place")
+    u.add_argument("--file", type=Path, required=True)
+    u.add_argument("--config", type=Path, required=True)
+    u.add_argument("--rcinfo", type=Path)
+    u.add_argument("--sdk", default=DEFAULT_SDK)
+    u.add_argument("--typedb", type=Path)
+
     args = ap.parse_args(argv)
     try:
+        if args.cmd == "config-fingerprint":
+            # Deliberately does not touch TypeDB.load: this has to stay cheap
+            # enough to run on every hub refresh, and keep working while
+            # another process is regenerating the SDK database file.
+            from .markers import compute_fingerprint
+            fingerprint = compute_fingerprint(args.config.read_text())
+            print(json.dumps({"ok": True, "fingerprint": fingerprint}))
+            return 0
+
         db = TypeDB.load(args.sdk, args.typedb)
         if args.cmd == "translate-project":
             from .translate import ProjectTranslator, collect_sources
@@ -40,17 +66,42 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(result))
             return 0 if result["ok"] else 1
         if args.cmd == "starter":
+            from .markers import compute_fingerprint
+            from .manual import generate as generate_manual
             from .starter import generate
-            rcinfo = json.loads(args.rcinfo.read_text()) if args.rcinfo else {}
-            rcinfo.pop("passphrase", None)
-            python = generate(db, args.config.read_text(), rcinfo, args.name)
-            print(json.dumps({"ok": True, "python": python}))
+            rcinfo = _read_rcinfo(args.rcinfo)
+            config_xml = args.config.read_text()
+            python = generate(db, config_xml, rcinfo, args.name)
+            fingerprint = compute_fingerprint(config_xml)
+            manual = generate_manual(db, config_xml, rcinfo, args.name, fingerprint)
+            print(json.dumps({"ok": True, "python": python, "fingerprint": fingerprint, "manual": manual}))
+            return 0
+        if args.cmd == "manual":
+            from .markers import compute_fingerprint
+            from .manual import generate as generate_manual
+            rcinfo = _read_rcinfo(args.rcinfo)
+            config_xml = args.config.read_text()
+            fingerprint = compute_fingerprint(config_xml)
+            manual = generate_manual(db, config_xml, rcinfo, args.name, fingerprint)
+            print(json.dumps({"ok": True, "markdown": manual, "fingerprint": fingerprint}))
+            return 0
+        if args.cmd == "starter-update":
+            from .update import apply_update
+            rcinfo = _read_rcinfo(args.rcinfo)
+            result = apply_update(db, args.file.read_text(), args.config.read_text(), rcinfo)
+            print(json.dumps(result))
             return 0
     except Exception as e:  # noqa: BLE001 - boundary with the extension
         print(f"pyftc: {e}", file=sys.stderr)
         traceback.print_exc(file=sys.stderr)
         return 2
     return 2
+
+
+def _read_rcinfo(path: Path | None) -> dict:
+    rcinfo = json.loads(path.read_text()) if path else {}
+    rcinfo.pop("passphrase", None)
+    return rcinfo
 
 
 if __name__ == "__main__":

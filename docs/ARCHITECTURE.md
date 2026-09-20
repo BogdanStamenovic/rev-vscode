@@ -125,6 +125,7 @@ Only public/protected API. `protected` members are kept because OpMode fields
 | `ftc.util`      | `com.qualcomm.robotcore.util`                                                 |
 | `ftc.vision`    | `org.firstinspires.ftc.vision`, `.apriltag`, `.opencv`                        |
 | `ftc.lang`      | hand-written: `long`, `short`, `byte`, `char` int aliases and `float32` for Java `float` |
+| `ftc.internal`  | no package of its own: catch-all for a class with no row above that a stubbed signature elsewhere still needs to resolve (transitive closure over methods/fields/extends/generic args from the packages above, e.g. `DcMotor.getMotorType() -> MotorConfigurationType`); not meant to be imported from directly |
 
 Every generated stub class has `__java__ = "<FQN>"`; the translator trusts the type DB,
 not the stub, but the attribute makes the mapping visible on hover.
@@ -149,4 +150,68 @@ stdout is JSON only, diagnostics never go to stderr. Exit 0 = ok, 1 = user code 
 ```
 
 `python -m pyftc starter --config <config.xml> --rcinfo <rcInfo.json> --name <ClassName>`
-→ `{"ok": true, "python": "<source of the starter OpMode>"}`
+```jsonc
+{ "ok": true,
+  "python": "<source of the starter OpMode>",
+  "fingerprint": "<16 hex chars, see below>",
+  "manual": "<markdown reference for this robot>" }
+```
+
+`python -m pyftc manual --config <config.xml> --rcinfo <rcInfo.json> --name <ClassName>`
+→ `{"ok": true, "markdown": "...", "fingerprint": "..."}`
+Regenerates only the man page, for a file whose starter pack already exists.
+
+`python -m pyftc config-fingerprint --config <config.xml>`
+→ `{"ok": true, "fingerprint": "..."}`
+Cheap enough to run on every hub refresh; it never parses the SDK type database.
+
+`python -m pyftc starter-update --file <existing.py> --config <config.xml> --rcinfo <rcInfo.json>`
+```jsonc
+{ "ok": true,
+  "changed": true,              // false when the fingerprint already matches
+  "applied": true,              // false when the file's markers are gone: nothing was rewritten
+  "fingerprint": "...",
+  "python": "<the whole updated file>",   // only when applied
+  "block": "<the new code, for pasting>", // only when applied is false
+  "manual": "<regenerated markdown>",
+  "added":   [{"name": "arm", "field": "arm", "type": "DcMotor",
+               "control": "gamepad 1: hold Y forward, hold A reverse"}],
+  "removed": [{"name": "old", "field": "old"}],
+  "hubsAdded": [{"name": "Expansion Hub 2", "address": "3"}],
+  "notes": ["..."] }
+```
+
+### Fingerprint
+
+`sha256` over a canonical JSON array of the configuration's hubs and devices —
+each device as `[name, tag, port, bus, hub, hubAddress, javaType]`, hubs as
+`[name, address]`, both sorted — truncated to 16 hex characters. It covers
+exactly what changes the generated code: renames, added and removed devices,
+port moves and new expansion hubs. It deliberately ignores rcInfo (firmware
+versions, which hub answered) so a robot that is merely unplugged does not
+look like a configuration change.
+
+## Contract 4: markers in a generated starter pack
+
+`starter-update` never parses the user's code. It finds these comment lines,
+appends inside them, and leaves every other line untouched:
+
+```python
+# ── pyftc:config name="Galerija" fingerprint="9f2c1ab30c4d5e6f" generated="2026-09-20" ──
+# ── pyftc:imports ──            … # ── pyftc:imports:end ──
+# ── pyftc:hardware ──           … # ── pyftc:hardware:end ──   (the comment block)
+    # ── pyftc:devices ──        … # ── pyftc:devices:end ──    (class body: fields)
+        # ── pyftc:init ──       … # ── pyftc:init:end ──       (hardwareMap lookups)
+            # ── pyftc:loop ──   … # ── pyftc:loop:end ──       (control code)
+```
+
+Rules, so the update can never eat someone's work:
+
+- New code is inserted immediately **before** the matching `:end` marker, at
+  that marker's indentation.
+- Nothing between the markers is rewritten or deleted, including lines the user
+  edited. A device that left the configuration gets a `# pyftc: no longer in the
+  configuration` comment above its field, never a deletion.
+- Only the `fingerprint=` and `generated=` values on the config line are edited.
+- If any marker is missing, the update refuses to touch the file, returns
+  `applied: false`, and hands back the code as `block` for the user to place.

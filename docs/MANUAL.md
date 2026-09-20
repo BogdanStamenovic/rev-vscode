@@ -657,6 +657,89 @@ Tune `DRIVE_POWER`, `MECHANISM_POWER` and `SERVO_STEP` at the top of the class.
 The starter pack is a starting point: it's your file, rename and rearrange
 freely. Spawning again won't overwrite it without asking.
 
+### Markers, and why they're there
+
+The generated file carries five pairs of comments like this:
+
+```python
+# ── pyftc:imports ──
+from ftc.opmode import LinearOpMode, TeleOp
+# ── pyftc:imports:end ──
+```
+
+one pair each for `imports`, `hardware` (the per-hub/per-device description
+comments), `devices` (the class-body field declarations), `init` (the
+`hardwareMap.get` lookups, direction/IMU setup and servo starting positions -
+everything that happens once, before `waitForStart()`), and `loop` (the
+gamepad control code, inside `while self.opModeIsActive():`). There's also one
+config line right after the docstring:
+
+```python
+# ── pyftc:config name="Galerija" fingerprint="9f2c1ab30c4d5e6f" generated="2026-09-20" ──
+```
+
+**Leave these lines alone.** Nothing else about the file is off-limits - rename
+fields, reorder devices, rewrite every line of control logic, delete whole
+methods - but if a marker comment itself goes missing or gets duplicated,
+`starter-update` (below) refuses to touch the file at all rather than guess
+where your code ends and generated code begins. It's cheap insurance: the
+markers are just comments, Python ignores them completely.
+
+### Updating an existing starter pack
+
+When the hub's hardware configuration changes - a new sensor, a second
+expansion hub, a motor unplugged - you don't have to spawn a fresh file and
+redo your edits. *Spawn starter pack* on a file that already has the markers
+runs an **update** instead of a full regeneration:
+
+- a device the configuration gained gets a field, a `hardwareMap` lookup, a
+  hardware-comment line and (if a gamepad slot is still free) a control, each
+  inserted **immediately before its region's `:end` marker** - after
+  everything already there, never in the middle of it;
+- a device the configuration lost is **never deleted**. Its field gets a
+  `# pyftc: no longer in the configuration` comment above it; its
+  `hardwareMap.get` lookup and its control code are left exactly as they
+  were. (This means that lookup will throw at INIT if you actually run the
+  file unmodified - the comment is your cue to go deal with it, not a promise
+  that the file still works as-is.)
+- newly added devices get whatever gamepad control is still free, using the
+  **same rules** as a fresh spawn (drivetrain detection aside - see below),
+  continuing to gamepad 2 once gamepad 1 fills up;
+- only the `fingerprint=` and `generated=` values on the config line change;
+  nothing else on that line, and no other line in the file, is rewritten.
+
+Two things it deliberately does **not** do:
+
+- **It doesn't build you a new drivetrain.** If your file has no arcade drive
+  yet and you add two new left/right-named motors, they get individual
+  gamepad controls like any other motor, not a drivetrain - wiring up arcade
+  drive after the fact means either spawning fresh or editing `loop` by hand.
+  An *existing* drivetrain is recognised and its two sticks are correctly
+  treated as spoken for.
+- **It matches devices by name only.** There's no old `config.xml` to diff
+  against - only what's already in the file. Renaming a device on the Driver
+  Hub, or moving it to a different port, looks exactly like removing the old
+  one and adding a new one under a different name. If that's not what you
+  want, edit the field/lookup by hand instead of relying on the rename to be
+  detected.
+
+If the file's markers are missing or damaged, nothing is touched: the tool
+reports it and gives you the newly-generated code as a block to paste in
+yourself.
+
+### The generated man page
+
+Alongside the starter pack, *Spawn starter pack* also writes `<Name>.md`: a
+full reference for this specific robot that doesn't fit in code comments -
+every device's **complete** method list (not just the trimmed one-liners in
+the `.py` file - full javadoc paragraphs, inherited methods included, grouped
+by the class that declares them), which hub answered when it was generated,
+the full control map and how to change it, and a walkthrough of the marker
+regions above. It's regenerated wholesale on every spawn or update (it has no
+markers of its own - there's nothing in it meant to survive hand edits). Run
+it on demand for a file that already has a starter pack without touching the
+`.py` file at all: `pyftc manual` (see below).
+
 ## 13. Python rules cheat sheet
 
 It's Python syntax on top of Java's rules. The translator stops with a message
@@ -770,15 +853,54 @@ Then add a test in `python/tests/test_translate.py`. Tests run against both the
 hand-written fixture and the real SDK database, and `test_javac.py` compiles
 every accepted program with javac.
 
+### The `pyftc` CLI's starter-pack subcommands
+
+All four take `--config <config.xml>` (from `adb cat /sdcard/FIRST/<name>.xml`);
+`starter` and `manual` also take `--rcinfo <rcInfo.json>` (`GET /js/rcInfo.json`,
+optional) and `--name <ClassName>`.
+
+- `pyftc starter --config ... --rcinfo ... --name ...` - a fresh starter pack.
+  Returns `{ok, python, fingerprint, manual}`.
+- `pyftc manual --config ... --rcinfo ... --name ...` - just the man page, for
+  a file whose starter pack already exists. Returns `{ok, markdown, fingerprint}`.
+- `pyftc config-fingerprint --config ...` - the fingerprint alone, from the
+  config XML only. Deliberately does not load the SDK type database (see
+  "Fingerprint" below), so it's cheap enough to call on every hub refresh to
+  decide whether anything changed at all. Returns `{ok, fingerprint}`.
+- `pyftc starter-update --file <existing.py> --config ... --rcinfo ...` -
+  extend an existing starter pack in place (see "Updating an existing starter
+  pack" above). Returns
+  `{ok, changed, applied, fingerprint, python?, block?, manual?, added, removed, hubsAdded, notes}`;
+  `python`/`manual` are only present when `applied` is true, `block` only
+  when it's false.
+
+#### Fingerprint
+
+`sha256` over the canonical sorted JSON of the configuration's hubs and
+devices, truncated to 16 hex characters (`python/pyftc/markers.py`,
+`compute_fingerprint`). It changes on a rename, a port move, an added or
+removed device, or a new hub; it's stable across rcInfo (a hub being
+unplugged doesn't count as a configuration change), and across the SDK
+version resolving a config's XML tags to different Java types (there's no SDK
+database involved in computing it at all - the XML tag itself stands in for
+the resolved Java type, since for a fixed SDK version one determines the
+other 1:1 anyway).
+
 ### Change the starter pack
 
-- Layout, header comments, capability lists: `python/pyftc/starter.py`.
+- Layout, header comments, capability lists, and the Contract 4 markers:
+  `python/pyftc/starter.py`.
 - Gamepad assignment rules: `python/pyftc/controls.py`. The plan is built as
   data first (which device gets which control), then rendered into both the
   header table and the loop, so they can't disagree. Add a device kind in
-  `_kind()`, and a branch in `plan_controls()`.
-- Tests: `python/tests/test_starter.py` (three real-shaped configurations in
-  `tests/fixtures/`).
+  `_kind()`, and a branch in `_assign_device()` (shared by a fresh spawn and
+  by `starter-update`'s newly-added devices).
+- Marker finding/parsing/inserting, and the fingerprint: `python/pyftc/markers.py`.
+- The update flow itself (diffing the new config against what a file's
+  markers already record, by device name): `python/pyftc/update.py`.
+- The generated man page: `python/pyftc/manual.py`.
+- Tests: `python/tests/test_starter.py`, `test_markers.py`, `test_update.py`,
+  `test_manual_gen.py` (three real-shaped configurations in `tests/fixtures/`).
 
 ### Add a manual example
 
