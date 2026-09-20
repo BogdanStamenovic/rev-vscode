@@ -13,7 +13,12 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import { ensureExtraPath } from '../python/autocomplete';
 import { stubDirFor } from '../python/ftcImportDetect';
 import { fetchRcInfo } from '../hub/rcinfo';
-import { buildAutocompleteReport, renderReportMarkdown, type AutocompleteCheckInputs } from '../python/checkAutocompleteReport';
+import {
+  buildAutocompleteReport,
+  renderReportMarkdown,
+  BASEDPYRIGHT_ID,
+  type AutocompleteCheckInputs,
+} from '../python/checkAutocompleteReport';
 import { log } from '../output';
 
 export const REPORT_SCHEME = 'pyftc-report';
@@ -34,22 +39,63 @@ export class AutocompleteReportProvider implements vscode.TextDocumentContentPro
   }
 }
 
-function pylanceExtension(): vscode.Extension<unknown> | undefined {
-  return vscode.extensions.getExtension('ms-python.vscode-pylance');
+/** Extensions that actually provide Python completions, best first. The
+ * Python extension itself is deliberately NOT in this list: since it
+ * dropped its bundled Jedi server it contributes no completion engine at
+ * all, so treating its presence as "a language server is installed" is what
+ * let a completely dead autocomplete report as healthy. */
+const LANGUAGE_SERVERS: Array<{ id: string; name: string }> = [
+  { id: 'ms-python.vscode-pylance', name: 'Pylance' },
+  { id: BASEDPYRIGHT_ID, name: 'basedpyright' },
+  { id: 'ms-pyright.pyright', name: 'Pyright' },
+];
+
+/** Pylance is licensed and gated to Microsoft's own build, so on Code - OSS,
+ * VSCodium and friends it is not installable advice. `vscode.env.appName`
+ * is the only signal available to an extension. */
+export function hostKind(appName: string): 'microsoft' | 'open-source' {
+  return /^visual studio code/i.test(appName.trim()) ? 'microsoft' : 'open-source';
 }
 
 function languageServerStatus(): { active: boolean; name?: string } {
-  const pylance = pylanceExtension();
-  if (pylance) {
-    return { active: pylance.isActive, name: 'Pylance' };
+  for (const server of LANGUAGE_SERVERS) {
+    const ext = vscode.extensions.getExtension(server.id);
+    if (ext) {
+      return { active: true, name: server.name };
+    }
   }
-  // No generic "which language server is active" API exists; best-effort
-  // fallback for anyone using something other than Pylance (e.g. Jedi via a
-  // third-party extension) so this check doesn't just declare defeat.
   const candidate = vscode.extensions.all.find(
-    (e) => e.isActive && /python.*language|pyright|jedi/i.test(String(e.packageJSON?.displayName ?? e.id))
+    (e) => e.isActive && /pyright|jedi|python.*language server/i.test(String(e.packageJSON?.displayName ?? e.id))
   );
   return candidate ? { active: true, name: String(candidate.packageJSON?.displayName ?? candidate.id) } : { active: false };
+}
+
+/** Offered only when the report says there is no language server at all -
+ * installing an extension is the user's call, so this asks rather than
+ * doing it, and a decline is remembered for the session by simply never
+ * asking again outside an explicit Check Autocomplete run. */
+async function offerLanguageServerInstall(host: 'microsoft' | 'open-source'): Promise<void> {
+  if (host === 'microsoft') {
+    void vscode.window.showWarningMessage(
+      'REV FTC: no Python language server found, so nothing will autocomplete. Install Pylance from the Extensions view.'
+    );
+    return;
+  }
+  const choice = await vscode.window.showWarningMessage(
+    'REV FTC: no Python language server found, so nothing will autocomplete. Pylance does not run on this build of VS Code; ' +
+      'basedpyright is the open-source equivalent.',
+    'Install basedpyright',
+    'Not now'
+  );
+  if (choice !== 'Install basedpyright') {
+    return;
+  }
+  try {
+    await vscode.commands.executeCommand('workbench.extensions.installExtension', BASEDPYRIGHT_ID);
+    void vscode.window.showInformationMessage('REV FTC: basedpyright installed. Reload the window to start using it.');
+  } catch (err) {
+    void vscode.window.showErrorMessage(`REV FTC: could not install ${BASEDPYRIGHT_ID}: ${(err as Error).message}`);
+  }
 }
 
 async function pathExists(p: string): Promise<boolean> {
@@ -131,6 +177,7 @@ async function gatherInputs(context: vscode.ExtensionContext): Promise<Autocompl
   ]);
   return {
     languageServer: languageServerStatus(),
+    host: hostKind(vscode.env.appName),
     extraPaths,
     stubDir,
     stubDirExists,
@@ -154,6 +201,10 @@ export async function runCheckAutocomplete(context: vscode.ExtensionContext, pro
   const failed = items.filter((i) => i.status === 'fail').length;
   const warned = items.filter((i) => i.status === 'warn').length;
   log(`checkAutocomplete: ${items.length} check(s), ${failed} failing, ${warned} warning`);
+
+  if (!inputs.languageServer.active) {
+    void offerLanguageServerInstall(inputs.host);
+  }
 
   const opened = await vscode.workspace.openTextDocument(REPORT_URI);
   const shown = await vscode.commands.executeCommand('markdown.showPreview', opened.uri).then(

@@ -17,6 +17,12 @@ export interface CheckItem {
 
 export interface AutocompleteCheckInputs {
   languageServer: { active: boolean; name?: string };
+  /** 'microsoft' = official VS Code, the only build Pylance will run on.
+   * 'open-source' = Code - OSS / VSCodium / any build served by Open VSX:
+   * Pylance refuses to load there, and ms-python.python alone ships no
+   * completion engine of its own, so recommending Pylance would be advice
+   * that cannot work. basedpyright is the Open VSX equivalent. */
+  host: 'microsoft' | 'open-source';
   extraPaths: string[];
   stubDir: string;
   stubDirExists: boolean;
@@ -34,6 +40,9 @@ export interface AutocompleteCheckInputs {
    * without a hub connected at all). */
   hubSdkVersion?: string;
 }
+
+export const BASEDPYRIGHT_ID = 'detachhead.basedpyright';
+const INSTALL_BASEDPYRIGHT_HINT = `run "Extensions: Install Extension" and pick ${BASEDPYRIGHT_ID}, or "REV FTC: Check Autocomplete" offers to install it for you. Reload the window afterwards.`;
 
 function item(id: string, label: string, status: CheckStatus, detail: string, fix?: string): CheckItem {
   return { id, label, status, detail, fix };
@@ -54,8 +63,13 @@ export function buildAutocompleteReport(inputs: AutocompleteCheckInputs): CheckI
           'language-server',
           'Python language server',
           'fail',
-          'No active Python language server was found (Pylance recommended).',
-          "Install the 'Pylance' extension (or another Python language server) from the Extensions view, then reload the window."
+          inputs.host === 'open-source'
+            ? 'No Python language server was found. This editor is a Code - OSS build, and the Python extension on its own ' +
+              'provides no completions: that engine is Pylance, which Microsoft only ships for official VS Code.'
+            : 'No active Python language server was found.',
+          inputs.host === 'open-source'
+            ? `Install basedpyright, the open-source equivalent that works here: ${INSTALL_BASEDPYRIGHT_HINT}`
+            : "Install the 'Pylance' extension from the Extensions view, then reload the window."
         )
   );
 

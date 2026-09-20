@@ -57,6 +57,7 @@ export async function ensureExtraPath(context: vscode.ExtensionContext): Promise
 
   try {
     await config.update('extraPaths', [...current, stubPath], vscode.ConfigurationTarget.Workspace);
+    await addBasedpyrightPath(stubPath);
   } catch (err) {
     // Happens when no Python language server extension is installed at all:
     // `python.analysis.extraPaths` isn't even a registered setting then, and
@@ -71,6 +72,24 @@ export async function ensureExtraPath(context: vscode.ExtensionContext): Promise
   }
   await context.workspaceState.update(MANAGED_PATH_KEY, stubPath);
   log(`autocomplete: added ${stubPath} to python.analysis.extraPaths`);
+}
+
+/** basedpyright reads its own `basedpyright.analysis.extraPaths` rather
+ * than Pylance's `python.analysis.*`, and it is the only language server
+ * that works on Code - OSS builds (Pylance is gated to Microsoft's own
+ * build). Writing both keys costs nothing and means the stubs resolve
+ * whichever of the two is installed. Failing here is not fatal: the key is
+ * unregistered when basedpyright is not installed. */
+async function addBasedpyrightPath(stubPath: string): Promise<void> {
+  try {
+    const config = vscode.workspace.getConfiguration('basedpyright.analysis');
+    const current = config.get<string[]>('extraPaths') ?? [];
+    if (!current.includes(stubPath)) {
+      await config.update('extraPaths', [...current, stubPath], vscode.ConfigurationTarget.Workspace);
+    }
+  } catch {
+    // basedpyright not installed - nothing to configure.
+  }
 }
 
 async function workspaceHasFtcImport(): Promise<boolean> {

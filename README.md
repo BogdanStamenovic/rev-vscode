@@ -137,8 +137,21 @@ install for that path: `scripts/copy-python.mjs` mirrors `python/` into
 pyftc` against that copy. Run `./ownbox.sh setup` from the repo root
 afterward if you also want a standalone `pyftc` on PATH.
 
-Open the folder with your robot code, accept "Enable FTC autocomplete", and use
-the REV FTC sidebar.
+Open the folder with your robot code and use the REV FTC sidebar; the stub path
+is wired up automatically.
+
+**You need a Python language server for autocomplete to exist at all.** The
+Python extension has not shipped one since it dropped Jedi - completions come
+from Pylance, and Pylance only runs on Microsoft's own build of VS Code. On
+Code - OSS, VSCodium and similar builds install
+[basedpyright](https://open-vsx.org/extension/detachhead/basedpyright) instead:
+
+```bash
+code --install-extension detachhead.basedpyright
+```
+
+`REV FTC: Check Autocomplete` reports which of these is missing and offers to
+install it.
 
 ## FIRST Global rules
 

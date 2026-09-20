@@ -774,6 +774,27 @@ in annotations.
 
 ## 14. Troubleshooting
 
+**Nothing autocompletes at all** (`self.left.` offers nothing): you have no
+Python language server. The Python extension stopped shipping one when it
+dropped Jedi, and the engine that replaced it, Pylance, is licensed to run only
+on Microsoft's own build of VS Code - on Code - OSS, VSCodium or any build that
+installs extensions from Open VSX it will not load. Install basedpyright, which
+is the same underlying engine (pyright) and does work there:
+
+```bash
+code --install-extension detachhead.basedpyright
+```
+
+Then reload the window. `REV FTC: Check Autocomplete` reports this case and
+offers to install it for you. If you prefer Pylance, you need the official
+VS Code build rather than the distribution's package.
+
+**Autocomplete works for `self.left.` but not `import ftc.hardware`**: the stub
+directory is not on the analysis path. `REV FTC: Check Autocomplete` prints the
+exact path and where it should be listed; the extension writes both
+`python.analysis.extraPaths` and `basedpyright.analysis.extraPaths` by itself,
+but it deliberately never re-adds a path you removed on purpose.
+
 **"No Control Hub found"**: on USB, check the cable and that REV Hardware
 Client isn't holding the hub; on Wi-Fi, check you're connected to the robot's
 network. The *Hub* view in the sidebar shows what the extension sees.

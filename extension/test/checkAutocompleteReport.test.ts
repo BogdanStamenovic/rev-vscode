@@ -7,6 +7,7 @@ const STUB_DIR = '/ext/python';
 function baseInputs(overrides: Partial<AutocompleteCheckInputs> = {}): AutocompleteCheckInputs {
   return {
     languageServer: { active: true, name: 'Pylance' },
+    host: 'microsoft',
     extraPaths: [STUB_DIR],
     stubDir: STUB_DIR,
     stubDirExists: true,
@@ -92,4 +93,18 @@ test('renderReportMarkdown: includes every item label as a heading', () => {
   for (const item of items) {
     assert.ok(md.includes(item.label), `missing heading for ${item.label}`);
   }
+});
+
+test('buildAutocompleteReport: on a Code - OSS build the missing-server fix names basedpyright, not Pylance', () => {
+  const items = buildAutocompleteReport(baseInputs({ languageServer: { active: false }, host: 'open-source' }));
+  const item = items.find((i) => i.id === 'language-server')!;
+  assert.equal(item.status, 'fail');
+  assert.match(item.fix!, /basedpyright/);
+  assert.doesNotMatch(item.fix!, /Pylance/);
+  assert.match(item.detail, /Code - OSS/);
+});
+
+test('buildAutocompleteReport: on official VS Code the missing-server fix still names Pylance', () => {
+  const items = buildAutocompleteReport(baseInputs({ languageServer: { active: false }, host: 'microsoft' }));
+  assert.match(items.find((i) => i.id === 'language-server')!.fix!, /Pylance/);
 });
