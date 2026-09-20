@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pyftc"
+version = "0.1.0"
+description = "Python -> OnBot Java translator for FTC/FGC robots (rev-vscode)"
+license = "MIT"
+requires-python = ">=3.10"
+# Deliberately no [project.dependencies]: translate.py/starter.py/typedb.py use
+# only ast, dataclasses, json, pathlib, typing, xml.etree, etc. Keep it that way -
+# the extension bundles this whole tree into the .vsix (copy-python.mjs) with no
+# separate dependency install step, so a stray PyPI dependency would silently
+# break packaged installs.
+
+[project.scripts]
+pyftc = "pyftc.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["pyftc", "ftc"]

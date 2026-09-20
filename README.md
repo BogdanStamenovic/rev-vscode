@@ -96,14 +96,46 @@ Rules, all enforced with an error on the offending line rather than a guess:
 
 ## Install
 
-Needs VS Code, Python 3.10+ (stdlib only), and for USB either REV Hardware
-Client 2 or `adb` on PATH.
+Needs Python 3.10+ (stdlib only) for the translator, and for USB either REV
+Hardware Client 2 or `adb` on PATH. The VS Code extension additionally needs
+Node.js and the `code` CLI on PATH to build and install itself — see below for
+what you get without them.
+
+Via [ownbox](https://github.com/BogdanStamenovic/ownbox):
+
+```bash
+ownbox sync
+ownbox install rev-vscode
+```
+
+This is two independent halves, and setup is honest about which you got:
+
+- **The `pyftc` CLI**, always: a venv in the checkout with the translator
+  installed editable, exposed on PATH as `pyftc` (`pyftc translate-project
+  --root .` etc. work standalone, with no VS Code involved).
+- **The VS Code extension**, only if `npm`/`node` were found: built to a
+  `.vsix` and installed with `code --install-extension`. Missing Node.js does
+  not fail the install — it says so and stops at the CLI half. Missing the
+  `code` CLI does not fail it either — it prints the exact command to run by
+  hand. `REV_VSCODE_SKIP_CODE_INSTALL=1` skips that install step on purpose
+  (non-interactive or test runs); the `.vsix` still gets built.
+
+`ownbox update rev-vscode` pulls and rebuilds both halves; `ownbox uninstall
+rev-vscode` removes the checkout (venv included) and uninstalls the extension.
+
+Without ownbox:
 
 ```bash
 git clone https://github.com/BogdanStamenovic/rev-vscode && cd rev-vscode/extension
 npm ci && npm run package
 code --install-extension dist/rev-vscode.vsix
 ```
+
+That builds and installs the extension only. It doesn't need a separate Python
+install for that path: `scripts/copy-python.mjs` mirrors `python/` into
+`extension/python` at package time, and the extension spawns `python3 -m
+pyftc` against that copy. Run `./ownbox.sh setup` from the repo root
+afterward if you also want a standalone `pyftc` on PATH.
 
 Open the folder with your robot code, accept "Enable FTC autocomplete", and use
 the REV FTC sidebar.
@@ -126,6 +158,7 @@ robot is in a supported state. Whether the people at the help desk accept
 | `extension/` | VS Code extension (TypeScript) |
 | `docs/MANUAL.md` | how to add devices, controls, autonomous; extending the tool |
 | `docs/ARCHITECTURE.md` | design, contracts, verified hub protocol |
+| `ownbox.yaml`, `ownbox.sh` | [ownbox](https://github.com/BogdanStamenovic/ownbox) install/update/remove |
 
 ## Tests
 

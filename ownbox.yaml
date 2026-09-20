@@ -1,0 +1,20 @@
+schema: 1
+name: rev-vscode
+description: Write FTC/FIRST Global robot code in Python in VS Code; it's translated to Java and built on the REV Control Hub by OnBot Java.
+homepage: https://github.com/BogdanStamenovic/rev-vscode
+tags: [ftc, first-global, robotics, vscode, python, java, onbot-java, rev-robotics]
+install:
+  platforms: [linux, darwin]
+  setup:
+    linux: [./ownbox.sh setup]
+    darwin: [./ownbox.sh setup]
+  update:
+    linux: [./ownbox.sh update]
+    darwin: [./ownbox.sh update]
+  remove:
+    linux: [./ownbox.sh remove]
+    darwin: [./ownbox.sh remove]
+commands:
+  pyftc:
+    linux: .venv/bin/pyftc
+    darwin: .venv/bin/pyftc

@@ -7,3 +7,6 @@ extension/python/
 *.vsix
 sdkgen/.cache/
 .cache/
+# venv created by ownbox.sh / manual `python -m venv .venv` installs
+.venv/
+*.egg-info/
