@@ -32,7 +32,24 @@ function group(id: string, label: string, children: TreeNode[], icon?: string): 
   return { id, kind: 'group', label, children, icon };
 }
 
-function buildTree(conn: HubConnection, rcInfo: RcInfo, config: ParsedConfig | undefined): TreeNode[] {
+interface ConfigView {
+  config: ParsedConfig | undefined;
+  /** Set when the most recent read failed; the tree then shows the last good
+   * config (if any) marked stale instead of dropping it. */
+  error?: string;
+  readAt?: number;
+}
+
+function shortReason(error: string): string {
+  if (/offline/i.test(error)) return 'adb over Wi-Fi is offline';
+  if (/unauthorized/i.test(error)) return 'hub refused adb (unauthorized)';
+  if (/incomplete config XML/i.test(error)) return 'read came back incomplete';
+  if (/No adb connection|not found|No route|unreachable|timed out/i.test(error)) return 'no adb connection to the hub';
+  return error.length > 60 ? `${error.slice(0, 57)}...` : error;
+}
+
+function buildTree(conn: HubConnection, rcInfo: RcInfo, view: ConfigView): TreeNode[] {
+  const config = view.config;
   const transportLabel = conn.transport === 'usb' ? 'USB' : conn.transport === 'wifi-direct' ? 'Wi-Fi' : 'Manual';
   const statusDesc = conn.adbSerial ? `${transportLabel} · adb ${conn.adbSerial}` : transportLabel;
 
@@ -69,7 +86,8 @@ function buildTree(conn: HubConnection, rcInfo: RcInfo, config: ParsedConfig | u
   );
 
   if (!config) {
-    roots.push(leaf('devices', 'message', 'Devices', 'config unavailable (no adb)', 'warning'));
+    const reason = view.error ? shortReason(view.error) : 'not read yet';
+    roots.push(leaf('devices', 'message', 'Devices', `config unavailable: ${reason} · retrying`, 'warning', view.error));
   } else {
     const deviceGroups = config.hubs.map((hub, hi) =>
       group(
@@ -81,7 +99,13 @@ function buildTree(conn: HubConnection, rcInfo: RcInfo, config: ParsedConfig | u
         'server'
       )
     );
-    roots.push(group('devices', 'Devices', deviceGroups, 'list-tree'));
+    const devices = group('devices', 'Devices', deviceGroups, 'list-tree');
+    if (view.error && view.readAt) {
+      const age = Math.round((Date.now() - view.readAt) / 1000);
+      devices.description = `last read ${age}s ago · ${shortReason(view.error)}, retrying`;
+      devices.tooltip = view.error;
+    }
+    roots.push(devices);
   }
 
   return roots;
@@ -98,6 +122,8 @@ export class HubTreeProvider implements vscode.TreeDataProvider<TreeNode>, vscod
   private roots: TreeNode[] = [leaf('status', 'message', 'Connecting…')];
   private lastConfigName: string | undefined;
   private lastConfig: ParsedConfig | undefined;
+  private lastConfigReadAt: number | undefined;
+  private configError: string | undefined;
   private timer: ReturnType<typeof setInterval> | undefined;
   private refreshInFlight: Promise<void> | undefined;
 
@@ -138,18 +164,37 @@ export class HubTreeProvider implements vscode.TreeDataProvider<TreeNode>, vscod
       const conn = await getConnection();
       const rcInfo = await fetchRcInfo();
 
-      if (forceConfigReload || rcInfo.activeConfigName !== this.lastConfigName) {
+      const nameChanged = rcInfo.activeConfigName !== this.lastConfigName;
+      // A failed read retries on the next tick. Before, a failure left the
+      // name recorded as read, so after one hiccup the view stayed on
+      // "config unavailable" until a manual refresh.
+      if (forceConfigReload || nameChanged || this.configError !== undefined) {
         try {
-          const { xml } = await fetchActiveConfigXml(conn, rcInfo.activeConfigName);
+          const { xml, readAt } = await fetchActiveConfigXml(conn, rcInfo.activeConfigName);
           this.lastConfig = parseActiveConfig(xml);
           this.lastConfigName = rcInfo.activeConfigName;
+          this.lastConfigReadAt = readAt;
+          this.configError = undefined;
         } catch (err) {
-          log(`hub view: could not read active config xml: ${(err as Error).message}`);
-          this.lastConfig = undefined;
+          const message = (err as Error).message;
+          if (message !== this.configError) {
+            log(`hub view: could not read active config xml: ${message}`);
+          }
+          this.configError = message;
+          if (nameChanged) {
+            // A different configuration is active; the old one's devices
+            // would be wrong, not merely stale.
+            this.lastConfig = undefined;
+            this.lastConfigReadAt = undefined;
+          }
         }
       }
 
-      this.roots = buildTree(conn, rcInfo, this.lastConfig);
+      this.roots = buildTree(conn, rcInfo, {
+        config: this.lastConfig,
+        error: this.configError,
+        readAt: this.lastConfigReadAt,
+      });
       // Fire-and-forget: this is "on hub connect" / "on sidebar refresh" for
       // configWatch.ts (see its header comment). It does its own adb/hub
       // round trip, so it must not delay the tree's own 5s refresh cycle.

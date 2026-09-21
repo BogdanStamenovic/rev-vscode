@@ -20,7 +20,7 @@
 // keeping it cheap (bail out of a file's scan after its first few lines).
 import * as vscode from 'vscode';
 import { withTempDir } from '../tempDir';
-import { fetchHubConfigFiles } from './configFetch';
+import { fetchHubConfigFiles, type ConfigReadOptions } from './configFetch';
 import { configFingerprint } from '../starterCli';
 import { findConfigHeader, decideConfigChanges, type CandidateFile } from './configHeader';
 import * as settingsMod from '../settings';
@@ -54,11 +54,14 @@ async function scanWorkspaceForCandidates(): Promise<Array<{ uri: vscode.Uri; te
  * reachable or the config XML can't be read - callers treat that as "nothing
  * to report" rather than an error, since this runs opportunistically on
  * ordinary UI events that shouldn't fail loudly over a disconnected hub. */
-export async function scanForConfigChanges(): Promise<ScanResult | undefined> {
+/** `maxAgeMs` lets the automatic 5 s check reuse a recent read. An explicit
+ * command must not: right after the robot is reconfigured, a copy from a few
+ * seconds earlier says every file is up to date. */
+export async function scanForConfigChanges(options: ConfigReadOptions = {}): Promise<ScanResult | undefined> {
   let currentFingerprint: string;
   try {
     currentFingerprint = await withTempDir(async (dir) => {
-      const { configPath } = await fetchHubConfigFiles(dir);
+      const { configPath } = await fetchHubConfigFiles(dir, options);
       const result = await configFingerprint(configPath);
       return result.fingerprint;
     });
@@ -137,7 +140,11 @@ export async function checkConfigChanges(): Promise<void> {
 
 async function doCheck(): Promise<void> {
   try {
-    const scan = await scanForConfigChanges();
+    // The background check reuses a read from the last few seconds (usually
+    // the hub view's): noticing a config change 15 s late costs nothing,
+    // while an adb read over Wi-Fi on every 5 s tick is what kept the link
+    // busy enough to drop.
+    const scan = await scanForConfigChanges({ maxAgeMs: 15_000 });
     if (!scan) {
       return;
     }

@@ -71,7 +71,21 @@ interface RunResult {
   code: number | null;
 }
 
+// One adb process at a time. The hub view, the config watcher, deploy and
+// the simulator each talk to adb on their own schedule; over Wi-Fi, their
+// overlapping `adb connect`s against the same address are what kept knocking
+// the hub's entry into "offline" (the extension log showed ~190 `device
+// offline` failures, each straight after a connect).
+let adbQueue: Promise<unknown> = Promise.resolve();
+
 function runAdb(adbPath: string, args: string[], timeoutMs = 10_000): Promise<RunResult> {
+  const run = () => spawnAdb(adbPath, args, timeoutMs);
+  const next = adbQueue.then(run, run);
+  adbQueue = next.catch(() => undefined);
+  return next;
+}
+
+function spawnAdb(adbPath: string, args: string[], timeoutMs: number): Promise<RunResult> {
   logCli([adbPath, ...args]);
   return new Promise((resolve, reject) => {
     const child = spawn(adbPath, args);
@@ -123,19 +137,94 @@ export async function shellCat(adbPath: string, serial: string, remotePath: stri
   return stdout;
 }
 
-/** Best-effort: hub may only be reachable via Wi-Fi adb at the RC's fixed
- * address. Failure here is non-fatal to callers - they fall back to
- * whatever `adb devices` already shows. */
-export async function connectWifiAdb(adbPath: string, address = '192.168.43.1:5555'): Promise<boolean> {
+export const WIFI_ADB_SERIAL = '192.168.43.1:5555';
+
+export type AdbState = 'device' | 'offline' | 'unauthorized' | 'absent';
+
+/** `adb -s <serial> get-state`: prints "device" on success, otherwise an
+ * error naming the state ("device offline", "device '...' not found"). */
+export async function adbState(adbPath: string, serial: string): Promise<AdbState> {
+  let result: RunResult;
   try {
-    const { stdout, code } = await runAdb(adbPath, ['connect', address], 5_000);
-    if (code === 0 && /connected/i.test(stdout)) {
-      return true;
+    result = await runAdb(adbPath, ['-s', serial, 'get-state'], 5_000);
+  } catch {
+    return 'absent';
+  }
+  const out = `${result.stdout}\n${result.stderr}`.toLowerCase();
+  if (result.code === 0 && result.stdout.trim() === 'device') {
+    return 'device';
+  }
+  if (out.includes('offline')) {
+    return 'offline';
+  }
+  if (out.includes('unauthorized')) {
+    return 'unauthorized';
+  }
+  return 'absent';
+}
+
+/** adb reports a dropped Wi-Fi link in several ways; all of them are worth
+ * one reconnect and retry rather than an error in the user's face. */
+export function isTransientAdbError(message: string): boolean {
+  return /offline|not found|closed|protocol fault|connection reset|no devices|broken pipe/i.test(message);
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+let wifiInFlight: Promise<AdbState> | undefined;
+
+/** Makes the hub's Wi-Fi adb entry usable and returns its final state.
+ *
+ * Checks before connecting, so a healthy link costs one `get-state` instead
+ * of a fresh `adb connect` on every refresh. The important case is a stale
+ * "offline" entry: `adb connect` on it answers "already connected" and
+ * changes nothing, which is how every read used to fail until the link
+ * happened to reset itself. Only dropping the entry forces a new handshake.
+ * Concurrent callers share one attempt. */
+export function ensureWifiAdb(adbPath: string, address = WIFI_ADB_SERIAL): Promise<AdbState> {
+  if (!wifiInFlight) {
+    wifiInFlight = connectAndWait(adbPath, address).finally(() => {
+      wifiInFlight = undefined;
+    });
+  }
+  return wifiInFlight;
+}
+
+async function connectAndWait(adbPath: string, address: string): Promise<AdbState> {
+  let state = await adbState(adbPath, address);
+  if (state === 'device' || state === 'unauthorized') {
+    return state;
+  }
+  if (state === 'offline') {
+    log(`adb: ${address} is offline; dropping the stale entry and reconnecting`);
+    await runAdb(adbPath, ['disconnect', address], 5_000).catch(() => undefined);
+  }
+  try {
+    const { stdout, stderr } = await runAdb(adbPath, ['connect', address], 5_000);
+    if (!/connected to/i.test(stdout)) {
+      log(`adb connect ${address}: ${(stdout || stderr).trim()}`);
+      return 'absent';
     }
-    log(`adb connect ${address}: ${stdout.trim()}`);
-    return false;
   } catch (err) {
     log(`adb connect ${address} failed: ${(err as Error).message}`);
-    return false;
+    return 'absent';
   }
+  // The handshake finishes after `adb connect` returns; until then the entry
+  // reads "offline" even though nothing is wrong.
+  for (let i = 0; i < 10; i++) {
+    state = await adbState(adbPath, address);
+    if (state === 'device' || state === 'unauthorized') {
+      break;
+    }
+    await sleep(300);
+  }
+  if (state !== 'device') {
+    log(`adb: ${address} is still ${state} after reconnecting`);
+  }
+  return state;
+}
+
+/** Kept for callers that only need a yes/no. */
+export async function connectWifiAdb(adbPath: string, address = WIFI_ADB_SERIAL): Promise<boolean> {
+  return (await ensureWifiAdb(adbPath, address)) === 'device';
 }
