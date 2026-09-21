@@ -1,0 +1,579 @@
+"""Starter pack for Gicko, generated 2026-09-20 from hardware configuration "FGC2026-Incheon".
+
+Press INIT on the Driver Hub: everything above waitForStart() runs once.
+Press START: the while loop runs until STOP.
+"""
+
+# ── pyftc:config name="FGC2026-Incheon" fingerprint="c841abeba9d5c0ab" generated="2026-09-20" ──
+
+# ── pyftc:imports ──
+from ftc.hardware import CRServo, DcMotor, IMU, RevHubOrientationOnRobot, Servo
+from ftc.navigation import AngleUnit
+from ftc.opmode import LinearOpMode, TeleOp
+# ── pyftc:imports:end ──
+
+
+# ── Gamepad controls ─────────────────────────────────────────────────────────
+#   "Collector": gamepad 1: left stick up/down
+#   "shooter": gamepad 1: right stick up/down
+#   "Climber": gamepad 1: right trigger forward, left trigger reverse
+#   "Fishing": gamepad 1: hold RB forward, hold LB reverse
+#   "LB": gamepad 1: hold D-pad up forward, hold D-pad down reverse
+#   "RB": gamepad 1: hold D-pad right forward, hold D-pad left reverse
+#   "LF": gamepad 1: hold Y forward, hold A reverse
+#   "RF": gamepad 1: hold B forward, hold X reverse
+#   "chainDrop": gamepad 2: hold RB / hold LB to move it
+#   "ChainStop": gamepad 2: hold D-pad up / hold D-pad down to move it
+#   "ShooterIntake": gamepad 2: left stick up/down
+#   "FixatorRelease": gamepad 2: hold D-pad right / hold D-pad left to move it
+#   "imu": gamepad 1 BACK resets the heading to 0
+#
+# ── Connected hardware ───────────────────────────────────────────────────────
+# ── pyftc:hardware ──
+# Expansion Hub 2 (address 2, firmware 1.8.2, connected)
+#   "Collector" -> self.collector: DcMotor  (REV Robotics UltraPlanetary HD Hex Motor, port 0)
+#       560 encoder ticks/rev, 300 max RPM, 20:1 gearing
+#   "shooter" -> self.shooter: DcMotor  (REV Robotics UltraPlanetary HD Hex Motor, port 1)
+#       560 encoder ticks/rev, 300 max RPM, 20:1 gearing
+#   "Climber" -> self.climber: DcMotor  (REV Robotics UltraPlanetary HD Hex Motor, port 2)
+#       560 encoder ticks/rev, 300 max RPM, 20:1 gearing
+#   "Fishing" -> self.fishing: DcMotor  (REV Robotics Core Hex Motor, port 3)
+#       288 encoder ticks/rev, 137 max RPM, 36.25:1 gearing
+# Control Hub (address 173, firmware 1.8.2, connected)
+#   "LB" -> self.lb: DcMotor  (REV Robotics UltraPlanetary HD Hex Motor, port 0)
+#       560 encoder ticks/rev, 300 max RPM, 20:1 gearing
+#   "RB" -> self.rb: DcMotor  (REV Robotics UltraPlanetary HD Hex Motor, port 1)
+#       560 encoder ticks/rev, 300 max RPM, 20:1 gearing
+#   "LF" -> self.lf: DcMotor  (REV Robotics UltraPlanetary HD Hex Motor, port 2)
+#       560 encoder ticks/rev, 300 max RPM, 20:1 gearing
+#   "RF" -> self.rf: DcMotor  (REV Robotics UltraPlanetary HD Hex Motor, port 3)
+#       560 encoder ticks/rev, 300 max RPM, 20:1 gearing
+#   "chainDrop" -> self.chain_drop: Servo  (Servo, port 0)
+#   "ChainStop" -> self.chain_stop: Servo  (Servo, port 1)
+#   "ShooterIntake" -> self.shooter_intake: CRServo  (Continuous Rotation Servo, port 2)
+#   "FixatorRelease" -> self.fixator_release: Servo  (Servo, port 3)
+#   "imu" -> self.imu: IMU  (REV internal IMU (BHI260AP), I2C bus 0)
+# ── pyftc:hardware:end ──
+#
+# ── What a DcMotor can do ─────────────────────────────────────────────────
+#   getMotorType() -> MotorConfigurationType
+#       Returns the assigned type for this motor.
+#   setMotorType(motorType: MotorConfigurationType)
+#       Sets the assigned type of this motor.
+#   getController() -> DcMotorController
+#       Returns the underlying motor controller on which this motor is situated.
+#   getPortNumber() -> int
+#       Returns the port number on the underlying motor controller on which this
+#       motor is situated.
+#   setZeroPowerBehavior(zeroPowerBehavior: ZeroPowerBehavior)
+#       Sets the behavior of the motor when a power level of zero is applied.
+#   getZeroPowerBehavior() -> ZeroPowerBehavior
+#       Returns the current behavior of the motor were a power level of zero to
+#       be applied.
+#   setPowerFloat()
+#       Sets the zero power behavior of the motor to ZeroPowerBehavior#FLOAT,
+#       then applies zero power to that motor.
+#   getPowerFloat() -> bool
+#       Returns whether the motor is currently in a float power level.
+#   setTargetPosition(position: int)
+#       Sets the desired encoder target position to which the motor should
+#       advance or retreat and then actively hold thereat.
+#   getTargetPosition() -> int
+#       Returns the current target encoder position for this motor.
+#   isBusy() -> bool
+#       Returns true if the motor is currently advancing or retreating to a
+#       target position.
+#   getCurrentPosition() -> int
+#       Returns the current reading of the encoder for this motor.
+#   setMode(mode: RunMode)
+#       Sets the current run mode for this motor
+#   getMode() -> RunMode
+#       Returns the current run mode for this motor
+#   setDirection(direction: Direction)
+#       Sets the logical direction in which this motor operates.
+#   getDirection() -> Direction
+#       Returns the current logical direction in which this motor is set as
+#       operating.
+#   setPower(power: float)
+#       Sets the power level of the motor, expressed as a fraction of the
+#       maximum possible power / speed supported according to the run mode in
+#       w...
+#   getPower() -> float
+#       Returns the current configured power level of the motor.
+#   getManufacturer() -> Manufacturer
+#       Returns an indication of the manufacturer of this device.
+#   getDeviceName() -> str
+#       Returns a string suitable for display to the user as to the type of
+#       device.
+#   getConnectionInfo() -> str
+#       Get connection information about this device in a human readable format
+#   getVersion() -> int
+#       Version
+#   resetDeviceConfigurationForOpMode()
+#       Resets the device's configuration to that which is expected at the
+#       beginning of an OpMode.
+#   close()
+#       Closes this device
+#
+# ── What a Servo can do ───────────────────────────────────────────────────
+#   getController() -> ServoController
+#       Returns the underlying servo controller on which this servo is situated.
+#   getPortNumber() -> int
+#       Returns the port number on the underlying servo controller on which this
+#       motor is situated.
+#   setDirection(direction: Direction)
+#       Sets the logical direction in which this servo operates.
+#   getDirection() -> Direction
+#       Returns the current logical direction in which this servo is set as
+#       operating.
+#   setPosition(position: float)
+#       Sets the current position of the servo, expressed as a fraction of its
+#       available range.
+#   getPosition() -> float
+#       Returns the position to which the servo was last commanded to move.
+#   scaleRange(min: float, max: float)
+#       Scales the available movement range of the servo to be a subset of its
+#       maximum range.
+#   getManufacturer() -> Manufacturer
+#       Returns an indication of the manufacturer of this device.
+#   getDeviceName() -> str
+#       Returns a string suitable for display to the user as to the type of
+#       device.
+#   getConnectionInfo() -> str
+#       Get connection information about this device in a human readable format
+#   getVersion() -> int
+#       Version
+#   resetDeviceConfigurationForOpMode()
+#       Resets the device's configuration to that which is expected at the
+#       beginning of an OpMode.
+#   close()
+#       Closes this device
+#   MIN_POSITION: float
+#       The minimum allowable position to which a servo can be moved
+#   MAX_POSITION: float
+#       The maximum allowable position to which a servo can be moved
+#
+# ── What a CRServo can do ─────────────────────────────────────────────────
+#   getController() -> ServoController
+#       Returns the underlying servo controller on which this servo is situated.
+#   getPortNumber() -> int
+#       Returns the port number on the underlying servo controller on which this
+#       motor is situated.
+#   setDirection(direction: Direction)
+#       Sets the logical direction in which this motor operates.
+#   getDirection() -> Direction
+#       Returns the current logical direction in which this motor is set as
+#       operating.
+#   setPower(power: float)
+#       Sets the power level of the motor, expressed as a fraction of the
+#       maximum possible power / speed supported according to the run mode in
+#       w...
+#   getPower() -> float
+#       Returns the current configured power level of the motor.
+#   getManufacturer() -> Manufacturer
+#       Returns an indication of the manufacturer of this device.
+#   getDeviceName() -> str
+#       Returns a string suitable for display to the user as to the type of
+#       device.
+#   getConnectionInfo() -> str
+#       Get connection information about this device in a human readable format
+#   getVersion() -> int
+#       Version
+#   resetDeviceConfigurationForOpMode()
+#       Resets the device's configuration to that which is expected at the
+#       beginning of an OpMode.
+#   close()
+#       Closes this device
+#
+# ── What an IMU can do ────────────────────────────────────────────────────
+#   initialize(parameters: Parameters) -> bool
+#       Initializes the IMU with non-default settings.
+#   resetYaw()
+#       Resets the robot's yaw angle to 0.
+#   getRobotYawPitchRollAngles() -> YawPitchRollAngles
+#   getRobotOrientation(reference: AxesReference, order: AxesOrder, angleUnit: AngleUnit) -> Orientation
+#   getRobotOrientationAsQuaternion() -> Quaternion
+#   getRobotAngularVelocity(angleUnit: AngleUnit) -> AngularVelocity
+#   getManufacturer() -> Manufacturer
+#       Returns an indication of the manufacturer of this device.
+#   getDeviceName() -> str
+#       Returns a string suitable for display to the user as to the type of
+#       device.
+#   getConnectionInfo() -> str
+#       Get connection information about this device in a human readable format
+#   getVersion() -> int
+#       Version
+#   resetDeviceConfigurationForOpMode()
+#       Resets the device's configuration to that which is expected at the
+#       beginning of an OpMode.
+#   close()
+#       Closes this device
+#
+# ── What a Gamepad can do ─────────────────────────────────────────────────
+#   setTriggerThreshold(threshold: float)
+#       Set the threshold for determining if a trigger is pressed
+#   getTriggerThreshold() -> float
+#       Get the threshold for determining if a trigger is pressed
+#   setUserForEffects(userForEffects: int)
+#   ps4ToString() -> str
+#   genericToString() -> str
+#   setLedColor(r: float, g: float, b: float, durationMs: int)
+#   runLedEffect(effect: LedEffect)
+#       Run an LED effect built using LedEffect.Builder The LED effect will be
+#       run asynchronously; your OpMode will not halt execution while the ...
+#   runRumbleEffect(effect: RumbleEffect)
+#       Run a rumble effect built using RumbleEffect.Builder The rumble effect
+#       will be run asynchronously; your OpMode will not halt execution wh...
+#   rumble(durationMs: int)
+#       Rumble the gamepad's first rumble motor at maximum power for a certain
+#       duration.
+#   rumble(rumble1: float, rumble2: float, durationMs: int)
+#       Rumble the gamepad at a fixed rumble power for a certain duration
+#       Calling this will displace any currently running rumble effect
+#   stopRumble()
+#       Cancel the currently running rumble effect, if any
+#   rumbleBlips(count: int)
+#       Rumble the gamepad for a certain number of "blips" using predetermined
+#       blip timing This will displace any currently running rumble effect.
+#   isRumbling() -> bool
+#       Returns an educated guess about whether there is a rumble action ongoing
+#       on this gamepad
+#   resetEdgeDetection()
+#       Clears any remembered presses and releases of buttons
+#   dpadUpWasPressed() -> bool
+#       Checks if dpad_up was pressed since the last call of this method
+#   dpadUpWasReleased() -> bool
+#       Checks if dpad_up was released since the last call of this method
+#   dpadDownWasPressed() -> bool
+#       Checks if dpad_down was pressed since the last call of this method
+#   dpadDownWasReleased() -> bool
+#       Checks if dpad_down was released since the last call of this method
+#   dpadLeftWasPressed() -> bool
+#       Checks if dpad_left was pressed since the last call of this method
+#   dpadLeftWasReleased() -> bool
+#       Checks if dpad_left was released since the last call of this method
+#   dpadRightWasPressed() -> bool
+#       Checks if dpad_right was pressed since the last call of this method
+#   dpadRightWasReleased() -> bool
+#       Checks if dpad_right was released since the last call of this
+#       methmethodod
+#   aWasPressed() -> bool
+#       Checks if a was pressed since the last call of this method
+#   aWasReleased() -> bool
+#       Checks if a was released since the last call of this method
+#   bWasPressed() -> bool
+#       Checks if b was pressed since the last call of this method
+#   bWasReleased() -> bool
+#       Checks if b was released since the last call of this method
+#   xWasPressed() -> bool
+#       Checks if x was pressed since the last call of this method
+#   xWasReleased() -> bool
+#       Checks if x was released since the last call of this method
+#   yWasPressed() -> bool
+#       Checks if y was pressed since the last call of this method
+#   yWasReleased() -> bool
+#       Checks if y was released since the last call of this method
+#   guideWasPressed() -> bool
+#       Checks if guide was pressed since the last call of this method
+#   guideWasReleased() -> bool
+#       Checks if guide was released since the last call of this method
+#   startWasPressed() -> bool
+#       Checks if start was pressed since the last call of this method
+#   startWasReleased() -> bool
+#       Checks if start was released since the last call of this method
+#   backWasPressed() -> bool
+#       Checks if back was pressed since the last call of this method
+#   backWasReleased() -> bool
+#       Checks if back was released since the last call of this method
+#   leftBumperWasPressed() -> bool
+#       Checks if left_bumper was pressed since the last call of this method
+#   leftBumperWasReleased() -> bool
+#       Checks if left_bumper was released since the last call of this method
+#   rightBumperWasPressed() -> bool
+#       Checks if right_bumper was pressed since the last call of this method
+#   rightBumperWasReleased() -> bool
+#       Checks if right_bumper was released since the last call of this method
+#   leftStickButtonWasPressed() -> bool
+#       Checks if left_stick_button was pressed since the last call of this
+#       method
+#   leftStickButtonWasReleased() -> bool
+#       Checks if left_stick_button was released since the last call of this
+#       method
+#   rightStickButtonWasPressed() -> bool
+#       Checks if right_stick_button was pressed since the last call of this
+#       method
+#   rightStickButtonWasReleased() -> bool
+#       Checks if right_stick_button was released since the last call of this
+#       method
+#   circleWasPressed() -> bool
+#       Checks if circle was pressed since the last call of this method
+#   circleWasReleased() -> bool
+#       Checks if circle was released since the last call of this method
+#   crossWasPressed() -> bool
+#       Checks if cross was pressed since the last call of this method
+#   crossWasReleased() -> bool
+#       Checks if cross was released since the last call of this method
+#   triangleWasPressed() -> bool
+#       Checks if triangle was pressed since the last call of this method
+#   triangleWasReleased() -> bool
+#       Checks if triangle was released since the last call of this method
+#   squareWasPressed() -> bool
+#       Checks if square was pressed since the last call of this method
+#   squareWasReleased() -> bool
+#       Checks if square was released since the last call of this method
+#   shareWasPressed() -> bool
+#       Checks if share was pressed since the last call of this method
+#   shareWasReleased() -> bool
+#       Checks if share was released since the last call of this method
+#   optionsWasPressed() -> bool
+#       Checks if options was pressed since the last call of this method
+#   optionsWasReleased() -> bool
+#       Checks if options was released since the last call of this method
+#   touchpadWasPressed() -> bool
+#       Checks if touchpad was pressed since the last call of this method
+#   touchpadWasReleased() -> bool
+#       Checks if touchpad was released since the last call of this method
+#   psWasPressed() -> bool
+#       Checks if ps was pressed since the last call of this method
+#   psWasReleased() -> bool
+#       Checks if ps was released since the last call of this method
+#   leftTriggerWasPressed() -> bool
+#       Checks if left_trigger was pressed since the last call of this method
+#   leftTriggerWasReleased() -> bool
+#       Checks if left_trigger was released since the last call of this method
+#   rightTriggerWasPressed() -> bool
+#       Checks if right_trigger was pressed since the last call of this method
+#   rightTriggerWasReleased() -> bool
+#       Checks if right_trigger was released since the last call of this method
+#   getSequenceNumber() -> int
+#   setSequenceNumber(sequenceNumber: int)
+#   setSequenceNumber()
+#   toByteArrayForTransmission() -> list[int]
+#       Serialize, but also record timestamp if for transmission
+#   shouldTransmit(nanotimeNow: int) -> bool
+#   allocateWholeWriteBuffer(overallSize: int) -> ByteBuffer
+#   getWholeReadBuffer(byteArray: list[int]) -> ByteBuffer
+#   getWriteBuffer(payloadSize: int) -> ByteBuffer
+#   getReadBuffer(byteArray: list[int]) -> ByteBuffer
+#   left_stick_x: float
+#       left analog stick horizontal axis
+#   left_stick_y: float
+#       left analog stick vertical axis
+#   right_stick_x: float
+#       right analog stick horizontal axis
+#   right_stick_y: float
+#       right analog stick vertical axis
+#   dpad_up: bool
+#       dpad up
+#   dpad_down: bool
+#       dpad down
+#   dpad_left: bool
+#       dpad left
+#   dpad_right: bool
+#       dpad right
+#   a: bool
+#       button a
+#   b: bool
+#       button b
+#   x: bool
+#       button x
+#   y: bool
+#       button y
+#   guide: bool
+#       button guide - often the large button in the middle of the controller.
+#   start: bool
+#       button start
+#   back: bool
+#       button back
+#   left_bumper: bool
+#       button left bumper
+#   right_bumper: bool
+#       button right bumper
+#   left_stick_button: bool
+#       left stick button
+#   right_stick_button: bool
+#       right stick button
+#   left_trigger: float
+#       left trigger
+#   right_trigger: float
+#       right trigger
+#   left_trigger_pressed: bool
+#       left trigger past threshold
+#   right_trigger_pressed: bool
+#       right trigger past threshold
+#   circle: bool
+#       PS4 Support - Circle
+#   cross: bool
+#       PS4 Support - cross
+#   triangle: bool
+#       PS4 Support - triangle
+#   square: bool
+#       PS4 Support - square
+#   share: bool
+#       PS4 Support - share
+#   options: bool
+#       PS4 Support - options
+#   touchpad: bool
+#       PS4 Support - touchpad
+#   touchpad_finger_1: bool
+#   touchpad_finger_2: bool
+#   touchpad_finger_1_x: float
+#   touchpad_finger_1_y: float
+#   touchpad_finger_2_x: float
+#   touchpad_finger_2_y: float
+#   ps: bool
+#       PS4 Support - PS Button
+
+
+@TeleOp(name="Main", group="pyftc")
+class Main(LinearOpMode):
+    # ── pyftc:devices ──
+    collector: DcMotor
+    shooter: DcMotor
+    climber: DcMotor
+    fishing: DcMotor
+    lb: DcMotor
+    rb: DcMotor
+    lf: DcMotor
+    rf: DcMotor
+    chain_drop: Servo
+    chain_stop: Servo
+    shooter_intake: CRServo
+    fixator_release: Servo
+    imu: IMU
+    # ── pyftc:devices:end ──
+
+    DRIVE_POWER: float = 1.0      # 0..1, lower it for gentler driving
+    MECHANISM_POWER: float = 0.8  # power for button-controlled motors
+    SERVO_STEP: float = 0.01      # how far a servo moves per loop while a button is held
+
+    def runOpMode(self) -> None:
+        # ── On ready: runs once when INIT is pressed ──
+        # ── pyftc:init ──
+        self.collector = self.hardwareMap.get(DcMotor, "Collector")
+        self.shooter = self.hardwareMap.get(DcMotor, "shooter")
+        self.climber = self.hardwareMap.get(DcMotor, "Climber")
+        self.fishing = self.hardwareMap.get(DcMotor, "Fishing")
+        self.lb = self.hardwareMap.get(DcMotor, "LB")
+        self.rb = self.hardwareMap.get(DcMotor, "RB")
+        self.lf = self.hardwareMap.get(DcMotor, "LF")
+        self.rf = self.hardwareMap.get(DcMotor, "RF")
+        self.chain_drop = self.hardwareMap.get(Servo, "chainDrop")
+        self.chain_stop = self.hardwareMap.get(Servo, "ChainStop")
+        self.shooter_intake = self.hardwareMap.get(CRServo, "ShooterIntake")
+        self.fixator_release = self.hardwareMap.get(Servo, "FixatorRelease")
+        self.imu = self.hardwareMap.get(IMU, "imu")
+        # Tell the IMU how the hub is mounted, or the heading will be wrong.
+        self.imu.initialize(IMU.Parameters(RevHubOrientationOnRobot(
+            RevHubOrientationOnRobot.LogoFacingDirection.UP,
+            RevHubOrientationOnRobot.UsbFacingDirection.FORWARD)))
+        chain_drop_position = 0.5  # servo jumps here on START; set your starting position
+        chain_stop_position = 0.5  # servo jumps here on START; set your starting position
+        fixator_release_position = 0.5  # servo jumps here on START; set your starting position
+        # ── pyftc:init:end ──
+
+        self.telemetry.addLine("Ready. Press START.")
+        self.telemetry.update()
+        self.waitForStart()
+
+        # ── On start: loops until STOP is pressed ──
+        while self.opModeIsActive():
+            # ── pyftc:loop ──
+            # "Collector": gamepad 1: left stick up/down
+            self.collector.setPower(-self.gamepad1.left_stick_y)
+            self.telemetry.addData("Collector", f"power {self.collector.getPower():.2f}")
+
+            # "shooter": gamepad 1: right stick up/down
+            self.shooter.setPower(-self.gamepad1.right_stick_y)
+            self.telemetry.addData("shooter", f"power {self.shooter.getPower():.2f}")
+
+            # "Climber": gamepad 1: right trigger forward, left trigger reverse
+            self.climber.setPower((self.gamepad1.right_trigger - self.gamepad1.left_trigger) * self.MECHANISM_POWER)
+            self.telemetry.addData("Climber", f"power {self.climber.getPower():.2f}")
+
+            # "Fishing": gamepad 1: hold RB forward, hold LB reverse
+            if self.gamepad1.right_bumper:
+                self.fishing.setPower(self.MECHANISM_POWER)
+            elif self.gamepad1.left_bumper:
+                self.fishing.setPower(-self.MECHANISM_POWER)
+            else:
+                self.fishing.setPower(0)
+            self.telemetry.addData("Fishing", f"power {self.fishing.getPower():.2f}")
+
+            # "LB": gamepad 1: hold D-pad up forward, hold D-pad down reverse
+            if self.gamepad1.dpad_up:
+                self.lb.setPower(self.MECHANISM_POWER)
+            elif self.gamepad1.dpad_down:
+                self.lb.setPower(-self.MECHANISM_POWER)
+            else:
+                self.lb.setPower(0)
+            self.telemetry.addData("LB", f"power {self.lb.getPower():.2f}")
+
+            # "RB": gamepad 1: hold D-pad right forward, hold D-pad left reverse
+            if self.gamepad1.dpad_right:
+                self.rb.setPower(self.MECHANISM_POWER)
+            elif self.gamepad1.dpad_left:
+                self.rb.setPower(-self.MECHANISM_POWER)
+            else:
+                self.rb.setPower(0)
+            self.telemetry.addData("RB", f"power {self.rb.getPower():.2f}")
+
+            # "LF": gamepad 1: hold Y forward, hold A reverse
+            if self.gamepad1.y:
+                self.lf.setPower(self.MECHANISM_POWER)
+            elif self.gamepad1.a:
+                self.lf.setPower(-self.MECHANISM_POWER)
+            else:
+                self.lf.setPower(0)
+            self.telemetry.addData("LF", f"power {self.lf.getPower():.2f}")
+
+            # "RF": gamepad 1: hold B forward, hold X reverse
+            if self.gamepad1.b:
+                self.rf.setPower(self.MECHANISM_POWER)
+            elif self.gamepad1.x:
+                self.rf.setPower(-self.MECHANISM_POWER)
+            else:
+                self.rf.setPower(0)
+            self.telemetry.addData("RF", f"power {self.rf.getPower():.2f}")
+
+            # "chainDrop": gamepad 2: hold RB / hold LB to move it
+            if self.gamepad2.right_bumper:
+                chain_drop_position = min(chain_drop_position + self.SERVO_STEP, 1.0)
+            elif self.gamepad2.left_bumper:
+                chain_drop_position = max(chain_drop_position - self.SERVO_STEP, 0.0)
+            self.chain_drop.setPosition(chain_drop_position)
+            self.telemetry.addData("chainDrop", f"position {chain_drop_position:.2f}")
+
+            # "ChainStop": gamepad 2: hold D-pad up / hold D-pad down to move it
+            if self.gamepad2.dpad_up:
+                chain_stop_position = min(chain_stop_position + self.SERVO_STEP, 1.0)
+            elif self.gamepad2.dpad_down:
+                chain_stop_position = max(chain_stop_position - self.SERVO_STEP, 0.0)
+            self.chain_stop.setPosition(chain_stop_position)
+            self.telemetry.addData("ChainStop", f"position {chain_stop_position:.2f}")
+
+            # "ShooterIntake": gamepad 2: left stick up/down
+            self.shooter_intake.setPower(-self.gamepad2.left_stick_y)
+            self.telemetry.addData("ShooterIntake", f"power {self.shooter_intake.getPower():.2f}")
+
+            # "FixatorRelease": gamepad 2: hold D-pad right / hold D-pad left to move it
+            if self.gamepad2.dpad_right:
+                fixator_release_position = min(fixator_release_position + self.SERVO_STEP, 1.0)
+            elif self.gamepad2.dpad_left:
+                fixator_release_position = max(fixator_release_position - self.SERVO_STEP, 0.0)
+            self.fixator_release.setPosition(fixator_release_position)
+            self.telemetry.addData("FixatorRelease", f"position {fixator_release_position:.2f}")
+
+            # "imu": BACK resets the heading
+            if self.gamepad1.back:
+                self.imu.resetYaw()
+            heading = self.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES)
+            self.telemetry.addData("imu heading", f"{heading:.1f} deg")
+
+            # ── pyftc:loop:end ──
+            # Live gamepad readout, handy for checking which button is which
+            self.telemetry.addData("Gamepad 1 sticks", f"L ({self.gamepad1.left_stick_x:.2f}, {self.gamepad1.left_stick_y:.2f})  R ({self.gamepad1.right_stick_x:.2f}, {self.gamepad1.right_stick_y:.2f})")
+            self.telemetry.addData("Gamepad 1 triggers", f"L {self.gamepad1.left_trigger:.2f}  R {self.gamepad1.right_trigger:.2f}")
+            self.telemetry.addData("Gamepad 1 A/B/X/Y", f"{self.gamepad1.a} {self.gamepad1.b} {self.gamepad1.x} {self.gamepad1.y}")
+            self.telemetry.addData("Runtime", f"{self.getRuntime():.1f} s")
+            self.telemetry.update()

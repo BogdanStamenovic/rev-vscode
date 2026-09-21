@@ -238,10 +238,6 @@ def test_fgc_main_magdump_cycle(db, tmp_path):
     """Copy of FGC_2026_Korea/code/main.py (the team's real OpMode). MagDump: cross
     cycles phase 0 -> 1 (shooter spins up) -> 2 (collector reversed at 1) -> 0 (both off),
     with a 500 ms debounce."""
-    if not (FIX / "sim" / "fgc_main.py").exists():
-        # The team's competition code stays out of this public repo; the
-        # fixture exists only on machines that have it.
-        pytest.skip("team OpMode copy not present (kept out of the public repo)")
     cfg = simconfig.from_starter(db, (FIX / "sim" / "fgc_starter.txt").read_text())
     press = lambda t: [gp(t, a=True), gp(t + 0.1)]  # noqa: E731
     script = [{"type": "init", "opMode": "Main", "at": 0.1}, {"type": "start", "at": 1.0},

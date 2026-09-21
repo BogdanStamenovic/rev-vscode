@@ -12,8 +12,3 @@ sdkgen/.cache/
 # venv created by ownbox.sh / manual `python -m venv .venv` installs
 .venv/
 *.egg-info/
-
-# The team's real OpMode and hub configuration, used by test_sim.py's
-# acceptance run; kept out of the public repo.
-python/tests/fixtures/sim/fgc_main.py
-python/tests/fixtures/sim/fgc_starter.txt
