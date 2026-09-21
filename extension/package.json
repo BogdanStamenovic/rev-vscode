@@ -13,6 +13,7 @@
   ],
   "main": "./dist/extension.js",
   "activationEvents": [
+    "onView:revFtcActions",
     "onView:revFtcHub",
     "workspaceContains:**/*.py",
     "onCommand:revFtc.deploy",
@@ -20,7 +21,8 @@
     "onCommand:revFtc.showGeneratedJava",
     "onCommand:revFtc.refreshHubView",
     "onCommand:revFtc.checkAutocomplete",
-    "onCommand:revFtc.updateFromConfig"
+    "onCommand:revFtc.updateFromConfig",
+    "onCommand:revFtc.setupFiles"
   ],
   "contributes": {
     "commands": [
@@ -52,6 +54,11 @@
         "command": "revFtc.updateFromConfig",
         "title": "REV FTC: Update Starter Pack From Hardware Configuration",
         "icon": "$(sync)"
+      },
+      {
+        "command": "revFtc.setupFiles",
+        "title": "REV FTC: Setup Files",
+        "icon": "$(tools)"
       }
     ],
     "viewsContainers": {
@@ -65,6 +72,10 @@
     },
     "views": {
       "revFtc": [
+        {
+          "id": "revFtcActions",
+          "name": "Actions"
+        },
         {
           "id": "revFtcHub",
           "name": "Hub"
@@ -119,6 +130,9 @@
         },
         {
           "command": "revFtc.updateFromConfig"
+        },
+        {
+          "command": "revFtc.setupFiles"
         }
       ]
     },
@@ -160,7 +174,10 @@
         },
         "revFtc.liveDiagnosticsTrigger": {
           "type": "string",
-          "enum": ["save", "edit"],
+          "enum": [
+            "save",
+            "edit"
+          ],
           "enumDescriptions": [
             "Re-run the background translator only when a .py file is saved.",
             "Also re-run on a debounce while typing (revFtc.liveDiagnosticsDebounceMs)."
@@ -180,7 +197,13 @@
           "description": "Watch the hub's active hardware configuration (on connect, on sidebar refresh, and before a deploy) and offer to update generated starter packs when it changes. The 'REV FTC: Update Starter Pack From Hardware Configuration' command still works by hand when this is off."
         }
       }
-    }
+    },
+    "viewsWelcome": [
+      {
+        "view": "revFtcActions",
+        "contents": "[Setup files](command:revFtc.setupFiles)\nCreates .vscode settings, pyrightconfig.json and the stub link, and checks Python and the language server, so autocomplete works.\n[Spawn starter pack](command:revFtc.spawnStarterPack)\n[Deploy to hub](command:revFtc.deploy)"
+      }
+    ]
   },
   "scripts": {
     "build": "node esbuild.js",

@@ -10,6 +10,7 @@ import { runUpdateFromConfig } from './commands/updateFromConfig';
 import { AutocompleteReportProvider, REPORT_SCHEME, runCheckAutocomplete } from './commands/checkAutocomplete';
 import { ensureAutocomplete, watchForFtcImports } from './python/autocomplete';
 import { LiveDiagnosticsController } from './liveDiagnostics';
+import { refreshStubLink, runSetupFiles } from './commands/setupFiles';
 
 export function activate(context: vscode.ExtensionContext): void {
   setExtensionPath(context.extensionPath);
@@ -52,7 +53,15 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('revFtc.showGeneratedJava', () => runShowGeneratedJava(javaProvider)),
     vscode.commands.registerCommand('revFtc.refreshHubView', () => hubTreeProvider.refresh(true)),
     vscode.commands.registerCommand('revFtc.updateFromConfig', () => runUpdateFromConfig()),
-    vscode.commands.registerCommand('revFtc.checkAutocomplete', () => runCheckAutocomplete(context, reportProvider))
+    vscode.commands.registerCommand('revFtc.checkAutocomplete', () => runCheckAutocomplete(context, reportProvider)),
+    vscode.commands.registerCommand('revFtc.setupFiles', () => runSetupFiles(context))
+  );
+
+  // The Actions view is deliberately empty: VS Code shows a view's welcome
+  // content (package.json viewsWelcome) only when its tree has no items, and
+  // welcome content is the one place that renders real labelled buttons.
+  context.subscriptions.push(
+    vscode.window.registerTreeDataProvider<never>('revFtcActions', { getTreeItem: (e) => e, getChildren: () => [] })
   );
 
   const liveDiagnostics = new LiveDiagnosticsController();
@@ -68,7 +77,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push({ dispose: disposeDiagnosticCollection });
 
-  void ensureAutocomplete(context);
+  void refreshStubLink(context).then(() => ensureAutocomplete(context));
 }
 
 export function deactivate(): void {
