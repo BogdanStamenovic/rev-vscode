@@ -89,6 +89,23 @@ async function run() {
     check('running setupFiles again leaves pyrightconfig.json byte-for-byte unchanged',
       fs.readFileSync(pyrightPath, 'utf8') === pyright1);
 
+    // --- revFtc.deletePack: file + its generated man page go, a user's note stays ---
+    const packPy = path.join(ws, 'Spare.py');
+    const packMd = path.join(ws, 'Spare.md');
+    const noteMd = path.join(ws, 'Keep.md');
+    const keepPy = path.join(ws, 'Keep.py');
+    fs.writeFileSync(packPy, '@TeleOp(name="Spare")\nclass Spare:\n    pass\n');
+    fs.writeFileSync(packMd, '# Spare: robot reference\n\nGenerated from hardware configuration "X". Configuration fingerprint `0`.\n');
+    fs.writeFileSync(keepPy, '@TeleOp(name="Keep")\nclass Keep:\n    pass\n');
+    fs.writeFileSync(noteMd, '# Keep\n\nhand-written notes\n');
+    await vscode.commands.executeCommand('revFtc.deletePack', vscode.Uri.file(packPy), { confirmed: true });
+    check('deletePack removed the pack\'s .py', !fs.existsSync(packPy));
+    check('deletePack removed its generated man page', !fs.existsSync(packMd));
+    check('deletePack left other packs alone', fs.existsSync(keepPy));
+    await vscode.commands.executeCommand('revFtc.deletePack', vscode.Uri.file(keepPy), { confirmed: true });
+    check('deletePack never deletes a hand-written .md that merely shares the name', fs.existsSync(noteMd));
+    fs.rmSync(noteMd, { force: true });
+
     // --- spawn starter pack against the fake hub/adb/CLI ---
     const spawnPromise = vscode.commands.executeCommand('revFtc.spawnStarterPack');
     await acceptDefaultInputBox(path.join(ws, 'StarterPack.py'));

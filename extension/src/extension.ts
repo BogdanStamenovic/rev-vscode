@@ -13,6 +13,7 @@ import { LiveDiagnosticsController } from './liveDiagnostics';
 import { SimPanel } from './sim/panel';
 import { SimDebugAdapterFactory, DEBUG_TYPE, debugInSimulator } from './sim/debugAdapter';
 import { refreshStubLink, runSetupFiles } from './commands/setupFiles';
+import { runDeletePack } from './commands/deletePack';
 
 export function activate(context: vscode.ExtensionContext): void {
   setExtensionPath(context.extensionPath);
@@ -78,7 +79,10 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('revFtc.debugSimulator', () => debugInSimulator(context)),
     vscode.debug.registerDebugAdapterDescriptorFactory(DEBUG_TYPE, new SimDebugAdapterFactory()),
     vscode.commands.registerCommand('revFtc._simulatorSend', (cmd: object) => SimPanel.current?.session.send(cmd)),
-    vscode.commands.registerCommand('revFtc.setupFiles', () => runSetupFiles(context))
+    vscode.commands.registerCommand('revFtc.setupFiles', () => runSetupFiles(context)),
+    vscode.commands.registerCommand('revFtc.deletePack', (uri?: vscode.Uri, options?: { confirmed?: boolean }) =>
+      runDeletePack(context, uri instanceof vscode.Uri ? uri : undefined, options)
+    )
   );
 
   // The Actions view is deliberately empty: VS Code shows a view's welcome

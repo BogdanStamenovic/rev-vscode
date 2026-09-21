@@ -25,7 +25,8 @@
     "onCommand:revFtc.debugSimulator",
     "onDebugResolve:revftc-sim",
     "onView:revFtcActions",
-    "onCommand:revFtc.setupFiles"
+    "onCommand:revFtc.setupFiles",
+    "onCommand:revFtc.deletePack"
   ],
   "contributes": {
     "commands": [
@@ -72,6 +73,11 @@
         "command": "revFtc.setupFiles",
         "title": "REV FTC: Setup Files",
         "icon": "$(tools)"
+      },
+      {
+        "command": "revFtc.deletePack",
+        "title": "REV FTC: Delete Pack",
+        "icon": "$(trash)"
       }
     ],
     "viewsContainers": {
@@ -167,6 +173,16 @@
         },
         {
           "command": "revFtc.setupFiles"
+        },
+        {
+          "command": "revFtc.deletePack"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "revFtc.deletePack",
+          "when": "resourceExtname == .py",
+          "group": "7_modification@9"
         }
       ]
     },
@@ -289,7 +305,7 @@
     "viewsWelcome": [
       {
         "view": "revFtcActions",
-        "contents": "[Setup files](command:revFtc.setupFiles)\nCreates .vscode settings, pyrightconfig.json and the stub link, and checks Python and the language server, so autocomplete works.\n[Spawn starter pack](command:revFtc.spawnStarterPack)\n[Open simulator](command:revFtc.openSimulator)\n[Deploy to hub](command:revFtc.deploy)"
+        "contents": "[Setup files](command:revFtc.setupFiles)\nCreates .vscode settings, pyrightconfig.json and the stub link, and checks Python and the language server, so autocomplete works.\n[Spawn starter pack](command:revFtc.spawnStarterPack)\n[Delete pack](command:revFtc.deletePack)\n[Open simulator](command:revFtc.openSimulator)\n[Deploy to hub](command:revFtc.deploy)"
       }
     ]
   },
