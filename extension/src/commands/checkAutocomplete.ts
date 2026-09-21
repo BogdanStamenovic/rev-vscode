@@ -11,6 +11,8 @@ import * as vscode from 'vscode';
 import * as path from 'node:path';
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { ensureExtraPath } from '../python/autocomplete';
+import { STUB_LINK_REL } from '../python/workspaceSetup';
+import { workspaceIsSetUp } from './setupFiles';
 import { stubDirFor } from '../python/ftcImportDetect';
 import { fetchRcInfo } from '../hub/rcinfo';
 import {
@@ -57,7 +59,7 @@ export function hostKind(appName: string): 'microsoft' | 'open-source' {
   return /^visual studio code/i.test(appName.trim()) ? 'microsoft' : 'open-source';
 }
 
-function languageServerStatus(): { active: boolean; name?: string } {
+export function languageServerStatus(): { active: boolean; name?: string } {
   for (const server of LANGUAGE_SERVERS) {
     const ext = vscode.extensions.getExtension(server.id);
     if (ext) {
@@ -74,7 +76,7 @@ function languageServerStatus(): { active: boolean; name?: string } {
  * installing an extension is the user's call, so this asks rather than
  * doing it, and a decline is remembered for the session by simply never
  * asking again outside an explicit Check Autocomplete run. */
-async function offerLanguageServerInstall(host: 'microsoft' | 'open-source'): Promise<void> {
+export async function offerLanguageServerInstall(host: 'microsoft' | 'open-source'): Promise<void> {
   if (host === 'microsoft') {
     void vscode.window.showWarningMessage(
       'REV FTC: no Python language server found, so nothing will autocomplete. Install Pylance from the Extensions view.'
@@ -168,7 +170,10 @@ async function checkImportResolves(): Promise<'yes' | 'unknown'> {
 
 async function gatherInputs(context: vscode.ExtensionContext): Promise<AutocompleteCheckInputs> {
   const stubDir = stubDirFor(context.extensionPath);
-  const extraPaths = vscode.workspace.getConfiguration('python.analysis').get<string[]>('extraPaths') ?? [];
+  const configured = vscode.workspace.getConfiguration('python.analysis').get<string[]>('extraPaths') ?? [];
+  // After Setup Files the configured entry is the workspace link, not the
+  // install directory; count it as the stub dir when the link resolves there.
+  const extraPaths = (await workspaceIsSetUp()) && configured.includes(STUB_LINK_REL) ? [...configured, stubDir] : configured;
   const [stubDirExists, importResolves, stubSdkVersion, hubSdkVersion] = await Promise.all([
     pathExists(stubDir),
     checkImportResolves(),

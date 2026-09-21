@@ -1,7 +1,9 @@
 __pycache__/
 *.pyc
 .pytest_cache/
-node_modules/
+# No trailing slash: a trailing slash matches only directories, and a
+# symlinked node_modules (as in a worktree) would get committed.
+node_modules
 extension/dist/
 extension/python/
 *.vsix

@@ -153,8 +153,13 @@ install for that path: `scripts/copy-python.mjs` mirrors `python/` into
 pyftc` against that copy. Run `./ownbox.sh setup` from the repo root
 afterward if you also want a standalone `pyftc` on PATH.
 
-Open the folder with your robot code and use the REV FTC sidebar; the stub path
-is wired up automatically.
+Open the folder with your robot code and press **Setup files** in the REV FTC
+sidebar. It links the stubs into `.pyftc/stubs`, writes `pyrightconfig.json`,
+`.vscode/settings.json` and `.vscode/extensions.json` (merging into anything
+already there), checks for Python 3.10+, and offers to install a language server
+if there is none. Running it again changes nothing. The link is re-pointed every
+time the extension starts, so updating the extension does not break
+autocomplete.
 
 **You need a Python language server for autocomplete to exist at all.** The
 Python extension has not shipped one since it dropped Jedi - completions come

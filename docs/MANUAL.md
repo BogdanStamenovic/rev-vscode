@@ -776,6 +776,10 @@ in annotations.
 
 ## 14. Troubleshooting
 
+**First thing to try for any autocomplete problem:** press **Setup files** in the
+REV FTC sidebar. It fixes stale paths, missing config and a missing link, and
+its details (Show details) say which step failed.
+
 **Nothing autocompletes at all** (`self.left.` offers nothing): you have no
 Python language server. The Python extension stopped shipping one when it
 dropped Jedi, and the engine that replaced it, Pylance, is licensed to run only

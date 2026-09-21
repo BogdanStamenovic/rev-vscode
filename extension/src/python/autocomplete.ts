@@ -25,6 +25,7 @@
 import * as vscode from 'vscode';
 import { log } from '../output';
 import { hasFtcImport, stubDirFor } from './ftcImportDetect';
+import { workspaceIsSetUp } from '../commands/setupFiles';
 
 export { hasFtcImport, stubDirFor };
 
@@ -37,6 +38,9 @@ const MANAGED_PATH_KEY = 'revFtc.autocompleteManagedPath';
 export async function ensureExtraPath(context: vscode.ExtensionContext): Promise<void> {
   if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
     return;
+  }
+  if (await workspaceIsSetUp()) {
+    return; // Setup Files owns the paths now, via the stable .pyftc/stubs link
   }
   const stubPath = stubDirFor(context.extensionPath);
   const config = vscode.workspace.getConfiguration('python.analysis');

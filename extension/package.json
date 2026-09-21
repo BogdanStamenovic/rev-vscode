@@ -23,7 +23,9 @@
     "onCommand:revFtc.updateFromConfig",
     "onCommand:revFtc.openSimulator",
     "onCommand:revFtc.debugSimulator",
-    "onDebugResolve:revftc-sim"
+    "onDebugResolve:revftc-sim",
+    "onView:revFtcActions",
+    "onCommand:revFtc.setupFiles"
   ],
   "contributes": {
     "commands": [
@@ -65,6 +67,11 @@
         "command": "revFtc.debugSimulator",
         "title": "REV FTC: Debug in Simulator",
         "icon": "$(debug-alt)"
+      },
+      {
+        "command": "revFtc.setupFiles",
+        "title": "REV FTC: Setup Files",
+        "icon": "$(tools)"
       }
     ],
     "viewsContainers": {
@@ -78,6 +85,10 @@
     },
     "views": {
       "revFtc": [
+        {
+          "id": "revFtcActions",
+          "name": "Actions"
+        },
         {
           "id": "revFtcHub",
           "name": "Hub"
@@ -153,6 +164,9 @@
         },
         {
           "command": "revFtc.debugSimulator"
+        },
+        {
+          "command": "revFtc.setupFiles"
         }
       ]
     },
@@ -194,7 +208,10 @@
         },
         "revFtc.liveDiagnosticsTrigger": {
           "type": "string",
-          "enum": ["save", "edit"],
+          "enum": [
+            "save",
+            "edit"
+          ],
           "enumDescriptions": [
             "Re-run the background translator only when a .py file is saved.",
             "Also re-run on a debounce while typing (revFtc.liveDiagnosticsDebounceMs)."
@@ -267,6 +284,12 @@
             }
           }
         ]
+      }
+    ],
+    "viewsWelcome": [
+      {
+        "view": "revFtcActions",
+        "contents": "[Setup files](command:revFtc.setupFiles)\nCreates .vscode settings, pyrightconfig.json and the stub link, and checks Python and the language server, so autocomplete works.\n[Spawn starter pack](command:revFtc.spawnStarterPack)\n[Open simulator](command:revFtc.openSimulator)\n[Deploy to hub](command:revFtc.deploy)"
       }
     ]
   },

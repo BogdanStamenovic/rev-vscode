@@ -12,6 +12,7 @@ import { ensureAutocomplete, watchForFtcImports } from './python/autocomplete';
 import { LiveDiagnosticsController } from './liveDiagnostics';
 import { SimPanel } from './sim/panel';
 import { SimDebugAdapterFactory, DEBUG_TYPE, debugInSimulator } from './sim/debugAdapter';
+import { refreshStubLink, runSetupFiles } from './commands/setupFiles';
 
 export function activate(context: vscode.ExtensionContext): void {
   setExtensionPath(context.extensionPath);
@@ -76,7 +77,15 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
     vscode.commands.registerCommand('revFtc.debugSimulator', () => debugInSimulator(context)),
     vscode.debug.registerDebugAdapterDescriptorFactory(DEBUG_TYPE, new SimDebugAdapterFactory()),
-    vscode.commands.registerCommand('revFtc._simulatorSend', (cmd: object) => SimPanel.current?.session.send(cmd))
+    vscode.commands.registerCommand('revFtc._simulatorSend', (cmd: object) => SimPanel.current?.session.send(cmd)),
+    vscode.commands.registerCommand('revFtc.setupFiles', () => runSetupFiles(context))
+  );
+
+  // The Actions view is deliberately empty: VS Code shows a view's welcome
+  // content (package.json viewsWelcome) only when its tree has no items, and
+  // welcome content is the one place that renders real labelled buttons.
+  context.subscriptions.push(
+    vscode.window.registerTreeDataProvider<never>('revFtcActions', { getTreeItem: (e) => e, getChildren: () => [] })
   );
 
   const liveDiagnostics = new LiveDiagnosticsController();
@@ -92,7 +101,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push({ dispose: disposeDiagnosticCollection });
 
-  void ensureAutocomplete(context);
+  void refreshStubLink(context).then(() => ensureAutocomplete(context));
 }
 
 export function deactivate(): void {

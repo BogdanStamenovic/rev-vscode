@@ -69,6 +69,26 @@ async function run() {
         true, { pythonExtensionPresent, extraPaths });
     }
 
+    // --- revFtc.setupFiles: workspace files for autocomplete ---
+    await vscode.commands.executeCommand('revFtc.setupFiles');
+    const link = path.join(ws, '.pyftc', 'stubs');
+    const linkStat = fs.existsSync(link) ? fs.lstatSync(link) : undefined;
+    check('setupFiles created .pyftc/stubs as a link', linkStat && linkStat.isSymbolicLink(), linkStat);
+    check('the stub link resolves to the stub package (ftc/__init__.py reachable through it)',
+      fs.existsSync(path.join(link, 'ftc', '__init__.py')), link);
+    check('setupFiles git-ignores the machine-specific link',
+      fs.existsSync(path.join(ws, '.pyftc', '.gitignore')) && fs.readFileSync(path.join(ws, '.pyftc', '.gitignore'), 'utf8').includes('stubs'));
+    const pyrightPath = path.join(ws, 'pyrightconfig.json');
+    const pyright1 = fs.existsSync(pyrightPath) ? fs.readFileSync(pyrightPath, 'utf8') : '';
+    check('setupFiles wrote pyrightconfig.json pointing at the workspace link, not the versioned install dir',
+      (() => { try { return JSON.stringify(JSON.parse(pyright1).extraPaths) === JSON.stringify(['.pyftc/stubs']); } catch { return false; } })(), pyright1);
+    const extJsonPath = path.join(ws, '.vscode', 'extensions.json');
+    const extJson = fs.existsSync(extJsonPath) ? fs.readFileSync(extJsonPath, 'utf8') : '';
+    check('setupFiles recommends this extension in .vscode/extensions.json', extJson.includes('bogdanstamenovic.rev-vscode'), extJson);
+    await vscode.commands.executeCommand('revFtc.setupFiles');
+    check('running setupFiles again leaves pyrightconfig.json byte-for-byte unchanged',
+      fs.readFileSync(pyrightPath, 'utf8') === pyright1);
+
     // --- spawn starter pack against the fake hub/adb/CLI ---
     const spawnPromise = vscode.commands.executeCommand('revFtc.spawnStarterPack');
     await acceptDefaultInputBox(path.join(ws, 'StarterPack.py'));
