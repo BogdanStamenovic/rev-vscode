@@ -1,0 +1,96 @@
+{
+  "_doc": "Every physical constant the simulator uses. verified=true: a published spec, quoted from the source URL. verified=false: a labelled placeholder (the value was not published or not found); the simulator's results that depend on it are approximate. docs/ARCHITECTURE.md renders this table.",
+  "battery": {
+    "nominalVoltage": {"value": 12.0, "unit": "V", "verified": true,
+      "source": "https://www.revrobotics.com/rev-31-1302/ (REV-31-1302 12V Slim Battery: \"12V\", 3000 mAh NiMH)",
+      "note": "A charged NiMH pack reads above nominal; the simulator holds the nominal value and models no sag."}
+  },
+  "hdHex": {
+    "voltage": {"value": 12.0, "unit": "V", "verified": true, "source": "https://www.revrobotics.com/rev-41-1291/ (\"12V DC\")"},
+    "freeSpeed": {"value": 6000, "unit": "rpm (motor shaft)", "verified": true, "source": "https://www.revrobotics.com/rev-41-1291/ ; https://docs.revrobotics.com/duo-build/motion/motors/hd-hex-motor (\"6000 rpm\")"},
+    "stallTorque": {"value": 0.105, "unit": "N·m (motor shaft)", "verified": true, "source": "https://www.revrobotics.com/rev-41-1291/ (\"0.105 Nm\")"},
+    "stallCurrent": {"value": 8.5, "unit": "A", "verified": true, "source": "https://www.revrobotics.com/rev-41-1291/ (\"8.5A\")"},
+    "freeCurrent": {"value": 0.4, "unit": "A", "verified": true, "source": "https://www.revrobotics.com/rev-41-1291/ (\"400mA\" no-load current)"},
+    "countsPerMotorRev": {"value": 28, "unit": "counts/rev", "verified": true, "source": "https://docs.revrobotics.com/duo-build/motion/motors/hd-hex-motor (\"At the motor - 28 counts/revolution\")"},
+    "rotorInertia": {"value": 5.0e-6, "unit": "kg·m² (motor shaft)", "verified": false, "source": "placeholder: REV publishes no rotor inertia; only affects how fast a free shaft spins up"}
+  },
+  "ultraPlanetary": {
+    "cartridge3": {"value": 2.89, "unit": ":1", "verified": true, "source": "https://www.revrobotics.com/rev-41-1601/ (\"Actual Gear Ratio: 2.89:1\"); REV-41-1600-UM-02 p.11"},
+    "cartridge4": {"value": 3.61, "unit": ":1", "verified": true, "source": "https://www.revrobotics.com/rev-41-1602/ (\"Actual Gear Ratio: 3.61:1\"); REV-41-1600-UM-02 p.11"},
+    "cartridge5": {"value": 5.23, "unit": ":1", "verified": true, "source": "https://www.revrobotics.com/rev-41-1603/ (\"Actual Gear Ratio: 5.23:1\"); REV-41-1600-UM-02 p.11"},
+    "defaultStack": {"value": 2, "unit": "stages (4:1 + 5:1, nominal 20:1)", "verified": false,
+      "source": "placeholder: the SDK's UltraPlanetary motor type assumes nominal 20:1 (@MotorType gearing=20); the real stack is whatever the team built, set it per motor in the simulator"},
+    "efficiency": {"value": 1.0, "unit": "fraction", "verified": false, "source": "placeholder: REV publishes no UltraPlanetary efficiency"}
+  },
+  "ultra90": {
+    "ratio": {"value": 1.0, "unit": ":1", "verified": true, "source": "https://www.revrobotics.com/rev-41-2080/ (\"Gear Ratio: 1:1\")"}
+  },
+  "coreHex": {
+    "voltage": {"value": 12.0, "unit": "V", "verified": true, "source": "https://www.revrobotics.com/rev-41-1300/ (\"12V DC\")"},
+    "gearRatio": {"value": 72, "unit": ":1", "verified": true, "source": "https://www.revrobotics.com/rev-41-1300/ (\"72:1\")",
+      "note": "The SDK's @MotorType for Core Hex says gearing=36.25, maxRPM=137; REV's product page says 72:1, 125 rpm. The simulator uses REV's numbers for physics and the SDK's for the SDK's own ticks-per-second scaling."},
+    "freeSpeed": {"value": 125, "unit": "rpm (output)", "verified": true, "source": "https://www.revrobotics.com/rev-41-1300/ (\"125 RPM\")"},
+    "stallTorque": {"value": 3.2, "unit": "N·m (output)", "verified": true, "source": "https://www.revrobotics.com/rev-41-1300/ (\"3.2 N-m\")"},
+    "stallCurrent": {"value": 4.4, "unit": "A", "verified": true, "source": "https://www.revrobotics.com/rev-41-1300/ (\"4.4 A\")"},
+    "freeCurrent": {"value": 0.0, "unit": "A", "verified": false, "source": "NOT FOUND: REV does not publish the Core Hex no-load current; 0 means no friction is modelled"},
+    "countsPerMotorRev": {"value": 4, "unit": "counts/rev", "verified": true, "source": "https://docs.revrobotics.com/duo-build/motion/motors/core-hex-motor (\"At the motor - 4 counts/revolution\"; 288 at the output)"},
+    "rotorInertia": {"value": 2.0e-6, "unit": "kg·m² (motor shaft)", "verified": false, "source": "placeholder: not published"}
+  },
+  "genericMotor": {
+    "stallTorqueAtOutputPerRatio": {"value": 0.105, "unit": "N·m per unit gear ratio", "verified": false,
+      "source": "placeholder for motor types that are not in the FGC kit (NeveRest, goBILDA, Tetrix...): free speed and gearing come from the SDK's @MotorType annotation, torque is this placeholder times the gearing"}
+  },
+  "loads": {
+    "freeShaftInertia": {"value": 2.0e-5, "unit": "kg·m² (output)", "verified": false, "source": "placeholder: hex shaft + hub + gear on an otherwise free output"},
+    "robotMass": {"value": 12.0, "unit": "kg", "verified": false, "source": "placeholder: bench approximation of the robot mass shared by the drive wheels; only sets how fast drive wheels spin up"},
+    "armInertia": {"value": 0.02, "unit": "kg·m² (output)", "verified": false, "source": "placeholder for an arm-type load"}
+  },
+  "srs": {
+    "rangeDeg": {"value": 270, "unit": "deg over 500..2500 µs", "verified": true, "source": "https://docs.revrobotics.com/rev-crossover-products/servo/smart-robot-servo-v2 (\"The default range for the SRS V2 is 270°. This range is mapped to an input pulse range of 500μs to 2500μs with 1500μs as the center point.\")"},
+    "pulseMinUs": {"value": 500, "unit": "µs", "verified": true, "source": "same page as rangeDeg"},
+    "pulseMaxUs": {"value": 2500, "unit": "µs", "verified": true, "source": "same page as rangeDeg"},
+    "speedSecPer60Deg": {"value": 0.14, "unit": "s/60° at 6 V", "verified": true, "source": "https://www.revrobotics.com/Smart-servo-v2 (\"Speed: 0.14 sec/60°\")"},
+    "continuousFreeSpeed": {"value": 71.4, "unit": "rpm at full pulse", "verified": false, "source": "placeholder: REV publishes no continuous-mode speed; this is the angular-mode slew rate (60°/0.14 s) reused"},
+    "pulseIncreasesCounterClockwise": {"value": 1, "unit": "1 = a longer pulse turns the output CCW seen from the spline", "verified": false,
+      "source": "placeholder: REV does not document which way the SRS turns for a longer pulse; the servo arc labels 0 and 1 so the relative motion is still right"}
+  },
+  "sdkServo": {
+    "defaultPulseLowerUs": {"value": 600, "unit": "µs", "verified": true, "source": "FTC SDK 11.2.0 PwmControl.PwmRange.usPulseLowerDefault = 600 (RobotCore-11.2.0-sources.jar)"},
+    "defaultPulseUpperUs": {"value": 2400, "unit": "µs", "verified": true, "source": "FTC SDK 11.2.0 PwmControl.PwmRange.usPulseUpperDefault = 2400 (RobotCore-11.2.0-sources.jar)",
+      "note": "With the default 'Servo' configuration type, positions 0..1 drive 600..2400 µs, i.e. 243° of an SRS's 270°; 'ServoFullRange' uses 500..2500."}
+  },
+  "distance2m": {
+    "minMm": {"value": 50, "unit": "mm", "verified": true, "source": "https://docs.revrobotics.com/rev-crossover-products/sensors/2m-distance/specs (\"Measurement Range | 5 | - | 200 | cm\")"},
+    "maxMm": {"value": 2000, "unit": "mm", "verified": true, "source": "same page"},
+    "outOfRangeMm": {"value": 8190, "unit": "mm", "verified": false,
+      "source": "placeholder: what the VL53L0X reports with nothing in range is not documented by REV or the FTC SDK (the SDK only passes the chip's reading through: VL53L0X.getDistance); 8190 is the commonly reported chip value"}
+  },
+  "colorV3": {
+    "proximityMaxMm": {"value": 100, "unit": "mm", "verified": true, "source": "https://docs.revrobotics.com/rev-crossover-products/sensors/color-sensor/specs (\"Proximity Sensor Range | 1 | - | 10 | cm\")"},
+    "countsWhiteAt10mm": {"value": 2000, "unit": "raw green counts", "verified": false, "source": "placeholder: raw colour counts depend on gain, integration time and the target; REV publishes no reference. Thresholds on raw red()/green()/blue() will differ from the real sensor."}
+  },
+  "potentiometer": {
+    "rangeDeg": {"value": 270, "unit": "deg", "verified": true, "source": "https://docs.revrobotics.com/rev-crossover-products/sensors/potentiometer/specifications (\"Range of Motion | 270°\")"},
+    "maxVolts": {"value": 3.3, "unit": "V at full rotation", "verified": false, "source": "placeholder: linear 0..3.3 V over 270° assumed; REV states the hub reads 0-5 V and the SDK's getMaxVoltage() is 3.3, but gives no output curve for the potentiometer"}
+  },
+  "lynx": {
+    "commandMsControlHub": {"value": 2.0, "unit": "ms per Lynx command", "verified": false,
+      "source": "gm0.org (community, not REV): https://gm0.org/en/latest/docs/software/adv-control-system/sdk-communication.html \"approximately 2 milliseconds over UART\""},
+    "commandMsExpansionHub": {"value": 3.0, "unit": "ms per Lynx command", "verified": false,
+      "source": "gm0.org (community, not REV): same page, \"approximately 3 milliseconds over USB\"; an RS485-linked Expansion Hub is assumed to cost the same"},
+    "i2cMs": {"value": 7.0, "unit": "ms per I2C read", "verified": false, "source": "gm0.org (community, not REV): same page, \"upwards of 7 milliseconds over USB\""},
+    "targetPositionTolerance": {"value": 5, "unit": "ticks", "verified": true, "source": "FTC SDK 11.2.0 LynxConstants.DEFAULT_TARGET_POSITION_TOLERANCE = 5"},
+    "failsafeDelayMs": {"value": 100, "unit": "ms", "verified": true, "source": "FTC SDK 11.2.0 OpModeManagerImpl.DefaultOpMode SAFE_WAIT_NANOS = 100 ms (motors set to 0 at stop, hub failsafe after)"}
+  },
+  "firmware": {
+    "velocityLoopKp": {"value": 0.0005, "unit": "power per (tick/s) of error", "verified": false,
+      "source": "approximation: the hub firmware's velocity PIDF is closed source; RUN_USING_ENCODER / RUN_TO_POSITION speeds are approximate"},
+    "positionLoopGain": {"value": 5.0, "unit": "(tick/s) per tick of error", "verified": false,
+      "source": "approximation of the hub firmware's position loop (closed source)"}
+  },
+  "sim": {
+    "sdkCallCostUs": {"value": 20, "unit": "µs of sim time per SDK call that does not reach a hub", "verified": false,
+      "source": "placeholder for the Control Hub CPU time of an SDK call; sets loop time when a loop sends no hub commands"},
+    "stepMs": {"value": 1, "unit": "ms", "verified": true, "source": "simulator design: fixed physics step"}
+  }
+}

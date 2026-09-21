@@ -12,6 +12,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startFakeHub } from './fakeHub.mjs';
 
+// Under Xvfb (DISPLAY set, WAYLAND_DISPLAY unset) Electron still auto-selects its
+// Wayland backend and connects to the default wayland-0 socket, i.e. the user's real
+// screen. Forcing X11 keeps the test window on the Xvfb display.
+const OZONE = process.env.DISPLAY && !process.env.WAYLAND_DISPLAY ? ['--ozone-platform=x11'] : [];
 const ext = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const tmp = mkdtempSync(path.join(os.tmpdir(), 'rev-e2e-fake-'));
 mkdirSync(path.join(tmp, 'ws/.vscode'), { recursive: true });
@@ -42,7 +46,7 @@ try {
   await runTests({
     extensionDevelopmentPath: ext,
     extensionTestsPath: path.join(ext, 'test/e2e/fakeSuite.js'),
-    launchArgs: [path.join(tmp, 'ws'), '--disable-extensions', '--user-data-dir', path.join(tmp, 'user')],
+    launchArgs: [path.join(tmp, 'ws'), '--disable-extensions', '--user-data-dir', path.join(tmp, 'user'), ...OZONE],
     extensionTestsEnv: {
       E2E_RESULT: process.env.E2E_RESULT,
       FAKE_HUB_CONFIG_XML: configXmlPath,

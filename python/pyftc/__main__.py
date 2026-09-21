@@ -47,7 +47,27 @@ def main(argv: list[str] | None = None) -> int:
     u.add_argument("--sdk", default=DEFAULT_SDK)
     u.add_argument("--typedb", type=Path)
 
+    sp = sub.add_parser("sim-prepare", help="translate and compile OpModes for the simulator (docs/ARCHITECTURE.md, Contract 5)")
+    sp_src = sp.add_mutually_exclusive_group(required=True)
+    sp_src.add_argument("--root", type=Path)
+    sp_src.add_argument("--files", type=Path, nargs="+")
+    sp.add_argument("--out", type=Path, required=True, help="build directory (classes, manifest.json)")
+    sp.add_argument("--cache", type=Path, required=True, help="where the simulation SDK and FTC SDK jars are cached")
+    sp.add_argument("--javac", help="javac to use (default: JAVA_HOME, PATH)")
+    sp.add_argument("--config", type=Path, help="hardware configuration XML (from the hub or the workspace)")
+    sp.add_argument("--config-source", default="file", help="where --config came from: hub or file")
+    sp.add_argument("--no-trace", action="store_true", help="build without the line/variable trace hooks")
+    sp.add_argument("--sdk", default=DEFAULT_SDK)
+
+    gp = sub.add_parser("gamepad", help="stream physical controllers as FTC Gamepad state (JSON lines)")
+    gp.add_argument("gamepad_args", nargs=argparse.REMAINDER)
+
     args = ap.parse_args(argv)
+    if args.cmd == "gamepad":
+        from .gamepad import main as gamepad_main
+        return gamepad_main(args.gamepad_args)
+    if args.cmd == "sim-prepare":
+        return _sim_prepare(args)
     try:
         if args.cmd == "config-fingerprint":
             # Deliberately does not touch TypeDB.load: this has to stay cheap
@@ -96,6 +116,31 @@ def main(argv: list[str] | None = None) -> int:
         traceback.print_exc(file=sys.stderr)
         return 2
     return 2
+
+
+def _sim_prepare(args: argparse.Namespace) -> int:
+    from .sim import build as simbuild
+    from .sim import config as simconfig
+    from .sim.prepare import prepare
+    from .translate import collect_sources
+    try:
+        db = TypeDB.load(args.sdk)
+        javac = simbuild.find_javac(args.javac)
+        sources = collect_sources(args.root) if args.root else [p.resolve() for p in args.files]
+        cfg = None
+        if args.config:
+            cfg = simconfig.from_xml(db, args.config.read_text(), args.config.stem, args.config_source)
+        result = prepare(sources, args.out, args.cache, javac, sdk=args.sdk, config=cfg,
+                         workspace=args.root, trace=not args.no_trace, db=db)
+    except simbuild.BuildError as e:
+        print(f"pyftc: {e}", file=sys.stderr)
+        return 2
+    except Exception as e:  # noqa: BLE001 - boundary with the extension
+        print(f"pyftc: {e}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        return 2
+    print(json.dumps(result))
+    return 0 if result["ok"] else 1
 
 
 def _read_rcinfo(path: Path | None) -> dict:

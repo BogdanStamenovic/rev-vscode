@@ -52,6 +52,18 @@ export async function resolvePythonPath(): Promise<string> {
   throw new Error("Could not find a Python interpreter. Set 'revFtc.pythonPath'.");
 }
 
+/** Python and environment for running other pyftc modules (the simulator's
+ * controller reader), with the bundled python/ tree on PYTHONPATH. */
+export async function pythonProcess(): Promise<{ python: string; env: NodeJS.ProcessEnv }> {
+  const python = await resolvePythonPath();
+  const extPythonDir = path.join(requireExtensionPath(), 'python');
+  const env: NodeJS.ProcessEnv = {
+    ...process.env,
+    PYTHONPATH: process.env.PYTHONPATH ? `${extPythonDir}${path.delimiter}${process.env.PYTHONPATH}` : extPythonDir,
+  };
+  return { python, env };
+}
+
 async function buildCommand(): Promise<string[]> {
   const override = settingsMod.translatorCommand();
   if (override.length > 0) {

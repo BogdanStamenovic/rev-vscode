@@ -10,6 +10,8 @@ import { runUpdateFromConfig } from './commands/updateFromConfig';
 import { AutocompleteReportProvider, REPORT_SCHEME, runCheckAutocomplete } from './commands/checkAutocomplete';
 import { ensureAutocomplete, watchForFtcImports } from './python/autocomplete';
 import { LiveDiagnosticsController } from './liveDiagnostics';
+import { SimPanel } from './sim/panel';
+import { SimDebugAdapterFactory, DEBUG_TYPE, debugInSimulator } from './sim/debugAdapter';
 
 export function activate(context: vscode.ExtensionContext): void {
   setExtensionPath(context.extensionPath);
@@ -52,7 +54,29 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('revFtc.showGeneratedJava', () => runShowGeneratedJava(javaProvider)),
     vscode.commands.registerCommand('revFtc.refreshHubView', () => hubTreeProvider.refresh(true)),
     vscode.commands.registerCommand('revFtc.updateFromConfig', () => runUpdateFromConfig()),
-    vscode.commands.registerCommand('revFtc.checkAutocomplete', () => runCheckAutocomplete(context, reportProvider))
+    vscode.commands.registerCommand('revFtc.checkAutocomplete', () => runCheckAutocomplete(context, reportProvider)),
+    vscode.commands.registerCommand('revFtc.openSimulator', () => {
+      SimPanel.show(context);
+    }),
+    // Not contributed: lets the extension-host tests see what the simulator panel did.
+    vscode.commands.registerCommand('revFtc._simulatorProbe', (file?: string) => {
+      const p = SimPanel.current;
+      if (!p) return { open: false };
+      return {
+        open: true,
+        ...p.probe,
+        running: p.session.running(),
+        counts: p.session.counts,
+        stderrTail: p.session.stderrTail,
+        lastExit: p.session.lastExit,
+        ready: p.session.lastReady,
+        lastState: p.session.lastState,
+        diagnostics: file ? p.session.diagnosticsFor(file).map((d) => ({ line: d.range.start.line + 1, message: d.message, severity: d.severity })) : [],
+      };
+    }),
+    vscode.commands.registerCommand('revFtc.debugSimulator', () => debugInSimulator(context)),
+    vscode.debug.registerDebugAdapterDescriptorFactory(DEBUG_TYPE, new SimDebugAdapterFactory()),
+    vscode.commands.registerCommand('revFtc._simulatorSend', (cmd: object) => SimPanel.current?.session.send(cmd))
   );
 
   const liveDiagnostics = new LiveDiagnosticsController();

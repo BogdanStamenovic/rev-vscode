@@ -137,11 +137,16 @@ class Emitter:
 
 
 class ProjectTranslator:
-    def __init__(self, db: TypeDB):
+    def __init__(self, db: TypeDB, sim_trace: bool = False):
         self.db = db
         self.diags: list[Diagnostic] = []
         self.files: list[PyFile] = []
         self.classes: dict[str, PyClass] = {}
+        # Simulator-only build (docs/ARCHITECTURE.md, Contract 5): every statement gets a
+        # same-line call to org.pyftc.sim.Trace so the simulator can show which Python
+        # lines ran and what locals were assigned. Same line, so lineMap is identical
+        # to the plain build. Never used for code that goes to the robot.
+        self.sim_trace = sim_trace
 
     # ---------------------------------------------------------------- driver
 
@@ -163,7 +168,10 @@ class ProjectTranslator:
                     "diagnostics": [d.to_json() for d in self.diags[before:]],
                 })
         ok = not any(d.severity == "error" for d in self.diags)
-        return {"ok": ok, "files": out, "diagnostics": [d.to_json() for d in self.diags]}
+        result = {"ok": ok, "files": out, "diagnostics": [d.to_json() for d in self.diags]}
+        if self.sim_trace:
+            result["traceFiles"] = [str(f.path) for f in self.files]
+        return result
 
     def diag(self, f: PyFile, node: ast.AST | None, message: str, severity: str = "error") -> None:
         line = getattr(node, "lineno", 1) or 1
@@ -487,6 +495,7 @@ class ClassTranslator:
         self.comment_cursor = 0
         self.emitted_comments: set[int] = set()
         self.tmp_counter = 0
+        self.trace_pending = 0
 
     # ------------------------------------------------------------ utilities
 
@@ -530,6 +539,9 @@ class ClassTranslator:
     def emit(self, text: str, node: ast.AST | None = None) -> None:
         if self.collect:
             return
+        if self.trace_pending and text and not text.startswith(("}", "@", "super(", "this(")):
+            text = f"org.pyftc.sim.Trace.l({self._trace_file()}, {self.trace_pending}); {text}"
+            self.trace_pending = 0
         line = getattr(node, "lineno", 0) if node is not None else 0
         if line:
             self.flush_comments(line - 1)
@@ -793,7 +805,24 @@ class ClassTranslator:
         first = min([b.lineno] + [ln for ln in self.f.comments if (a.end_lineno or a.lineno) < ln < b.lineno])
         return any(not lines[ln - 1].strip() for ln in range((a.end_lineno or a.lineno) + 1, first))
 
+    def _trace_file(self) -> int:
+        return self.p.files.index(self.f)
+
+    def _trace_assign(self, s: ast.stmt, name: str) -> str:
+        """Same-line suffix recording a local's new value (sim-trace builds only)."""
+        if not self.p.sim_trace or self.collect or self.method is None:
+            return ""
+        scope = f"{self.c.node.name}.{self.method.name}"
+        return f' org.pyftc.sim.Trace.a({self._trace_file()}, {s.lineno}, "{scope}", "{name}", {_ident(name)});'
+
     def stmt(self, s: ast.stmt, ret: JType) -> None:
+        self.trace_pending = s.lineno if (self.p.sim_trace and not self.collect and self.method is not None) else 0
+        try:
+            self._stmt(s, ret)
+        finally:
+            self.trace_pending = 0
+
+    def _stmt(self, s: ast.stmt, ret: JType) -> None:
         if isinstance(s, ast.Expr):
             if isinstance(s.value, ast.Constant) and isinstance(s.value.value, str):
                 return  # docstring
@@ -873,7 +902,7 @@ class ClassTranslator:
             if name in self.scope.params:
                 t = self.scope.params[name]
                 e = self.coerce(self.expr(value, t), t, value)
-                self.emit(f"{_ident(name)} = {e.code};", s)
+                self.emit(f"{_ident(name)} = {e.code};{self._trace_assign(s, name)}", s)
                 return
             known = self.scope.types.get(name)
             e = self.expr(value, declared or known)
@@ -891,9 +920,9 @@ class ClassTranslator:
                 if t.is_unknown or t == NULL:
                     raise self.fail(s, f"cannot infer the type of '{name}'; annotate it (e.g. `{name}: float = ...`)")
                 self.scope.declared.add(name)
-                self.emit(f"{self.render(t)} {_ident(name)} = {e.code};", s)
+                self.emit(f"{self.render(t)} {_ident(name)} = {e.code};{self._trace_assign(s, name)}", s)
             else:
-                self.emit(f"{_ident(name)} = {e.code};", s)
+                self.emit(f"{_ident(name)} = {e.code};{self._trace_assign(s, name)}", s)
         elif isinstance(target, ast.Attribute):
             lhs = self.expr(target)
             e = self.coerce(self.expr(value, lhs.type), lhs.type, value)
@@ -939,14 +968,15 @@ class ClassTranslator:
         rhs = self.expr(s.value)
         simple = {ast.Add: "+=", ast.Sub: "-=", ast.Mult: "*=", ast.BitAnd: "&=", ast.BitOr: "|=",
                   ast.BitXor: "^=", ast.LShift: "<<=", ast.RShift: ">>="}
+        suffix = self._trace_assign(s, s.target.id) if isinstance(s.target, ast.Name) else ""
         if type(op) in simple and not (isinstance(op, ast.Add) and lhs.type.is_string and not rhs.type.is_string and False):
-            self.emit(f"{lhs.code} {simple[type(op)]} {rhs.code};", s)
+            self.emit(f"{lhs.code} {simple[type(op)]} {rhs.code};{suffix}", s)
         elif isinstance(op, ast.Div) and not lhs.type.is_integral:
-            self.emit(f"{lhs.code} /= {rhs.code};", s)
+            self.emit(f"{lhs.code} /= {rhs.code};{suffix}", s)
         else:
             full = self.binop(ast.copy_location(ast.BinOp(s.target, op, s.value), s))
             full = self.coerce(full, lhs.type, s)
-            self.emit(f"{lhs.code} = {full.code};", s)
+            self.emit(f"{lhs.code} = {full.code};{suffix}", s)
 
     def if_stmt(self, s: ast.If, ret: JType, keyword: str) -> None:
         cond = self.condition(s.test)

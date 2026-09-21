@@ -24,6 +24,7 @@ so they are known to work. If you change an example, run the tests.
 - [14. Troubleshooting](#14-troubleshooting)
 - [15. Extending the tool](#15-extending-the-tool)
 - [16. Saving data between matches](#16-saving-data-between-matches)
+- [17. The simulator](#17-the-simulator)
 
 ---
 
@@ -1031,3 +1032,53 @@ class Main(LinearOpMode):
   `/sdcard/FIRST/settings/` at runtime and that the value is still there
   after reboot. That's a claim only the real hub can settle -- treat it as
   unverified until someone runs it at an event or on the bench.
+
+## 17. The simulator
+
+`REV FTC: Open Simulator` (the ▷ screen icon in the Hub sidebar and in the editor
+title bar of a `.py` file) opens a panel beside your code. It translates your
+OpModes exactly as a deploy would, compiles them, and runs them against
+simulated hardware built from your robot configuration: the hub's active
+configuration when a hub is connected, otherwise a configuration XML in the
+workspace, otherwise the device list in a starter pack's comment block. No robot
+needed.
+
+- **Driver Hub** (right): pick the OpMode, INIT, START, STOP. Telemetry shows what
+  the Driver Hub would show, including the SDK's 250 ms throttle (a line you add
+  for a single loop may never arrive, on the robot too). Errors show the exception
+  and the Python line; they also land in the Problems panel.
+- **Gamepads**: choose the controller type (PS4/PS5 buttons are Cross/Circle/…,
+  Xbox and Logitech are A/B/…; the code gets both names). Input comes from a
+  plugged-in controller (the panel, or on Linux the system reader: hold START
+  and press A to become gamepad1, START+B for gamepad2), from the keyboard
+  ("Keys: Gamepad 1"), or by clicking the drawing. The line under the drawing is
+  exactly what the code receives: pushing a stick up gives a negative `left_stick_y`.
+- **3D bench**: every motor, servo and sensor floats in space. Drag to orbit,
+  right-drag to pan, wheel to zoom, WASD to fly (when "Keys: Camera"). Click a
+  device, then Move (G) / Rotate (R) it; the layout is saved in
+  `.pyftc/sim-layout.json`. A spinning motor shows a curved arrow on its yellow
+  shaft face (orange = clockwise, blue = counter-clockwise, as seen looking at the
+  shaft) and a label with power, REVERSED and rpm. That arrow is after
+  `setDirection()` and after the motor type's own reversal, so it is the way the
+  shaft really turns. Servos show their 0..1 arc and where the horn is.
+- **Sensors**: click and hold a touch sensor or limit switch; distance and colour
+  sensors see the walls you add (or take a manual value in the inspector); rotate
+  the Control Hub to move the IMU.
+- **Code view and editor**: the lines that ran in the last loop are highlighted in
+  your `.py` file and in the panel, with the values locals got; the OpMode's
+  fields are listed live.
+- **Debug**: set breakpoints in your `.py` file and press Debug (or `REV FTC: Debug
+  in Simulator`). The OpMode stops on the line, sim time and the motors freeze,
+  and Variables / Watch / Call Stack show Python names. Step goes one Python line
+  at a time.
+- **Warnings** point at logic mistakes: a motor set twice with different values
+  in one loop (only the last one stays; the first reaches the motor for a few
+  ms), a loop that never checks `opModeIsActive()` (STOP cannot stop it), a busy
+  loop that never calls the SDK.
+
+What it is not: the motors spin free on a bench, there is no robot driving on a
+field. Motor speeds come from REV's published curves and the real UltraPlanetary
+ratios (set your cartridge stack per motor in the inspector; the SDK itself
+assumes 20:1). A few numbers are placeholders and are listed in
+`docs/ARCHITECTURE.md`. The simulator needs a JDK (Java 11+); it finds one via
+`revFtc.javaHome`, `JAVA_HOME` or `PATH`, or offers to download JDK 17.

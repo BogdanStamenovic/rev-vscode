@@ -20,7 +20,10 @@
     "onCommand:revFtc.showGeneratedJava",
     "onCommand:revFtc.refreshHubView",
     "onCommand:revFtc.checkAutocomplete",
-    "onCommand:revFtc.updateFromConfig"
+    "onCommand:revFtc.updateFromConfig",
+    "onCommand:revFtc.openSimulator",
+    "onCommand:revFtc.debugSimulator",
+    "onDebugResolve:revftc-sim"
   ],
   "contributes": {
     "commands": [
@@ -52,6 +55,16 @@
         "command": "revFtc.updateFromConfig",
         "title": "REV FTC: Update Starter Pack From Hardware Configuration",
         "icon": "$(sync)"
+      },
+      {
+        "command": "revFtc.openSimulator",
+        "title": "REV FTC: Open Simulator",
+        "icon": "$(vm-running)"
+      },
+      {
+        "command": "revFtc.debugSimulator",
+        "title": "REV FTC: Debug in Simulator",
+        "icon": "$(debug-alt)"
       }
     ],
     "viewsContainers": {
@@ -73,6 +86,11 @@
     },
     "menus": {
       "view/title": [
+        {
+          "command": "revFtc.openSimulator",
+          "when": "view == revFtcHub",
+          "group": "navigation@0"
+        },
         {
           "command": "revFtc.spawnStarterPack",
           "when": "view == revFtcHub",
@@ -99,6 +117,16 @@
           "command": "revFtc.showGeneratedJava",
           "when": "resourceLangId == python",
           "group": "navigation@2"
+        },
+        {
+          "command": "revFtc.openSimulator",
+          "when": "resourceLangId == python",
+          "group": "navigation@3"
+        },
+        {
+          "command": "revFtc.debugSimulator",
+          "when": "resourceLangId == python",
+          "group": "navigation@4"
         }
       ],
       "commandPalette": [
@@ -119,6 +147,12 @@
         },
         {
           "command": "revFtc.updateFromConfig"
+        },
+        {
+          "command": "revFtc.openSimulator"
+        },
+        {
+          "command": "revFtc.debugSimulator"
         }
       ]
     },
@@ -178,31 +212,89 @@
           "type": "boolean",
           "default": true,
           "description": "Watch the hub's active hardware configuration (on connect, on sidebar refresh, and before a deploy) and offer to update generated starter packs when it changes. The 'REV FTC: Update Starter Pack From Hardware Configuration' command still works by hand when this is off."
+        },
+        "revFtc.javaHome": {
+          "type": "string",
+          "default": "",
+          "description": "JDK used by the simulator (it compiles your translated OpModes, so it needs javac, Java 11 or newer). Leave empty to use JAVA_HOME or javac on PATH; if there is none, the simulator offers to download JDK 17 into the extension's storage."
+        },
+        "revFtc.simulatorConfigSource": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "workspace"
+          ],
+          "enumDescriptions": [
+            "Use the connected hub's active hardware configuration, else a configuration XML in the workspace, else the device list of a generated starter pack.",
+            "Never ask the hub: use a configuration XML in the workspace, else a starter pack's device list."
+          ],
+          "default": "auto",
+          "description": "Where the simulator gets the robot's hardware configuration."
         }
       }
-    }
+    },
+    "breakpoints": [
+      {
+        "language": "python"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "revftc-sim",
+        "label": "REV FTC Simulator",
+        "languages": [
+          "python"
+        ],
+        "configurationAttributes": {
+          "attach": {
+            "properties": {}
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "revftc-sim",
+            "request": "attach",
+            "name": "REV FTC Simulator"
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "REV FTC: Debug in Simulator",
+            "body": {
+              "type": "revftc-sim",
+              "request": "attach",
+              "name": "REV FTC Simulator"
+            }
+          }
+        ]
+      }
+    ]
   },
   "scripts": {
     "build": "node esbuild.js",
     "watch": "node esbuild.js --watch",
-    "typecheck": "tsc --noEmit -p .",
+    "typecheck": "tsc --noEmit -p . && tsc --noEmit -p webview",
+    "build:webview": "node esbuild.js --webview-only",
     "pretest": "tsc -p tsconfig.test.json",
     "test": "NODE_PATH=test/vscode-shim node --test out-test/test/*.test.js",
     "prepackage": "node scripts/copy-python.mjs",
     "package": "npm run prepackage && npm run build && npx @vscode/vsce package --no-dependencies -o dist/rev-vscode.vsix",
     "smoke": "tsc -p tsconfig.test.json && NODE_PATH=test/vscode-shim node out-test/test/hub-smoke.js",
     "e2e": "node test/e2e/run.mjs",
-    "e2e:fake": "node test/e2e/runFake.mjs"
+    "e2e:fake": "node test/e2e/runFake.mjs",
+    "e2e:sim": "node test/e2e/runSim.mjs"
   },
   "dependencies": {
     "fast-xml-parser": "^4.5.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "@types/three": "^0.186.0",
     "@types/vscode": "^1.90.0",
     "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^4.0.0",
     "esbuild": "^0.28.2",
+    "three": "^0.186.0",
     "typescript": "^5.6.0"
   },
   "license": "MIT",

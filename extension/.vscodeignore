@@ -8,6 +8,8 @@ scripts/**
 tsconfig.json
 tsconfig.test.json
 esbuild.js
-*.map
+**/*.map
 node_modules/**
 !python/**
+webview/**
+dist/sim-dev/**

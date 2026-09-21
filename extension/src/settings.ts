@@ -58,3 +58,13 @@ export function liveDiagnosticsDebounceMs(): number {
 export function configWatch(): boolean {
   return cfg().get<boolean>('configWatch') ?? true;
 }
+
+/** JDK home for the simulator (javac is needed, not just java). Empty = PATH, then offer a download. */
+export function javaHome(): string | undefined {
+  return nonEmpty(cfg().get<string>('javaHome'));
+}
+
+/** Where the simulator's hardware configuration comes from: 'auto' tries the hub first. */
+export function simulatorConfigSource(): 'auto' | 'workspace' {
+  return cfg().get<string>('simulatorConfigSource') === 'workspace' ? 'workspace' : 'auto';
+}

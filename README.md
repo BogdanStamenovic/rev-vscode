@@ -34,13 +34,29 @@ Verified against a real Control Hub (RC app 11.2, SDK 11.2.0) over USB:
 Connection is automatic: `192.168.43.1:8080` if you are on the robot's Wi-Fi,
 otherwise an `adb forward` over USB (it finds REV Hardware Client's bundled adb).
 
+- **Simulator** (`REV FTC: Open Simulator`): runs the same translated Java on
+  simulated hardware from your configuration, no hub needed. Motors, servos and
+  sensors float in a 3D bench and visibly spin the way the code commands them
+  (after `setDirection`); a Driver Hub panel (INIT/START/STOP, telemetry) and a
+  gamepad panel (PS4/Xbox/F310 naming, real controller, keyboard) drive the
+  OpMode; exceptions land on the Python line; the lines that ran and the values
+  of your variables show live; breakpoints and stepping work through VS Code's
+  debugger with sim time frozen. It uses the real FTC SDK classes wherever they
+  run off Android and REV's published motor specs (see docs/MANUAL.md §17 and
+  docs/ARCHITECTURE.md for exactly what is simulated and what is a placeholder).
+  Tested headless and in a VS Code window; not yet compared against a real robot
+  side by side.
+
 ## What does not exist yet
 
 - **REV Hardware Client replacement features** (firmware/OS/app updates,
   backups, log viewer). The research is done: its Quarkus backend runs headless
   and its API is mapped (see `docs/ARCHITECTURE.md`). It is not wired into the
   extension, so keep the Hardware Client around for updates.
-- **Running OpModes** from VS Code. You still press INIT/START on the Driver Hub.
+- **Running OpModes on the robot** from VS Code. You still press INIT/START on the
+  Driver Hub (the simulator's Driver Hub drives only the simulator).
+- **Simulating a whole robot** on the field (driving, climbing, game pieces), the
+  webcam/vision, and non-kit devices. The simulator is a bench of free shafts.
 - **Full Python.** See below; this is Java wearing a Python costume.
 - Only **SDK 11.2.0** has a type database. The hub offers 12.0; if you update the
   Robot Controller app, regenerate (`sdkgen`, below) or new APIs won't autocomplete
@@ -183,6 +199,8 @@ cd python && uv run --no-project --with pytest pytest -q tests
 
 cd extension
 npm test                                   # unit tests
+npm run e2e:fake                           # VS Code window, fake hub (use xvfb-run)
+npm run e2e:sim                            # VS Code window, simulator + debugger (use xvfb-run)
 npm run smoke                              # real hub: save/build/error/cleanup
 E2E_HUB_URL=http://127.0.0.1:18080 npm run e2e   # real VS Code + real hub
 ```
