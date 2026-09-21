@@ -82,7 +82,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.cmd == "translate-project":
             from .translate import ProjectTranslator, collect_sources
             paths = collect_sources(args.root) if args.root else [p.resolve() for p in args.files]
-            result = ProjectTranslator(db).translate(paths)
+            result = ProjectTranslator(db).translate(paths, root=args.root)
             print(json.dumps(result))
             return 0 if result["ok"] else 1
         if args.cmd == "starter":

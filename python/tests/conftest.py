@@ -135,9 +135,12 @@ def translate(db: TypeDB, tmp_path: Path):
         paths = []
         for fname, src in {name: source, **(extra or {})}.items():
             p = tmp_path / fname
+            p.parent.mkdir(parents=True, exist_ok=True)  # `extra` may name a subfolder, e.g. "autos/left.py"
             p.write_text(textwrap_dedent(src))
             paths.append(p)
-        return ProjectTranslator(db).translate(paths)
+        # tmp_path is every test's project root: one Java package per file,
+        # named after its path under here (docs/ARCHITECTURE.md Contract 3).
+        return ProjectTranslator(db).translate(paths, root=tmp_path)
     return run
 
 

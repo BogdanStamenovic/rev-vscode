@@ -19,7 +19,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from ..translate import PACKAGE, ProjectTranslator
+from ..translate import ProjectTranslator
 from ..typedb import TypeDB
 from . import build as simbuild
 from . import config as simconfig
@@ -35,7 +35,7 @@ def prepare(sources: list[Path], out_dir: Path, cache: Path, javac: Path, sdk: s
     db = db or TypeDB.load(sdk)
     sdkbuild = simbuild.build(cache, javac, sdk)
 
-    result = ProjectTranslator(db, sim_trace=trace).translate(sources)
+    result = ProjectTranslator(db, sim_trace=trace).translate(sources, root=workspace)
     diagnostics = list(result["diagnostics"])
     if not result["ok"]:
         return {"ok": False, "stage": "translate", "diagnostics": diagnostics}
@@ -50,13 +50,17 @@ def prepare(sources: list[Path], out_dir: Path, cache: Path, javac: Path, sdk: s
 
     if out_dir.exists():
         shutil.rmtree(out_dir)
-    src_dir = out_dir / "src" / PACKAGE.replace(".", "/")
     classes_dir = out_dir / "classes"
-    src_dir.mkdir(parents=True)
     classes_dir.mkdir(parents=True)
     by_path: dict[str, dict[str, Any]] = {}
     for f in result["files"]:
-        p = src_dir / f"{f['className']}.java"
+        # One package per pack (docs/ARCHITECTURE.md Contract 3): write each
+        # .java under its own hubPath-shaped subdirectory, not flattened into
+        # one folder, or two packs' same-named helper class (e.g. `Cycle`)
+        # would silently overwrite each other on disk before javac ever sees
+        # the collision.
+        p = out_dir / f["hubPath"].lstrip("/")
+        p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(f["java"])
         by_path[str(p)] = f
 
@@ -75,8 +79,9 @@ def prepare(sources: list[Path], out_dir: Path, cache: Path, javac: Path, sdk: s
     manifest = {
         "sdkVersion": sdk,
         "config": config,
-        "classes": [{"className": f"{PACKAGE}.{f['className']}", "source": f["source"]} for f in result["files"]],
-        "lineMaps": {f"{PACKAGE}.{f['className']}": {"source": f["source"], "lineMap": f["lineMap"]} for f in result["files"]},
+        "classes": [{"className": f"{f['package']}.{f['className']}", "source": f["source"]} for f in result["files"]],
+        "lineMaps": {f"{f['package']}.{f['className']}": {"source": f["source"], "lineMap": f["lineMap"]}
+                     for f in result["files"]},
         "traceFiles": result.get("traceFiles", []),
     }
     manifest_path = out_dir / "manifest.json"

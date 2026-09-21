@@ -63,8 +63,9 @@ the OnBot Java editor. The hub never knows Python was involved.
 - Hardware config lives at `/sdcard/FIRST/<activeConfigName>.xml`, read via adb. No HTTP endpoint.
 - Over USB, adb sees the hub by serial; `adb forward tcp:N tcp:8080` exposes the web server.
   Over Wi-Fi, the hub is `192.168.43.1:8080` and adb is `192.168.43.1:5555`.
-- Generated code goes in package `org.firstinspires.ftc.teamcode.pyftc`, path
-  `/src/org/firstinspires/ftc/teamcode/pyftc/`. Deploy owns that folder only.
+- Generated code goes under `org.firstinspires.ftc.teamcode.pyftc`, path
+  `/src/org/firstinspires/ftc/teamcode/pyftc/`; each pack (Python file) gets
+  its own subpackage under there (below). Deploy owns that whole folder tree.
 
 ## Contract 1: type database `python/pyftc/data/sdk-<version>.json`
 
@@ -140,15 +141,54 @@ stdout is JSON only, diagnostics never go to stderr. Exit 0 = ok, 1 = user code 
 ```jsonc
 { "ok": true,
   "files": [{
-    "source": "/abs/path/Drive.py",
-    "className": "Drive",
-    "hubPath": "/src/org/firstinspires/ftc/teamcode/pyftc/Drive.java",
+    "source": "/abs/path/autos/left.py",
+    "className": "LeftAuto",
+    "package": "org.firstinspires.ftc.teamcode.pyftc.autos.left",
+    "hubPath": "/src/org/firstinspires/ftc/teamcode/pyftc/autos/left/LeftAuto.java",
     "java": "package ...",
     "lineMap": [0, 3, 3, 4],        // lineMap[javaLine-1] = python line (1-based), 0 = synthetic
     "diagnostics": [] }],
   "diagnostics": [{"source": "/abs/Drive.py", "line": 12, "col": 4, "endLine": 12, "endCol": 9,
                    "severity": "error" | "warning", "message": "..."}] }
 ```
+
+### One Java package per Python file
+
+Every `.py` file (a "pack") gets its own Java package, so packs can be
+removed cleanly and two packs never interfere with each other by sharing one
+namespace. The mapping is purely path-based, relative to `--root` (a file
+translated via `--files`, with no root, falls back to a package named after
+just its own filename -- today only `showGeneratedJava`'s single-file preview
+uses that mode, so there is no folder structure to lose):
+
+```
+<root>/main.py         -> package ...pyftc.main          hubPath .../pyftc/main/<Class>.java
+<root>/autos/left.py   -> package ...pyftc.autos.left     hubPath .../pyftc/autos/left/<Class>.java
+```
+
+Each path segment (a folder name or the file's stem) is sanitized into a
+valid Java identifier, deterministically, independently of the others:
+invalid characters (anything but `[A-Za-z0-9_]`, e.g. `-`, a space) become
+`_`; a segment starting with a digit gets a leading `_`; a segment that is a
+Java keyword (`class`, `import`, ...) gets a trailing `_`. This only changes
+the *Java* package/hubPath the translator emits -- the *Python* import the
+user writes (`from autos.left import X`) always uses the real, unsanitized
+file/folder names, exactly as real Python would resolve it. Two files whose
+paths sanitize to the same package (e.g. `my-pack.py` and `my_pack.py`, both
+`my_pack`) is a translator error naming both files, not a silent merge.
+
+Class resolution is per file: a file sees its own top-level classes plus
+exactly what it imports (`from shooter import Shooter`, or `import shooter`
+then `shooter.Shooter` for a single-segment project module -- the dotted form
+`import autos.left` is not supported, since real Python's binding for it
+needs package machinery this translator does not model; write `from
+autos.left import X` instead). Referencing another file's class without
+importing it is a translator error, the same as real Python's `NameError`
+would be. Two files may define a helper class with the same simple name
+(each pack's classes are keyed by (module, name), not by name alone); every
+project class's fields, constructors and methods are emitted `public` (Python
+has no privacy) since two packs' classes routinely reference each other
+across the package boundary this scheme introduces.
 
 `python -m pyftc starter --config <config.xml> --rcinfo <rcInfo.json> --name <ClassName>`
 ```jsonc

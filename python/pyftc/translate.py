@@ -35,6 +35,26 @@ double else enum extends final finally float for goto if implements import insta
 native new package private protected public return short static strictfp super switch synchronized this
 throw throws transient try void volatile while true false null var""".split())
 
+_INVALID_JAVA_ID_CHAR = re.compile(r"[^A-Za-z0-9_]")
+
+
+def sanitize_package_segment(name: str) -> str:
+    """One path segment (a directory name or a file's stem) -> a valid Java
+    identifier, deterministically: every FGC 2026 kit change: one pack (one
+    .py file) gets its own Java package, named after its path under the
+    project root, so two packs never collide and removing one cleanly removes
+    its package. The Python import the user writes (`from autos.left import
+    X`) always uses the *real* file/folder names; this sanitizing only feeds
+    the *Java* package/hubPath the translator emits, so a folder or file name
+    that is not itself a valid Java identifier (starts with a digit, has a
+    dash, is a Java keyword...) still gets somewhere to live on the hub."""
+    out = _INVALID_JAVA_ID_CHAR.sub("_", name) or "_"
+    if out[0].isdigit():
+        out = "_" + out
+    if out in JAVA_KEYWORDS:
+        out = out + "_"
+    return out
+
 PY_EXCEPTIONS = {
     "Exception": "java.lang.RuntimeException", "RuntimeError": "java.lang.RuntimeException",
     "ValueError": "java.lang.IllegalArgumentException", "TypeError": "java.lang.IllegalArgumentException",
@@ -123,6 +143,23 @@ class PyFile:
     names: dict[str, Any] = field(default_factory=dict)  # python name -> ClassRef | "math" | JType alias
     comments: dict[int, tuple[str, bool]] = field(default_factory=dict)  # line -> (text, trailing)
     classes: list[PyClass] = field(default_factory=list)
+    # The file's location, in two parallel forms (one Java package per Python
+    # file, docs/ARCHITECTURE.md Contract 3): `module` is the literal path
+    # under the project root -- e.g. `<root>/autos/left.py` -> ("autos",
+    # "left") -- exactly what a Python `from autos.left import X` needs, so
+    # imports resolve on the real names the user typed. `java_segments` is
+    # the same path with each segment sanitized into a valid Java identifier
+    # (sanitize_package_segment): only the generated package/hubPath uses it.
+    module: tuple[str, ...] = ()
+    java_segments: list[str] = field(default_factory=list)
+
+    @property
+    def package(self) -> str:
+        return PACKAGE + "." + ".".join(self.java_segments)
+
+    @property
+    def hub_dir(self) -> str:
+        return HUB_DIR + "/" + "/".join(self.java_segments)
 
 
 class Emitter:
@@ -141,7 +178,17 @@ class ProjectTranslator:
         self.db = db
         self.diags: list[Diagnostic] = []
         self.files: list[PyFile] = []
-        self.classes: dict[str, PyClass] = {}
+        # Java package (dotted) -> the first file that produced it, so a
+        # second file whose sanitized path collides with it can be reported
+        # by name (see _check_package_collision) instead of silently sharing
+        # the package.
+        self.packages: dict[str, PyFile] = {}
+        # Python module path (the real, unsanitized `module` tuple on PyFile)
+        # -> that file, for resolving `from x.y import Z` / `import x` the
+        # way Python itself would: against actual file/folder names, not the
+        # Java-safe ones. Built once every file is parsed (translate()).
+        self.modules_by_pyname: dict[tuple[str, ...], PyFile] = {}
+        self.root: Path | None = None
         # Simulator-only build (docs/ARCHITECTURE.md, Contract 5): every statement gets a
         # same-line call to org.pyftc.sim.Trace so the simulator can show which Python
         # lines ran and what locals were assigned. Same line, so lineMap is identical
@@ -150,21 +197,32 @@ class ProjectTranslator:
 
     # ---------------------------------------------------------------- driver
 
-    def translate(self, paths: Iterable[Path]) -> dict[str, Any]:
+    def translate(self, paths: Iterable[Path], root: Path | None = None) -> dict[str, Any]:
+        # One Java package per Python file (docs/ARCHITECTURE.md Contract 3):
+        # `root` is the project root every file's package is computed
+        # relative to. Without one (the extension's single/multi-file
+        # "--files" preview mode has no project root) each file falls back to
+        # a package named after just its own filename, ignoring any folder it
+        # happens to sit in -- the only mode that calls translate() this way
+        # today (showGeneratedJava) only ever passes one file, so there is no
+        # folder structure to lose.
+        self.root = Path(root) if root is not None else None
         for p in paths:
             self._parse_file(p)
+        self.modules_by_pyname = {f.module: f for f in self.files if f.tree is not None}
         for f in self.files:
             self._resolve_imports(f)
-        for c in self.classes.values():
-            self._guard(c.file, lambda c=c: self._build_signature(c))
+        for f in self.files:
+            for c in f.classes:
+                self._guard(f, lambda c=c: self._build_signature(c))
         out = []
         for f in self.files:
             for c in f.classes:
                 before = len(self.diags)
                 java, line_map = ClassTranslator(self, c).run()
                 out.append({
-                    "source": str(f.path), "className": c.node.name,
-                    "hubPath": f"{HUB_DIR}/{c.node.name}.java", "java": java, "lineMap": line_map,
+                    "source": str(f.path), "className": c.node.name, "package": f.package,
+                    "hubPath": f"{f.hub_dir}/{c.node.name}.java", "java": java, "lineMap": line_map,
                     "diagnostics": [d.to_json() for d in self.diags[before:]],
                 })
         ok = not any(d.severity == "error" for d in self.diags)
@@ -187,6 +245,38 @@ class ProjectTranslator:
             self.diag(f, e.node, e.message)
             return None
 
+    def _module_parts(self, path: Path) -> tuple[str, ...]:
+        """The file's location as a Python module path: directory names then
+        the filename stem, exactly as `from a.b import X` would need to spell
+        it. Not sanitized -- that only happens for the Java side (PyFile.
+        java_segments) -- so the import the user writes always matches real
+        file/folder names."""
+        rel: Path
+        if self.root is not None:
+            try:
+                rel = path.relative_to(self.root)
+            except ValueError:
+                rel = Path(path.name)
+        else:
+            rel = Path(path.name)
+        return rel.parts[:-1] + (rel.stem,)
+
+    def _display_path(self, f: PyFile) -> str:
+        if self.root is not None:
+            try:
+                return str(f.path.relative_to(self.root))
+            except ValueError:
+                pass
+        return f.path.name
+
+    def _check_package_collision(self, f: PyFile) -> None:
+        existing = self.packages.get(f.package)
+        if existing is None:
+            self.packages[f.package] = f
+            return
+        self.diag(f, None, f"'{self._display_path(f)}' and '{self._display_path(existing)}' both sanitize to the "
+                           f"same Java package ('{f.package}'); rename one of the files or folders so they differ")
+
     def _parse_file(self, path: Path) -> None:
         source = path.read_text()
         try:
@@ -197,23 +287,35 @@ class ProjectTranslator:
             self.diags.append(Diagnostic(str(path), e.lineno or 1, max((e.offset or 1) - 1, 0), e.lineno or 1,
                                          e.offset or 1, "error", f"syntax error: {e.msg}"))
             return
-        f = PyFile(path, source, tree, comments=_comments(source))
+        module = self._module_parts(path)
+        java_segments = [sanitize_package_segment(p) for p in module]
+        f = PyFile(path, source, tree, comments=_comments(source), module=module, java_segments=java_segments)
         self.files.append(f)
+        self._check_package_collision(f)
+        seen: set[str] = set()
         for node in tree.body:
             if isinstance(node, ast.ClassDef):
-                if node.name in self.classes:
-                    self.diag(f, node, f"class {node.name} is also defined in {self.classes[node.name].file.path.name}; "
-                                       "all classes share one Java package, names must be unique")
+                if node.name in seen:
+                    self.diag(f, node, f"class {node.name} is defined twice in {f.path.name}")
                     continue
+                seen.add(node.name)
                 if node.name in JAVA_KEYWORDS:
                     self.diag(f, node, f"'{node.name}' is a Java keyword and cannot be a class name")
                     continue
-                c = PyClass(node, f, f"{PACKAGE}.{node.name}")
+                c = PyClass(node, f, f"{f.package}.{node.name}")
                 f.classes.append(c)
-                self.classes[node.name] = c
                 self.db.add_class(c.fqn, {"kind": "class", "simpleName": node.name, "outer": None, "module": None,
                                           "typeParams": [], "extends": [], "abstract": False, "methods": [],
                                           "fields": [], "enumConstants": [], "constructors": [], "doc": ""})
+
+    def _project_module(self, mod: str) -> PyFile | None:
+        """Resolve a dotted Python module string (from `from <mod> import X`
+        or `import <mod>`) to the project file it names, or None if it is not
+        one of this project's own files. Keyed by the real, unsanitized path
+        (PyFile.module) so this matches exactly what the name would resolve
+        to in real Python."""
+        parts = tuple(p for p in mod.lstrip(".").split(".") if p)
+        return self.modules_by_pyname.get(parts) if parts else None
 
     def _resolve_imports(self, f: PyFile) -> None:
         if f.tree is None:
@@ -258,15 +360,39 @@ class ProjectTranslator:
                             f.names[local] = ClassRef(fqn)
                     elif mod == "math":
                         f.names[local] = ("mathattr", alias.name)
-                    elif alias.name in self.classes and mod.lstrip(".").split(".")[-1] == self.classes[alias.name].file.path.stem:
-                        f.names[local] = ClassRef(self.classes[alias.name].fqn)
                     else:
-                        self.diag(f, node, f"cannot import '{alias.name}' from '{mod}': only ftc.*, math, "
-                                           "and classes from other files in this project are available on the robot")
+                        target = self._project_module(mod)
+                        if target is None:
+                            self.diag(f, node, f"cannot import '{alias.name}' from '{mod}': only ftc.*, math, "
+                                               "and classes from other files in this project are available on the robot")
+                        else:
+                            cls = next((c for c in target.classes if c.node.name == alias.name), None)
+                            if cls is None:
+                                self.diag(f, node, f"'{mod}' ({target.path.name}) has no class '{alias.name}'")
+                            else:
+                                f.names[local] = ClassRef(cls.fqn)
             elif isinstance(node, ast.Import):
                 for alias in node.names:
                     if alias.name == "math":
                         f.names[alias.asname or "math"] = "math"
+                        continue
+                    target = self._project_module(alias.name)
+                    if target is not None and "." not in alias.name:
+                        # `import shooter` then `shooter.Shooter(...)` -- the
+                        # simple, single-segment case real Python handles by
+                        # binding the module object itself (e_Name/e_Attribute
+                        # below resolve `shooter.X` through this marker).
+                        f.names[alias.asname or alias.name] = ("pymodule", target.module)
+                    elif target is not None:
+                        # `import autos.left` only binds the top package name
+                        # in real Python (`autos`), and reaching `left` off it
+                        # needs `autos.left` to itself be a package with an
+                        # `__init__.py` -- machinery this translator does not
+                        # model. `from autos.left import X` says the same
+                        # thing unambiguously; point at it instead of
+                        # guessing.
+                        self.diag(f, node, f"'import {alias.name}' is not supported; write "
+                                           f"'from {alias.name} import ClassName' instead")
                     else:
                         self.diag(f, node, f"module '{alias.name}' is not available on the robot "
                                            "(use 'from ftc.<module> import Name')")
@@ -517,7 +643,10 @@ class ClassTranslator:
             data = self.db.get(top)
         simple = top.rsplit(".", 1)[-1]
         pkg = top.rsplit(".", 1)[0] if "." in top else ""
-        if pkg not in ("java.lang", PACKAGE, ""):
+        # Own file's own package (one per pack, not the shared PACKAGE
+        # constant): a class from a *different* pack needs a real `import`
+        # even though both live somewhere under PACKAGE.
+        if pkg not in ("java.lang", self.f.package, ""):
             existing = self.imports.get(simple)
             if existing is None:
                 self.imports[simple] = top
@@ -591,7 +720,13 @@ class ClassTranslator:
 
         for name, t in self.c.fields.items():
             fnode = self.c.field_nodes[name]
-            mods = ("static " if name in self.c.static_fields else "") + ("final " if name in self.c.final_fields else "")
+            # Always public: Python has no field privacy (methods and
+            # constructors are already emitted public), and now that every
+            # pack has its own package, package-private (no modifier) would
+            # break the moment another file's field or ClassVar is read
+            # across packages -- it used to work by accident, sharing one
+            # package with everything else.
+            mods = "public " + ("static " if name in self.c.static_fields else "") + ("final " if name in self.c.final_fields else "")
             init = self.c.field_inits.get(name)
             if init is not None and isinstance(fnode, (ast.AnnAssign, ast.Assign)) and fnode in self.c.node.body:
                 def emit_field(name=name, t=t, init=init, fnode=fnode, mods=mods) -> None:
@@ -613,7 +748,7 @@ class ClassTranslator:
         self.emit("}")
 
         head = Emitter()
-        head.emit(f"package {PACKAGE};")
+        head.emit(f"package {self.f.package};")
         head.emit("")
         head.emit(f"// Generated by pyftc from {self.f.path.name}. Edits here are overwritten on the next deploy.")
         head.emit("")
@@ -1269,6 +1404,9 @@ class ClassTranslator:
             return self.e_Constant(ast.Constant({"True": True, "False": False, "None": None}[name]), expected)
         if isinstance(bound, tuple) and bound[0] == "mathattr":
             return self.math_attr(node, bound[1])
+        if isinstance(bound, tuple) and bound[0] == "pymodule":
+            raise self.fail(node, f"'{name}' is a module, not a value; write '{name}.ClassName' or "
+                                  f"'{name}.ClassName(...)'")
         if name in PY_EXCEPTIONS or name in CATCH_EXCEPTIONS:
             raise self.fail(node, f"'{name}' can only be used in raise/except")
         raise self.fail(node, f"undefined name '{name}'" + (" (fields need `self.`)" if name in self.c.fields else ""))
@@ -1287,9 +1425,22 @@ class ClassTranslator:
             return Expr(c if "." in c or "(" in c else f"Math.{c}", DOUBLE)
         raise self.fail(node, f"math.{attr} is not a constant; call it")
 
+    def _module_class_ref(self, node: ast.AST, mod_parts: tuple[str, ...], attr: str) -> Expr:
+        """`shooter.Shooter` where `shooter` was bound by a plain `import
+        shooter` (see e_Name's "pymodule" marker and _resolve_imports)."""
+        target = self.p.modules_by_pyname.get(mod_parts)
+        cls = next((c for c in target.classes if c.node.name == attr), None) if target is not None else None
+        if cls is None:
+            raise self.fail(node, f"module '{'.'.join(mod_parts)}' has no class '{attr}'")
+        return Expr(self.ref(cls.fqn), UNKNOWN, cls=ClassRef(cls.fqn))
+
     def e_Attribute(self, node: ast.Attribute, expected: JType | None) -> Expr:
-        if isinstance(node.value, ast.Name) and self.f.names.get(node.value.id) == "math":
-            return self.math_attr(node, node.attr)
+        if isinstance(node.value, ast.Name):
+            bound = self.f.names.get(node.value.id)
+            if bound == "math":
+                return self.math_attr(node, node.attr)
+            if isinstance(bound, tuple) and bound[0] == "pymodule":
+                return self._module_class_ref(node, bound[1], node.attr)
         obj = self.expr(node.value)
         attr = node.attr
         if obj.cls is not None:
@@ -1354,8 +1505,14 @@ class ClassTranslator:
                 raise self.fail(node, "exceptions can only be raised")
             raise self.fail(node, f"'{fn.id}' is not callable here (methods need `self.`, functions need a class)")
         if isinstance(fn, ast.Attribute):
-            if isinstance(fn.value, ast.Name) and self.f.names.get(fn.value.id) == "math":
-                return self.math_call(node, fn.attr)
+            if isinstance(fn.value, ast.Name):
+                bound = self.f.names.get(fn.value.id)
+                if bound == "math":
+                    return self.math_call(node, fn.attr)
+                if isinstance(bound, tuple) and bound[0] == "pymodule":
+                    ref = self._module_class_ref(fn, bound[1], fn.attr)
+                    assert ref.cls is not None
+                    return self.construct(node, ref.cls.fqn, expected)
             if (isinstance(fn.value, ast.Call) and isinstance(fn.value.func, ast.Name) and fn.value.func.id == "super"):
                 return self.super_call(node, fn.attr)
             obj = self.expr(fn.value)

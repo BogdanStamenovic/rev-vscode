@@ -79,8 +79,13 @@ class Basic(LinearOpMode):                # class name = file name, no spaces
   `self.telemetry`, `self.gamepad1`, `self.gamepad2`, `self.sleep(...)`.
 - Always loop on `self.opModeIsActive()`, never `while True`: that is what
   notices the STOP button.
-- One class per file keeps things simple. The class name must be unique across
-  the whole workspace (all files end up in one Java package).
+- One class per file keeps things simple. Each file gets its own Java package
+  (named after its path, e.g. `autos/left.py` -> `...pyftc.autos.left`), so a
+  helper class name only has to be unique within its own file; two files can
+  even both have their own class called the same thing. A class in another
+  file still needs an explicit `from other_file import ClassName` (or
+  `from a_folder.other_file import ClassName` for one in a subfolder) --
+  there is no automatic cross-file lookup, same as real Python.
 
 ## 3. Adding any device: the recipe
 
@@ -575,7 +580,7 @@ a method returning something needs `-> type`. See `drive_cm` above.
 **Helper classes in other files** keep OpModes short. Hardware is passed in:
 
 ```python
-# example: split/Drivetrain.py
+# example: Drivetrain.py
 from ftc.hardware import DcMotor, DcMotorSimple, HardwareMap
 from ftc.util import Range
 
@@ -598,7 +603,7 @@ class Drivetrain:
 ```
 
 ```python
-# example: split/MainTeleOp.py
+# example: MainTeleOp.py, next to Drivetrain.py above
 from ftc.opmode import LinearOpMode, TeleOp
 from Drivetrain import Drivetrain
 
@@ -613,8 +618,10 @@ class MainTeleOp(LinearOpMode):
         drivetrain.stop()
 ```
 
-Import your own classes with `from FileName import ClassName`. A helper class
-has no `@TeleOp`, so it never shows up on the Driver Hub.
+Import your own classes with `from FileName import ClassName`, matching the
+real path from the project root: a helper file in a subfolder is `from
+folder.FileName import ClassName` (e.g. `from autos.left import LeftAuto`).
+A helper class has no `@TeleOp`, so it never shows up on the Driver Hub.
 
 **Lists** for groups of things:
 

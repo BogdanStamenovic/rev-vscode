@@ -26,11 +26,16 @@ pytestmark = pytest.mark.skipif(
 
 
 def _compile(files: list[dict], out: Path) -> subprocess.CompletedProcess[str]:
-    src = out / "src"
-    src.mkdir(parents=True, exist_ok=True)
     paths = []
     for f in files:
-        p = src / f"{f['className']}.java"
+        # Each file goes under its own hubPath-shaped directory (one Java
+        # package per pack, docs/ARCHITECTURE.md Contract 3) rather than a
+        # single flat "src" folder: two packs can legitimately produce the
+        # same className (e.g. a helper class called `Cycle` in two files),
+        # and dumping them all into one directory would have the second
+        # overwrite the first on disk before javac ever ran.
+        p = out / f["hubPath"].lstrip("/")
+        p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(f["java"])
         paths.append(str(p))
     return subprocess.run(

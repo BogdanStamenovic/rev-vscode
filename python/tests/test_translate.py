@@ -36,12 +36,16 @@ def test_opmode_shell(translate):
     r = translate(body("self.waitForStart()"))
     assert r["ok"], r["diagnostics"]
     j = java(r)
-    assert "package org.firstinspires.ftc.teamcode.pyftc;" in j
+    # Robot.py is the only file in the project, at the root: one Java package
+    # per Python file (docs/ARCHITECTURE.md Contract 3), named after the
+    # file's own path -- here just "Robot".
+    assert "package org.firstinspires.ftc.teamcode.pyftc.Robot;" in j
     assert '@TeleOp(name = "T", group = "g")' in j
     assert "public class Robot extends LinearOpMode {" in j
     assert "import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;" in j
     assert "@Override\n    public void runOpMode() {" in j
-    assert r["files"][0]["hubPath"] == "/src/org/firstinspires/ftc/teamcode/pyftc/Robot.java"
+    assert r["files"][0]["hubPath"] == "/src/org/firstinspires/ftc/teamcode/pyftc/Robot/Robot.java"
+    assert r["files"][0]["package"] == "org.firstinspires.ftc.teamcode.pyftc.Robot"
 
 
 def test_hardware_map_class_literal_and_generic_return(translate):
@@ -268,6 +272,211 @@ class Arm:
     assert "this.motor = motor;" in by_name["Arm"]
     assert "static final int TICKS = 288;" in by_name["Arm"]
     assert "return (double) motor.getCurrentPosition() / TICKS;" in by_name["Arm"]
+
+
+# ---------------------------------------------------------------- one Java package per Python file
+
+
+def test_two_files_can_each_define_a_class_with_the_same_name(translate):
+    """One Java package per Python file (docs/ARCHITECTURE.md Contract 3):
+    two unrelated packs can each have their own helper class called `Cycle`
+    without colliding, the way they would sharing one flat package."""
+    main = """
+from ftc.opmode import LinearOpMode, TeleOp
+
+class Cycle:
+    count: int = 0
+
+    def tick(self) -> int:
+        self.count += 1
+        return self.count
+
+@TeleOp(name="T", group="g")
+class Robot(LinearOpMode):
+    def runOpMode(self) -> None:
+        c = Cycle()
+        c.tick()
+        self.waitForStart()
+"""
+    shooter = """
+class Cycle:
+    label: str = "shooter"
+
+    def describe(self) -> str:
+        return self.label
+"""
+    r = translate(main, name="main.py", extra={"shooter.py": shooter})
+    assert r["ok"], r["diagnostics"]
+    cycles = [f for f in r["files"] if f["className"] == "Cycle"]
+    assert len(cycles) == 2
+    assert {f["package"] for f in cycles} == {
+        "org.firstinspires.ftc.teamcode.pyftc.main",
+        "org.firstinspires.ftc.teamcode.pyftc.shooter",
+    }
+    assert {f["hubPath"] for f in cycles} == {
+        "/src/org/firstinspires/ftc/teamcode/pyftc/main/Cycle.java",
+        "/src/org/firstinspires/ftc/teamcode/pyftc/shooter/Cycle.java",
+    }
+
+
+def test_cross_file_import_field_and_classvar_access_across_packages(translate):
+    """`from shooter import Shooter` used from main.py: an instance field
+    access (`self.shooter.motor`) and a ClassVar access
+    (`Shooter.ready_count`) both now cross a package boundary, so both need
+    to be emitted `public` (see ClassTranslator.run()'s field modifiers) or
+    javac would reject them."""
+    shooter = """
+from typing import ClassVar
+from ftc.hardware import DcMotor
+
+class Shooter:
+    motor: DcMotor
+    ready_count: ClassVar[int] = 0
+
+    def __init__(self, motor: DcMotor):
+        self.motor = motor
+
+    def spin(self) -> None:
+        self.motor.setPower(1.0)
+"""
+    main = """
+from ftc.opmode import LinearOpMode, TeleOp
+from ftc.hardware import DcMotor
+from shooter import Shooter
+
+@TeleOp(name="T", group="g")
+class Robot(LinearOpMode):
+    shooter: Shooter
+
+    def runOpMode(self) -> None:
+        self.shooter = Shooter(self.hardwareMap.get(DcMotor, "shooter"))
+        self.waitForStart()
+        self.shooter.spin()
+        m = self.shooter.motor
+        Shooter.ready_count = 1
+"""
+    r = translate(main, name="main.py", extra={"shooter.py": shooter})
+    assert r["ok"], r["diagnostics"]
+    by_name = {f["className"]: f for f in r["files"]}
+    assert by_name["Robot"]["package"] == "org.firstinspires.ftc.teamcode.pyftc.main"
+    assert by_name["Shooter"]["package"] == "org.firstinspires.ftc.teamcode.pyftc.shooter"
+    assert "import org.firstinspires.ftc.teamcode.pyftc.shooter.Shooter;" in by_name["Robot"]["java"]
+    assert "public DcMotor motor;" in by_name["Shooter"]["java"]
+    assert "public static int ready_count = 0;" in by_name["Shooter"]["java"]
+    assert "Shooter.ready_count = 1;" in by_name["Robot"]["java"]
+    assert "DcMotor m = shooter.motor;" in by_name["Robot"]["java"]
+
+
+def test_plain_import_of_project_module_then_attribute_access(translate):
+    """`import shooter` then `shooter.Shooter(...)` -- the single-segment
+    plain-import form, cheap enough to support directly rather than making
+    it a blanket error like the dotted form below."""
+    shooter = """
+from ftc.hardware import DcMotor
+
+class Shooter:
+    motor: DcMotor
+
+    def __init__(self, motor: DcMotor):
+        self.motor = motor
+"""
+    main = """
+from ftc.opmode import LinearOpMode, TeleOp
+from ftc.hardware import DcMotor
+import shooter
+
+@TeleOp(name="T", group="g")
+class Robot(LinearOpMode):
+    def runOpMode(self) -> None:
+        s = shooter.Shooter(self.hardwareMap.get(DcMotor, "shooter"))
+        self.waitForStart()
+"""
+    r = translate(main, name="main.py", extra={"shooter.py": shooter})
+    assert r["ok"], r["diagnostics"]
+    by_name = {f["className"]: f["java"] for f in r["files"]}
+    assert 'Shooter s = new Shooter(hardwareMap.get(DcMotor.class, "shooter"));' in by_name["Robot"]
+    assert "import org.firstinspires.ftc.teamcode.pyftc.shooter.Shooter;" in by_name["Robot"]
+
+
+def test_dotted_plain_import_of_project_module_is_a_clear_error(translate):
+    """`import autos.left` only binds the top package (`autos`) in real
+    Python; reaching `.left` off it needs package machinery this translator
+    does not model. Must be a clear error pointing at the fix, not a guess."""
+    left = "class LeftAuto:\n    pass\n"
+    main = body("pass")
+    main = main.replace("import math", "import math\nimport autos.left")
+    r = translate(main, extra={"autos/left.py": left})
+    assert not r["ok"]
+    msgs = errors(r)
+    assert any("import autos.left" in m and "from autos.left import ClassName" in m for m in msgs), msgs
+
+
+def test_subfolder_module_import(translate):
+    """`from autos.left import X`: a helper class in a subfolder, resolved by
+    its real (unsanitized) module path -- not by matching the last dotted
+    segment against any file with that name, the way the old flat-package
+    translator used to."""
+    left = """
+class LeftAuto:
+    STEPS: int = 4
+"""
+    main = body("n = LeftAuto.STEPS")
+    main = main.replace("import math", "import math\nfrom autos.left import LeftAuto")
+    r = translate(main, extra={"autos/left.py": left})
+    assert r["ok"], r["diagnostics"]
+    by_name = {f["className"]: f for f in r["files"]}
+    assert by_name["LeftAuto"]["package"] == "org.firstinspires.ftc.teamcode.pyftc.autos.left"
+    assert by_name["LeftAuto"]["hubPath"] == "/src/org/firstinspires/ftc/teamcode/pyftc/autos/left/LeftAuto.java"
+    assert "int n = LeftAuto.STEPS;" in by_name["Robot"]["java"]
+
+
+def test_reference_to_other_files_class_without_import_is_a_clear_error(translate):
+    """A class in another file that was never imported must not resolve by a
+    silent cross-file lookup -- real Python would raise NameError too. This
+    must be a translator error on the line that actually uses it."""
+    helper = """
+class Arm:
+    TICKS: int = 288
+"""
+    main = body("a = Arm()")
+    r = translate(main, extra={"Arm.py": helper})
+    assert not r["ok"]
+    msgs = errors(r)
+    assert any("not callable" in m and "Arm" in m for m in msgs), msgs
+    used_line = main.splitlines().index("        a = Arm()") + 1
+    err = next(d for d in r["diagnostics"] if d["severity"] == "error")
+    assert err["line"] == used_line
+
+
+def test_package_segment_sanitizing(translate):
+    """A folder/file name that is not a valid Java identifier still gets a
+    package (sanitize_package_segment): invalid characters become '_', a
+    segment starting with a digit gets a leading '_', a Java keyword gets a
+    trailing '_'."""
+    empty = "class {name}:\n    pass\n"
+    r = translate(body("self.waitForStart()"), extra={
+        "my-pack.py": empty.format(name="LeftHelper"),
+        "3wheel.py": empty.format(name="ThreeWheelHelper"),
+        "class.py": empty.format(name="ClassHelper"),
+    })
+    assert r["ok"], r["diagnostics"]
+    by_class = {f["className"]: f for f in r["files"]}
+    assert by_class["LeftHelper"]["package"] == "org.firstinspires.ftc.teamcode.pyftc.my_pack"
+    assert by_class["ThreeWheelHelper"]["package"] == "org.firstinspires.ftc.teamcode.pyftc._3wheel"
+    assert by_class["ClassHelper"]["package"] == "org.firstinspires.ftc.teamcode.pyftc.class_"
+
+
+def test_package_collision_across_sanitized_names_is_an_error(translate):
+    """Two files whose names differ only by a character sanitizing erases
+    ('my-pack.py' and 'my_pack.py' both become 'my_pack') must not silently
+    share a package -- that would merge their classes without warning. It is
+    a translator error naming both files."""
+    a = "class A:\n    pass\n"
+    b = "class B:\n    pass\n"
+    r = translate(body("self.waitForStart()"), extra={"my-pack.py": a, "my_pack.py": b})
+    assert not r["ok"]
+    msgs = errors(r)
+    assert any("my-pack.py" in m and "my_pack.py" in m and "same Java package" in m for m in msgs), msgs
 
 
 def test_self_field_inferred_from_hardware_map(translate):
