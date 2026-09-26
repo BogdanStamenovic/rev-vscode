@@ -370,6 +370,25 @@ def test_imu_yaw_follows_the_hub_pose(db, tmp_path):
     assert [m["lines"] for m in tel if m["t"] > 1.2][-1] == ["yaw : 90"]
 
 
+def test_settings_file_written_then_read_back(db, tmp_path):
+    # ReadWriteFile.readFile goes through AppUtil.copyStream; the shim lacked it
+    # and every read died with NoSuchMethodError while writes worked.
+    name = f"pyftc-test-{tmp_path.name}.txt"
+    body = f'''        f: File = AppUtil.getInstance().getSettingsFile("{name}")
+        ReadWriteFile.writeFile(f, "a=1.5\\nb=2")
+        text = ReadWriteFile.readFile(f)
+        f.delete()
+        self.waitForStart()
+        while self.opModeIsActive():
+            self.telemetry.addData("read", text.replace("\\n", "|"))
+            self.telemetry.update()'''
+    script = [{"type": "init", "opMode": "T", "at": 0.1}, {"type": "start", "at": 0.2}]
+    msgs = run(db, tmp_path, {"T.py": opmode(body, imports="from ftc.io import AppUtil, File, ReadWriteFile")},
+               simconfig.from_xml(db, MIXED, "Mixed", "file"), script, 0.8)
+    assert not [m for m in msgs if m["type"] == "exception"], [m for m in msgs if m["type"] == "exception"]
+    assert [m["lines"] for m in msgs if m["type"] == "telemetry"][-1] == ["read : a=1.5|b=2"]
+
+
 def test_busy_loop_without_sdk_calls_restarts_like_the_robot_controller(db, tmp_path):
     body = '''        self.waitForStart()
         while True:

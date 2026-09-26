@@ -49,6 +49,28 @@ public class AppUtil {
         }
     }
 
+    // ReadWriteFile.readFile/writeFile call these on the real AppUtil; without
+    // them every settings-file read in the simulator died with NoSuchMethodError.
+    public void copyStream(java.io.InputStream inputStream, java.io.OutputStream outputStream) throws java.io.IOException {
+        byte[] buffer = new byte[8192];
+        int n;
+        while ((n = inputStream.read(buffer)) != -1) {
+            outputStream.write(buffer, 0, n);
+        }
+    }
+
+    public void copyStream(java.io.InputStream inputStream, File file) throws java.io.IOException {
+        try (java.io.OutputStream out = new java.io.FileOutputStream(file)) {
+            copyStream(inputStream, out);
+        }
+    }
+
+    public void copyStream(File file, java.io.OutputStream outputStream) throws java.io.IOException {
+        try (java.io.InputStream in = new java.io.FileInputStream(file)) {
+            copyStream(in, outputStream);
+        }
+    }
+
     public File getRelativePath(File root, File child) {
         File result = new File("");
         while (!root.equals(child)) {
