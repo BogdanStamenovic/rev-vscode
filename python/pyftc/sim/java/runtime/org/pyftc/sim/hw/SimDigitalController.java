@@ -88,8 +88,14 @@ public final class SimDigitalController implements DigitalChannelController {
             return pins[pin].lastKnownState.getNonTimedValue();
         }
         try {
-            hub.command();
-            boolean result = hub.digitalInput[pin];
+            boolean result;
+            if (hub.bulkMode != Hub.BULK_OFF) {
+                hub.bulkRead("digital" + pin);
+                result = hub.bulkDigital[pin];
+            } else {
+                hub.command();
+                result = hub.digitalInput[pin];
+            }
             pins[pin].lastKnownState.setValue(result);
             return result;
         } catch (InterruptedException e) {

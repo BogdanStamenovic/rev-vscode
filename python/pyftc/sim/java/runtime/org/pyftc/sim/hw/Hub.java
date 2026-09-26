@@ -25,6 +25,18 @@ public final class Hub {
     public final DigitalChannel.Mode[] digitalMode = new DigitalChannel.Mode[8];
     public final double[] analogVolts = new double[4];
 
+    // Bulk caching (LynxModule.setBulkCachingMode): 0 OFF, 1 MANUAL, 2 AUTO.
+    // As on the real hub, with it on every encoder/velocity/digital read is
+    // served from one bulk-read snapshot (one command); OFF sends one bulk
+    // command per read. MANUAL keeps the snapshot until clearBulkCache().
+    public static final int BULK_OFF = 0, BULK_MANUAL = 1, BULK_AUTO = 2;
+    public int bulkMode = BULK_OFF;
+    private boolean bulkValid = false;
+    private final java.util.Set<String> bulkReadSince = new java.util.HashSet<>();
+    public final int[] bulkPosition = new int[4];
+    public final int[] bulkVelocity = new int[4];
+    public final boolean[] bulkDigital = new boolean[8];
+
     public SimDcMotorController motorController;
     public SimServoController servoController;
     public SimDigitalController digitalController;
@@ -65,6 +77,30 @@ public final class Hub {
             if (Thread.interrupted()) throw new InterruptedException();
         }
         SimClock.charge(ns);
+    }
+
+    /**
+     * A read that the real SDK routes through the bulk cache. tag names the
+     * value (AUTO refreshes the snapshot when the same value is read twice).
+     */
+    public synchronized void bulkRead(String tag) throws InterruptedException {
+        if (bulkMode == BULK_AUTO && bulkValid && bulkReadSince.contains(tag)) bulkValid = false;
+        if (!bulkValid) {
+            command();
+            for (int i = 0; i < 4; i++) {
+                bulkPosition[i] = motors[i].encoderPosition();
+                bulkVelocity[i] = (int) Math.round(motors[i].velocityTicksPerSec());
+            }
+            for (int i = 0; i < 8; i++) bulkDigital[i] = digitalInput[i];
+            bulkValid = true;
+            bulkReadSince.clear();
+        }
+        if (bulkMode == BULK_AUTO) bulkReadSince.add(tag);
+    }
+
+    public synchronized void clearBulkCache() {
+        bulkValid = false;
+        bulkReadSince.clear();
     }
 
     public void command() throws InterruptedException {

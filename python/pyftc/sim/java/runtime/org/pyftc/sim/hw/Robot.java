@@ -90,6 +90,9 @@ public final class Robot {
             r.hardwareMap.dcMotorController.put(name, hub.motorController);
             r.hardwareMap.servoController.put(name, hub.servoController);
             r.hardwareMap.voltageSensor.put(name, hub.voltageSensor);
+            // The SDK registers each hub as a LynxModule under the hub's name
+            // (hardwareMap.getAll(LynxModule.class) for bulk caching).
+            r.hardwareMap.put(name, new com.qualcomm.hardware.lynx.LynxModule(hub));
         }
         for (JsonElement de : config.getAsJsonArray("devices")) {
             JsonObject d = de.getAsJsonObject();

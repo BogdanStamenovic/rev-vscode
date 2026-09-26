@@ -322,15 +322,16 @@ def test_config_from_starter_markers(db):
 
 
 def test_unsupported_class_fails_at_compile_naming_it(db, tmp_path):
-    src = opmode('''        hubs = self.hardwareMap.getAll(LynxModule)
-        self.waitForStart()''', imports="from ftc.hardware import LynxModule")
-    line = src.splitlines().index("        hubs = self.hardwareMap.getAll(LynxModule)") + 1
+    src = opmode('''        cam = self.hardwareMap.get(WebcamName, "Webcam 1")
+        self.waitForStart()''', imports="from ftc.hardware import WebcamName")
+    line = src.splitlines().index('        cam = self.hardwareMap.get(WebcamName, "Webcam 1")') + 1
     p = tmp_path / "T.py"
     p.write_text(src)
     r = prepare([p], tmp_path / "build", CACHE, JAVAC, config=simconfig.from_xml(db, MIXED, "Mixed", "file"), db=db)
     assert not r["ok"] and r["stage"] == "compile"
-    d = r["diagnostics"][0]
-    assert d["line"] == line and "does not support" in d["message"] and "LynxModule" in d["message"]
+    # The import line gets its own "package not simulated" error; the use must name the class.
+    d = [x for x in r["diagnostics"] if x["line"] == line][0]
+    assert "does not support" in d["message"] and "WebcamName" in d["message"]
 
 
 def test_touch_and_distance_sensors(db, tmp_path):

@@ -434,6 +434,10 @@ public final class SimDcMotorController implements DcMotorController, DcMotorCon
     @Override public synchronized int getMotorCurrentPosition(int motor) {
         validateMotor(motor); motor -= apiMotorFirst;
         try {
+            if (hub.bulkMode != Hub.BULK_OFF) {
+                hub.bulkRead("position" + motor);
+                return hub.bulkPosition[motor];
+            }
             hub.command();
             return ch(motor).encoderPosition();
         } catch (InterruptedException e) {
@@ -486,6 +490,10 @@ public final class SimDcMotorController implements DcMotorController, DcMotorCon
 
     private int internalGetMotorTicksPerSecond(int motorZ) {
         try {
+            if (hub.bulkMode != Hub.BULK_OFF) {
+                hub.bulkRead("velocity" + motorZ);
+                return hub.bulkVelocity[motorZ];
+            }
             hub.command();
             return (int) Math.round(ch(motorZ).velocityTicksPerSec());
         } catch (InterruptedException e) {
